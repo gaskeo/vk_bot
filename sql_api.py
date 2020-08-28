@@ -35,3 +35,7 @@ class Sqlite:
             return admin[1]
         return 0
 
+    def get_all_admins(self):
+        admins = self.cur.execute(f"SELECT * FROM admins ORDER BY access_level").fetchall()
+        return admins
+

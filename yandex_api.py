@@ -1,5 +1,4 @@
 import requests
-from pprint import pprint
 
 API_ADDRESS = "https://dictionary.yandex.net/dicservice.json/lookupMultiple"
 
@@ -26,7 +25,4 @@ def get_text_from_json_get_synonyms(json, dict="ru"):
         return all_syn
     else:
         return None
-
-
-pprint(get_text_from_json_get_synonyms(get_synonyms("привет")))
 
