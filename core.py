@@ -17,6 +17,8 @@ SQL_FILE_NAME = "db/data.db"
 GROUP_ID = os.getenv("vk_group_id")
 TOKEN = os.getenv("vk_group_token")
 
+CHIEF_ADMIN = os.getenv("chief_admin")
+
 sqlite = Sqlite(SQL_FILE_NAME)
 
 
@@ -26,7 +28,21 @@ def check_command(message: str, messages_old, vk, user_id):
             syns = get_syns_refactored(message.split()[1:])
             send_message(syns, vk, user_id)
         else:
-            send_message("Ошибка: нет слова", vk, user_id)
+                send_message("Ошибка: нет слова", vk, user_id)
+    elif message.lower().startswith("/sa"):
+        if sqlite.get_admin(user_id) == 5:
+            if len(message.split()) == 3:
+                new_admin_id, access_level = message.split()[1:]
+                if not access_level.isdigit() or not (1 <= int(access_level) <= 5):
+                    send_message("Недопустимый уровень пользователя", vk, user_id)
+                    return
+                answer = set_admin(new_admin_id, access_level, vk)
+                send_message(answer, vk, user_id)
+            else:
+                send_message("Неправильный формат команды", vk, user_id)
+        else:
+            send_message("У вас нет прав для этой команды. "
+                         "Минимальный уровень администрирования для данной команды: 5", vk, user_id)
     else:
         send_message("Ты шо, я не понимаю тебя", vk, user_id)
 
@@ -46,6 +62,34 @@ def get_syns_refactored(word):
         return "Ничего не найдено"
 
 
+def set_admin(user_id, access_level, vk):
+    user_id = get_user_id_via_url(user_id, vk)
+    if user_id:
+        if str(user_id) != CHIEF_ADMIN:
+            answer = sqlite.set_admin(user_id, access_level)
+            return answer
+        else:
+            return "Невозможно поменять уровень администрирования"
+    return "Такого пользователя не существует"
+
+
+def get_user_id_via_url(user_url, vk):
+    def get_user_screen_name_of_url(url: str):
+        if url.startswith("[") and url.endswith("]") and "|" in url:
+            url = url[1:url.find("|")]
+            return url
+        url = url.replace("@", "")
+        if url.endswith("/"):
+            url = url[:-1]
+        while "/" in url:
+            url = url[url.rfind("/") + 1:]
+        return url
+    info = vk.utils.resolveScreenName(screen_name=get_user_screen_name_of_url(user_url))
+    if info:
+        return info["object_id"]
+    return None
+
+
 def send_message(message, vk, user_id):
     vk.messages.send(user_id=user_id,
                      message=message,
@@ -58,12 +102,10 @@ def main():
     longpoll = VkBotLongPoll(vk_session, GROUP_ID)
     for event in longpoll.listen():
         if event.type == VkBotEventType.MESSAGE_NEW:
-            print(event.obj.message)
             user_id = event.obj.message['from_id']
             vk = vk_session.get_api()
             messages = [message for message in vk.messages.getHistory
                         (count=5, user_id=user_id)["items"] if message["from_id"] == user_id][1]
-            print(messages)
             text = event.obj.message['text']
             old = sqlite.check_user_in_db(user_id)
             if not old:
