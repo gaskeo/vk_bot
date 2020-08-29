@@ -4,7 +4,7 @@ from io import BytesIO
 import random, string
 
 
-def create_shakal(image, factor):
+def create_grain(image, factor):
     image = Image.open(image)
     width = image.size[0]
     height = image.size[1]
@@ -33,3 +33,17 @@ def create_shakal(image, factor):
                                       + string.ascii_lowercase + string.digits) for _ in range(16)))
     image.save(name)
     return name
+
+
+def create_shakal(image, factor):
+    image = Image.open(image)
+    width = image.size[0]
+    height = image.size[1]
+    image = image.resize((width // factor or 1, height // factor or 1))
+    image = image.resize((width, height))
+    name = "photos/{}.jpg" \
+        .format(''.join(random.choice(string.ascii_uppercase
+                                      + string.ascii_lowercase + string.digits) for _ in range(16)))
+    image.save(name)
+    return name
+
