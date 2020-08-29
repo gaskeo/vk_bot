@@ -3,8 +3,14 @@ import requests
 API_ADDRESS = "https://dictionary.yandex.net/dicservice.json/lookupMultiple"
 
 
-def get_synonyms(text, dict="ru"):
+def get_synonyms(text, dict="ru") -> dict:
+    """
+    get synonyms from yandex api
+    :param text: text need synonyms
+    :param dict: language of text
+    :return: dict of synonyms
 
+    """
     params = {
         "dict": dict,
         "text": text
@@ -12,7 +18,14 @@ def get_synonyms(text, dict="ru"):
     return requests.get(API_ADDRESS, params=params).json()
 
 
-def get_text_from_json_get_synonyms(json, dict="ru"):
+def get_text_from_json_get_synonyms(json, dict="ru") -> list:
+    """
+    refactor object from 'get_synonyms' function
+    :param json: source object
+    :param dict: language of text
+    :return: list of synonyms
+
+    """
     all_syn = []
     if json[dict]["syn"]:
         for word in json[dict]["syn"][0]["tr"]:
@@ -22,7 +35,5 @@ def get_text_from_json_get_synonyms(json, dict="ru"):
                 for syn in word["syn"]:
                     syns.append(syn["text"])
             all_syn.append({main_word: syns})
-        return all_syn
-    else:
-        return None
+    return all_syn
 

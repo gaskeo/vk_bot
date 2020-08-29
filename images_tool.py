@@ -1,10 +1,17 @@
-from PIL import Image, ImageDraw
+from PIL import Image
 from io import BytesIO
 
 import random, string
 
 
-def create_grain(image, factor):
+def create_grain(image: BytesIO or str, factor: int) -> str:
+    """
+    create grain image from source image
+    :param image: bytes of image or file's name
+    :param factor: factor of image grain
+    :return: name of file in /photos directory
+
+    """
     image = Image.open(image)
     width = image.size[0]
     height = image.size[1]
@@ -35,7 +42,14 @@ def create_grain(image, factor):
     return name
 
 
-def create_shakal(image, factor):
+def create_shakal(image: BytesIO or str, factor: int) -> str:
+    """
+    create shakal image from source image
+    :param image: bytes of image or file's name
+    :param factor: factor of image grain
+    :return: name of file in /photos directory
+
+    """
     image = Image.open(image)
     width = image.size[0]
     height = image.size[1]
