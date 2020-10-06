@@ -12,6 +12,9 @@ from images_tool import create_shakal, create_grain
 import vk_api
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 
+from pyzbar.pyzbar import decode
+from PIL import Image
+
 dotenv_path = os.path.join(os.path.dirname(__file__), 'config.env')
 
 if os.path.exists(dotenv_path):
@@ -72,8 +75,27 @@ def check_command(all_data_message: dict, vk: vk_api.vk_api.VkApiMethod, user_id
         admin_help_command(user_id, vk)
     elif message.lower().startswith("/ia"):
         is_admin_command(user_id, vk, message)
+    elif message.lower().startswith("/dqr"):
+        decode_qr_code_command(user_id, vk, all_data_message)
     else:
         send_message("Не понял... Список команд: /help", vk, user_id)
+
+
+def decode_qr_code_command(user_id: int, vk: vk_api.vk_api.VkApiMethod, all_data_message: dict):
+    print(all_data_message)
+    if all_data_message["attachments"]:
+        for qr_code in all_data_message["attachments"]:
+            if qr_code["type"] == "photo":
+                url = qr_code["photo"]["sizes"][-1]["url"]
+                print(qr_code["photo"]["sizes"][-1])
+                size = (qr_code["photo"]["sizes"][-1]["width"],
+                        qr_code["photo"]["sizes"][-1]["height"])
+                qr = urllib.request.urlopen(url).read()
+                bytes_qr = BytesIO(qr)
+                a = Image.open(bytes_qr)
+                b = Image.frombytes(mode="L", size=size, data=a.tobytes())
+                data = decode((a.load(), *size))
+                print(data)
 
 
 def get_synonyms_command(user_id: int, vk: vk_api.vk_api.VkApiMethod, message: str):
@@ -366,25 +388,29 @@ def main():
     longpoll = VkBotLongPoll(vk_session, GROUP_ID)
     upload = vk_api.VkUpload(vk_session)
     vk = vk_session.get_api()
-    for event in longpoll.listen():
-        if event.type == VkBotEventType.MESSAGE_NEW:
-            user_id = event.obj.message['from_id']
-            old = sqlite.check_user_in_db(user_id)
-            if not old:
-                sqlite.add_user(user_id, "")
-                send_message("Ты теперь смешарик! Напиши /help, "
-                             "чтобы узнать список команд", vk, user_id)
-            check_command(event.obj.message, vk, user_id, upload)
+    while True:
+        try:
+            for event in longpoll.listen():
+                if event.type == VkBotEventType.MESSAGE_NEW:
+                    user_id = event.obj.message['from_id']
+                    old = sqlite.check_user_in_db(user_id)
+                    if not old:
+                        sqlite.add_user(user_id, "")
+                        send_message("Ты теперь смешарик! Напиши /help, "
+                                     "чтобы узнать список команд", vk, user_id)
+                    check_command(event.obj.message, vk, user_id, upload)
 
-        if event.type == VkBotEventType.MESSAGE_ALLOW:
-            user_id = event.obj["user_id"]
-            if sqlite.check_user_in_db(user_id):
-                send_message("Ты снова с нами! Напиши /help, вдруг новые команды появились, "
-                             "а ты не в курсе", vk, user_id)
-            else:
-                sqlite.add_user(user_id, "")
-                send_message("Спасибо, что разрешил сообщения! Напиши /help, "
-                             "чтобы ознакомиться с функциями бота", vk, user_id)
+                if event.type == VkBotEventType.MESSAGE_ALLOW:
+                    user_id = event.obj["user_id"]
+                    if sqlite.check_user_in_db(user_id):
+                        send_message("Ты снова с нами! Напиши /help, вдруг новые команды появились, "
+                                     "а ты не в курсе", vk, user_id)
+                    else:
+                        sqlite.add_user(user_id, "")
+                        send_message("Спасибо, что разрешил сообщения! Напиши /help, "
+                                     "чтобы ознакомиться с функциями бота", vk, user_id)
+        except Exception as e:
+            send_message(str(e), vk, int(CHIEF_ADMIN))
 
 
 if __name__ == '__main__':
