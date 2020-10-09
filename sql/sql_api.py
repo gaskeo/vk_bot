@@ -71,3 +71,6 @@ class Sqlite:
         admins = self.cur.execute(f"SELECT * FROM admins ORDER BY access_level").fetchall()
         return admins
 
+    def exit_db(self):
+        self.conn.close()
+        return True
