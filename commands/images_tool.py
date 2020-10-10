@@ -1,9 +1,11 @@
 from PIL import Image, ImageFont, ImageDraw
 from io import BytesIO
 
-import random, string
+import random
+import string
 
-ARABIC_TEXT = "الموقعكؤسةيدهنظأرغبحتإشجزفطآىثضخئـءصذ"
+from utils import get_random_wiki_page, get_only_symbols
+
 
 TEXT_COLORS = {
     "black": "white",
@@ -75,33 +77,39 @@ def create_shakal(image: BytesIO or str, factor: int) -> str:
     return name
 
 
-def create_arabic_meme(image: BytesIO or str, text_color: str = "black") -> str:
+def create_arabic_meme(image: BytesIO or str, text_color: str = "black") -> tuple:
     image = Image.open(image)
     draw = ImageDraw.Draw(image)
-    text = "".join([random.choice(ARABIC_TEXT) for _ in range(random.randint(4, 8))])
+    text = get_random_wiki_page()
+    only_symbols = get_only_symbols(text)[::-1]
     size = image.size[0], image.size[1]
     font_size = size[1] // 6
-    font = ImageFont.truetype("arial.ttf", font_size)
-    text_size = draw.textsize(text, font=font)
-    x, y = (size[0] - text_size[0]) // 2, (size[1] - int((text_size[1])))
+    font = ImageFont.truetype("/fonts/arial.ttf", font_size)
+    text_size = draw.textsize(only_symbols, font=font)
+    x, y = (size[0] - text_size[0]) // 2, (size[1] - int((text_size[1])) - 2)
+    while x <= 0 and font_size > 1:
+        font_size -= 1
+        font = ImageFont.truetype("/fonts/arial.ttf", font_size)
+        text_size = draw.textsize(only_symbols, font=font)
+        x = (size[0] - text_size[0]) // 2
     offset = 3
     if text_color not in TEXT_COLORS.keys():
         text_color = "black"
     shadow_color = TEXT_COLORS[text_color]
 
     for off in range(offset):
-        draw.text((x - off, y), text, font=font, fill=shadow_color)
-        draw.text((x + off, y), text, font=font, fill=shadow_color)
-        draw.text((x, y + off), text, font=font, fill=shadow_color)
-        draw.text((x, y - off), text, font=font, fill=shadow_color)
-        draw.text((x - off, y + off), text, font=font, fill=shadow_color)
-        draw.text((x + off, y + off), text, font=font, fill=shadow_color)
-        draw.text((x - off, y - off), text, font=font, fill=shadow_color)
-        draw.text((x + off, y - off), text, font=font, fill=shadow_color)
+        draw.text((x - off, size[1] - int(text_size[1])), only_symbols, font=font, fill=shadow_color)
+        draw.text((x + off, size[1] - int(text_size[1])), only_symbols, font=font, fill=shadow_color)
+        draw.text((x, size[1] - int(text_size[1]) + off), only_symbols, font=font, fill=shadow_color)
+        draw.text((x, size[1] - int(text_size[1]) - off), only_symbols, font=font, fill=shadow_color)
+        draw.text((x - off, size[1] - int(text_size[1]) + off), only_symbols, font=font, fill=shadow_color)
+        draw.text((x + off, size[1] - int(text_size[1]) + off), only_symbols, font=font, fill=shadow_color)
+        draw.text((x - off, size[1] - int(text_size[1]) - off), only_symbols, font=font, fill=shadow_color)
+        draw.text((x + off, size[1] - int(text_size[1]) - off), only_symbols, font=font, fill=shadow_color)
     draw.text(((size[0] - text_size[0]) // 2, (size[1] - int((text_size[1])))),
-              text=text, font=font, fill=text_color)
+              text=only_symbols, font=font, fill=text_color)
     name = "photos/{}.jpg" \
         .format(''.join(random.choice(string.ascii_uppercase
                                       + string.ascii_lowercase + string.digits) for _ in range(16)))
     image.save(name)
-    return name
+    return name, text

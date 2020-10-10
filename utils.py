@@ -1,4 +1,5 @@
 import vk_api
+import requests
 
 import random
 
@@ -50,3 +51,18 @@ def send_message(message: str, vk: vk_api.vk_api.VkApiMethod, user_id: int, atta
                      message=message,
                      random_id=random.randint(0, 2 ** 64),
                      attachment=attachments)
+
+
+def get_random_wiki_page() -> str:
+    request = "https://ar.wikipedia.org/w/api.php?action=query&format=json&list=random&rnlimit=5"
+    pages = requests.get(request).json()["query"]["random"]
+    longest_page = max(pages, key=lambda page: page["title"])["title"]
+    return longest_page
+
+
+def get_only_symbols(text: str) -> str:
+    final_text = ""
+    for i in text:
+        if i.isalpha() or i == " ":
+            final_text += i
+    return final_text

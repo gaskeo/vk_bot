@@ -1,6 +1,6 @@
 import requests
 
-API_ADDRESS = "https://dictionary.yandex.net/dicservice.json/lookupMultiple"
+SYNONYMS_API_ADDRESS = "https://dictionary.yandex.net/dicservice.json/lookupMultiple"
 
 
 def get_synonyms(text, dict="ru") -> dict:
@@ -15,7 +15,7 @@ def get_synonyms(text, dict="ru") -> dict:
         "dict": dict,
         "text": text
     }
-    return requests.get(API_ADDRESS, params=params).json()
+    return requests.get(SYNONYMS_API_ADDRESS, params=params).json()
 
 
 def get_text_from_json_get_synonyms(json, dict="ru") -> list:

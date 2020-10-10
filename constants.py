@@ -13,6 +13,7 @@ SQL_FILE_NAME: str = os.getenv("db_path")
 GROUP_ID: str = os.getenv("vk_group_id")
 TOKEN: str = os.getenv("vk_group_token")
 CHIEF_ADMIN: str = os.getenv("chief_admin")
+Y_TRANSLATE_KEY = os.getenv("yandex_api_key")
 
 with open(os.getenv("help"), encoding="utf-8") as help_text:
     HELP_TEXT = help_text.read()

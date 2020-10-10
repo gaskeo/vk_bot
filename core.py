@@ -25,10 +25,9 @@ def check_command(all_data_message: dict, vk: vk_api.vk_api.VkApiMethod, user_id
 
     """
     message: str = all_data_message["text"]
+    # user commands
     if message.lower().startswith("/gs"):
         get_syns(user_id, vk, message)
-    elif message.lower().startswith("/sa"):
-        set_admin_command(user_id, vk, message)
     elif message.lower().startswith("/cyx"):
         create_yaderniy_xyesos_2009_command(user_id, vk, message)
     elif message.lower().startswith("/cs"):
@@ -37,17 +36,22 @@ def check_command(all_data_message: dict, vk: vk_api.vk_api.VkApiMethod, user_id
         create_grain_command(user_id, vk, message, all_data_message, upload)
     elif message.lower().startswith("/ca"):
         create_arabic_funny_command(user_id, vk, message, all_data_message, upload)
-    elif message.lower() == "/ga":
-        get_all_admins_command(user_id, vk)
     elif message.lower().startswith("/help"):
         help_command(user_id, vk)
+    # admin commands
+    elif message.lower().startswith("/sa"):
+        set_admin_command(user_id, vk, message, sqlite)
+    elif message.lower() == "/ga":
+        get_all_admins_command(user_id, vk, sqlite)
     elif message.lower().startswith("/adm"):
-        admin_help_command(user_id, vk)
+        admin_help_command(user_id, vk, sqlite)
     elif message.lower().startswith("/ia"):
-        is_admin_command(user_id, vk, message)
+        is_admin_command(user_id, vk, message, sqlite)
     elif message.lower().startswith("/bb"):
-        bb_command(user_id, vk)
+        bb_command(user_id, vk, sqlite)
     else:
+        if all_data_message:
+            print(all_data_message)
         send_message("Не понял... Список команд: /help", vk, user_id)
 
 
