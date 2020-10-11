@@ -1,2 +1,6 @@
 config.env
 db/data.db
+photos
+draft.py
+.idea
+vk_config.v2.json

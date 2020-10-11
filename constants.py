@@ -1,4 +1,5 @@
 from dotenv import load_dotenv
+from sys import platform
 
 import os
 
@@ -13,6 +14,13 @@ SQL_FILE_NAME: str = os.getenv("db_path")
 GROUP_ID: str = os.getenv("vk_group_id")
 TOKEN: str = os.getenv("vk_group_token")
 CHIEF_ADMIN: str = os.getenv("chief_admin")
+
+if platform in ("linux", "linux2"):
+    FONTS_PATH: str = os.getenv("font_linux")
+elif platform == "win32":
+    FONTS_PATH: str = os.getenv("font_windows")
+ARABIC_FONT: str = os.getenv("arabic_font")
+
 Y_TRANSLATE_KEY = os.getenv("yandex_api_key")
 
 with open(os.getenv("help"), encoding="utf-8") as help_text:
