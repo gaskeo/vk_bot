@@ -7,6 +7,7 @@ import os
 
 import random
 
+from sql.sql_api import Sqlite
 from .images_tool import create_arabic_meme, create_grain, create_shakal
 from utils import send_message
 from yandex.yandex_api import get_text_from_json_get_synonyms, get_synonyms
@@ -143,6 +144,21 @@ def get_syns(user_id: int, vk: vk_api.vk_api.VkApiMethod, message):
         send_message(syns, vk, user_id)
     else:
         send_message("Ошибка: нет слова", vk, user_id)
+
+
+def change_ladno_chance_command(chat_id: int,
+                                vk: vk_api.vk_api.VkApiMethod,
+                                message: str,
+                                sqlite: Sqlite):
+    if len(message.split()) == 2:
+        chance = message.split()[1]
+        if chance.isdigit() and 0 <= int(chance) <= 100:
+            sqlite.change_ladno_chance(chat_id, int(chance) / 100)
+            send_message(f"Шанс Ладно успешно изменен на {chance}%", vk, -abs(chat_id))
+        else:
+            send_message("Должно быть число от 0 до 100", vk, -abs(chat_id))
+    else:
+        send_message("Добавьте шанс (от 0 до 100)", vk, -abs(chat_id))
 
 
 def help_command(user_id: int, vk: vk_api.vk_api.VkApiMethod):

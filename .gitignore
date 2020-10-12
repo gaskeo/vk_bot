@@ -4,3 +4,7 @@ photos
 draft.py
 .idea
 vk_config.v2.json
+__pycache__
+commands/__pycache__
+sql/__pycache__
+yandex/__pycache__

@@ -2,7 +2,7 @@ import sqlite3
 
 
 class Sqlite:
-    def __init__(self, db_name: str, password=None):
+    def __init__(self, db_name: str):
         self.db_name = db_name
         self.conn = sqlite3.connect(db_name)
         self.cur = self.conn.cursor()
@@ -29,6 +29,33 @@ class Sqlite:
         user = self.cur.execute(f"SELECT id FROM users WHERE ID == {user_id} LIMIT 1;").fetchone()
         return True if user else False
 
+    def add_chat(self, chat_id: int):
+        if self.check_chat_in_db(abs(chat_id)):
+            return
+        self.cur.execute("INSERT INTO chats VALUES ({}, {})".format(abs(chat_id), 0.30))
+        self.conn.commit()
+
+    def check_chat_in_db(self, chat_id: int) -> bool:
+        chat = self.cur.execute(
+            f"SELECT id FROM chats WHERE ID == {abs(chat_id)} LIMIT 1;"
+        ).fetchone()
+        return True if chat else False
+
+    def change_ladno_chance(self, chat_id: int, chance: float):
+        if not self.check_chat_in_db(abs(chat_id)):
+            self.add_chat(chat_id)
+        self.cur.execute(f"UPDATE chats SET ladno_chance == {chance} WHERE id == {abs(chat_id)}")
+        self.conn.commit()
+
+    def get_ladno_chance(self, chat_id: int):
+        if self.check_chat_in_db(abs(chat_id)):
+            chance = self.cur.execute(f"SELECT ladno_chance FROM chats "
+                                      f"WHERE id == {abs(chat_id)} LIMIT 1;").fetchone()
+            if chance:
+                chance = chance[0]
+            return chance
+        return 0
+
     def set_admin(self, user_id: int, access_level: int) -> str:
         """
         adding user in admin's db
@@ -39,10 +66,11 @@ class Sqlite:
         """
         user = self.cur.execute(f"SELECT id FROM users WHERE ID == {user_id} LIMIT 1;").fetchone()
         if user:
-            is_admin = self.cur.execute(f"SELECT * FROM admins WHERE ID == {user_id} LIMIT 1;")\
+            is_admin = self.cur.execute(f"SELECT * FROM admins WHERE ID == {user_id} LIMIT 1;") \
                 .fetchone()
             if is_admin:
-                self.cur.execute(f"UPDATE admins SET access_level = {access_level} WHERE id == {user_id}")
+                self.cur.execute(f"UPDATE admins SET access_level = {access_level} "
+                                 f"WHERE id == {user_id}")
             else:
                 self.cur.execute(f"INSERT INTO admins VALUES ({user_id}, {access_level})")
             self.conn.commit()

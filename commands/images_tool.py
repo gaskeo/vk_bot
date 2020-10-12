@@ -4,7 +4,7 @@ from io import BytesIO
 import random
 import string
 
-from utils import get_random_wiki_page, get_only_symbols
+from utils import get_random_funny_wiki_page, get_only_symbols
 from constants import FONTS_PATH, ARABIC_FONT
 
 
@@ -81,7 +81,7 @@ def create_shakal(image: BytesIO or str, factor: int) -> str:
 def create_arabic_meme(image: BytesIO or str, text_color: str = "black") -> tuple:
     image = Image.open(image)
     draw = ImageDraw.Draw(image)
-    text = get_random_wiki_page()
+    text = get_random_funny_wiki_page()
     only_symbols = get_only_symbols(text)[::-1]
     size = image.size[0], image.size[1]
     font_size = size[1] // 6
@@ -90,7 +90,7 @@ def create_arabic_meme(image: BytesIO or str, text_color: str = "black") -> tupl
     x, y = (size[0] - text_size[0]) // 2, (size[1] - int((text_size[1])) - 2)
     while x <= 0 and font_size > 1:
         font_size -= 1
-        font = ImageFont.truetype("/fonts/arial.ttf", font_size)
+        font = ImageFont.truetype(f"{FONTS_PATH}{ARABIC_FONT}", font_size)
         text_size = draw.textsize(only_symbols, font=font)
         x = (size[0] - text_size[0]) // 2
     offset = 3
@@ -103,10 +103,14 @@ def create_arabic_meme(image: BytesIO or str, text_color: str = "black") -> tupl
         draw.text((x + off, size[1] - int(text_size[1])), only_symbols, font=font, fill=shadow_color)
         draw.text((x, size[1] - int(text_size[1]) + off), only_symbols, font=font, fill=shadow_color)
         draw.text((x, size[1] - int(text_size[1]) - off), only_symbols, font=font, fill=shadow_color)
-        draw.text((x - off, size[1] - int(text_size[1]) + off), only_symbols, font=font, fill=shadow_color)
-        draw.text((x + off, size[1] - int(text_size[1]) + off), only_symbols, font=font, fill=shadow_color)
-        draw.text((x - off, size[1] - int(text_size[1]) - off), only_symbols, font=font, fill=shadow_color)
-        draw.text((x + off, size[1] - int(text_size[1]) - off), only_symbols, font=font, fill=shadow_color)
+        draw.text(
+            (x - off, size[1] - int(text_size[1]) + off), only_symbols, font=font, fill=shadow_color)
+        draw.text(
+            (x + off, size[1] - int(text_size[1]) + off), only_symbols, font=font, fill=shadow_color)
+        draw.text(
+            (x - off, size[1] - int(text_size[1]) - off), only_symbols, font=font, fill=shadow_color)
+        draw.text(
+            (x + off, size[1] - int(text_size[1]) - off), only_symbols, font=font, fill=shadow_color)
     draw.text(((size[0] - text_size[0]) // 2, (size[1] - int((text_size[1])))),
               text=only_symbols, font=font, fill=text_color)
     name = "photos/{}.jpg" \

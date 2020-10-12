@@ -20,7 +20,7 @@ def admin_help_command(user_id: int, vk: vk_api.vk_api.VkApiMethod, sqlite: Sqli
         send_message("У вас нет доступа к данной команде", vk, user_id)
 
 
-def get_all_admins_command(user_id: int, vk: vk_api.vk_api.VkApiMethod, sqlite: Sqlite) -> str:
+def get_all_admins_command(user_id: int, vk: vk_api.vk_api.VkApiMethod, sqlite: Sqlite):
     """
     get all admins and refactor answer
     :param user_id: id of user who need list of admins
@@ -35,8 +35,8 @@ def get_all_admins_command(user_id: int, vk: vk_api.vk_api.VkApiMethod, sqlite: 
             for (id_temp, access_level_temp) in admins:
                 admins_str += f"{'@id'}{id_temp} - {access_level_temp}\n"
             send_message(admins_str, vk, user_id)
-        return "Список пуст"
-    return "У вас нет доступа к этой команде"
+        send_message("Список пуст", vk, user_id)
+    send_message("У вас нет прав для этой команды", vk, user_id)
 
 
 def is_admin_command(user_id: int, vk: vk_api.vk_api.VkApiMethod, message: str, sqlite: Sqlite):
@@ -63,7 +63,7 @@ def is_admin_command(user_id: int, vk: vk_api.vk_api.VkApiMethod, message: str, 
         else:
             send_message("Неправильный формат команды", vk, user_id)
     else:
-        send_message("У вас нет прав для этой команды")
+        send_message("У вас нет прав для этой команды", vk, user_id)
 
 
 def set_admin_command(user_id: int, vk: vk_api.vk_api.VkApiMethod, message: str, sqlite: Sqlite):
@@ -129,3 +129,5 @@ def bb_command(user_id: int, vk: vk_api.vk_api.VkApiMethod, sqlite: Sqlite):
             send_message(f"Завершаю работу по команде @id{user_id}", vk, int(CHIEF_ADMIN))
         send_message("Завершаю работу всей программы", vk, user_id)
         exit(0)
+    else:
+        send_message("У вас нет доступа к данной команде", vk, user_id)
