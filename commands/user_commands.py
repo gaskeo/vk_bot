@@ -11,7 +11,105 @@ from sql.sql_api import Sqlite
 from .images_tool import create_arabic_meme, create_grain, create_shakal
 from utils import send_message
 from yandex.yandex_api import get_text_from_json_get_synonyms, get_synonyms
-from constants import HELP_TEXT
+from constants import HELP_TEXT, ANSWER_CHANCE, LADNO_CHANCE, HUY_CHANCE, NU_POLUCHAETSYA_CHANCE
+
+CHANCES_ONE_ANSWER = {
+    "answer_chance": "ответа",
+    "ladno_chance": "Ладно",
+    "huy_chance": "Ху-",
+    "nu_poluchaetsya_chance": "Ну получается..."
+}
+
+CHANCES_ALL_SETTINGS = {
+    "answer_chance": "Шанс ответа",
+    "ladno_chance": "Шанс Ладно",
+    "huy_chance": "Шанс Ху-",
+    "nu_poluchaetsya_chance": "Шанс Ну получается..."
+}
+
+SETTINGS_KEYBOARD = {
+  "buttons": [
+    [
+      {
+        "action": {
+          "type": "text",
+          "label": "/lc 0",
+          "payload": ""
+        },
+        "color": "negative"
+      },
+      {
+        "action": {
+          "type": "text",
+          "label": "/lc 50",
+          "payload": ""
+        },
+        "color": "secondary"
+      },
+      {
+        "action": {
+          "type": "text",
+          "label": "/lc 100",
+          "payload": ""
+        },
+        "color": "positive"
+      }
+    ],
+    [
+      {
+        "action": {
+          "type": "text",
+          "label": "/hc 0",
+          "payload": ""
+        },
+        "color": "negative"
+      },
+      {
+        "action": {
+          "type": "text",
+          "label": "/hc 50",
+          "payload": ""
+        },
+        "color": "secondary"
+      },
+      {
+        "action": {
+          "type": "text",
+          "label": "/hc 100",
+          "payload": ""
+        },
+        "color": "positive"
+      }
+    ],
+    [
+      {
+        "action": {
+          "type": "text",
+          "label": "/nc 0",
+          "payload": ""
+        },
+        "color": "negative"
+      },
+      {
+        "action": {
+          "type": "text",
+          "label": "/nc 50",
+          "payload": ""
+        },
+        "color": "secondary"
+      },
+      {
+        "action": {
+          "type": "text",
+          "label": "/nc 100",
+          "payload": ""
+        },
+        "color": "positive"
+      }
+    ]
+  ],
+  "inline": True
+}
 
 
 def create_yaderniy_xyesos_2009_command(
@@ -41,7 +139,7 @@ def create_arabic_funny_command(user_id: int, vk: vk_api.vk_api.VkApiMethod, mes
             color = message.split()[-1]
         for image in all_data_message["attachments"]:
             if image["type"] == "photo":
-                url = image["photo"]["sizes"][-1]["url"]
+                url = max(image["photo"]["sizes"], key=lambda x: x["height"])["url"]
                 img = urllib.request.urlopen(url).read()
                 bytes_img = BytesIO(img)
                 name_final_file, text = create_arabic_meme(bytes_img, color)
@@ -125,6 +223,7 @@ def get_syns(user_id: int, vk: vk_api.vk_api.VkApiMethod, message):
     :param words: list of words need synonyms
     :return: refactored synonyms for message
     """
+
     def get_syns_refactored(words):
         syns = get_text_from_json_get_synonyms(get_synonyms(words))
         if syns:
@@ -146,26 +245,50 @@ def get_syns(user_id: int, vk: vk_api.vk_api.VkApiMethod, message):
         send_message("Ошибка: нет слова", vk, user_id)
 
 
-def change_ladno_chance_command(chat_id: int,
-                                vk: vk_api.vk_api.VkApiMethod,
-                                message: str,
-                                sqlite: Sqlite):
+def change_chance_command(chat_id: int,
+                          what: str,
+                          vk: vk_api.vk_api.VkApiMethod,
+                          message: str,
+                          sqlite: Sqlite):
     if len(message.split()) == 2:
         chance = message.split()[1]
         if chance.isdigit() and 0 <= int(chance) <= 100:
-            sqlite.change_ladno_chance(chat_id, int(chance) / 100)
-            send_message(f"Шанс Ладно успешно изменен на {chance}%", vk, -abs(chat_id))
+            sqlite.change_chances(abs(chat_id), params={what: int(chance)})
+            send_message(f"Шанс {CHANCES_ONE_ANSWER.get(what, '...')}"
+                         f" успешно изменен на {chance}%", vk, -abs(chat_id))
         else:
             send_message("Должно быть число от 0 до 100", vk, -abs(chat_id))
     else:
         send_message("Добавьте шанс (от 0 до 100)", vk, -abs(chat_id))
 
 
+def get_chance_command(chat_id: int,
+                       what: str,
+                       vk: vk_api.vk_api.VkApiMethod,
+                       sqlite: Sqlite
+                       ):
+    chance = sqlite.get_chances(abs(chat_id), params={what: True})
+    send_message(f"Шанс {CHANCES_ONE_ANSWER[what]} равен "
+                 f"{int(chance[what])}%", vk, chat_id)
+
+
+def show_settings_command(chat_id: int, vk: vk_api.vk_api.VkApiMethod, sqlite: Sqlite):
+    all_chances = sqlite.get_chances(abs(chat_id), params={ANSWER_CHANCE: True,
+                                                           LADNO_CHANCE: True,
+                                                           HUY_CHANCE: True,
+                                                           NU_POLUCHAETSYA_CHANCE: True})
+    send_message("Настройки беседы:\n{}".format('\n'.join(
+        [f'{CHANCES_ALL_SETTINGS[what]}: '
+         f'{int(chance)}%' for what, chance in
+         tuple(all_chances.items())])), vk, chat_id, keyboard=SETTINGS_KEYBOARD
+    )
+
+
 def help_command(user_id: int, vk: vk_api.vk_api.VkApiMethod):
     """
     command for help
     :param user_id: id of user who need help
-    :param vk: vk_api for reply messsage
+    :param vk: vk_api for reply message
 
     """
     send_message(HELP_TEXT, vk, user_id)

@@ -85,12 +85,14 @@ def create_arabic_meme(image: BytesIO or str, text_color: str = "black") -> tupl
     only_symbols = get_only_symbols(text)[::-1]
     size = image.size[0], image.size[1]
     font_size = size[1] // 6
-    font = ImageFont.truetype(f"{FONTS_PATH}{ARABIC_FONT}", font_size)
+    font = ImageFont.truetype(f"{FONTS_PATH}{ARABIC_FONT}", font_size,
+                              layout_engine=ImageFont.LAYOUT_BASIC)
     text_size = draw.textsize(only_symbols, font=font)
     x, y = (size[0] - text_size[0]) // 2, (size[1] - int((text_size[1])) - 2)
     while x <= 0 and font_size > 1:
         font_size -= 1
-        font = ImageFont.truetype(f"{FONTS_PATH}{ARABIC_FONT}", font_size)
+        font = ImageFont.truetype(f"{FONTS_PATH}{ARABIC_FONT}", font_size,
+                                  layout_engine=ImageFont.LAYOUT_BASIC)
         text_size = draw.textsize(only_symbols, font=font)
         x = (size[0] - text_size[0]) // 2
     offset = 3

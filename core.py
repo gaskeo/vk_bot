@@ -1,6 +1,8 @@
 from vk_api import VkApi
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 
+import logging
+
 from constants import *
 from commands.user_commands import       \
     create_yaderniy_xyesos_2009_command, \
@@ -9,11 +11,20 @@ from commands.user_commands import       \
     create_grain_command,                \
     get_syns,                            \
     help_command,                        \
-    change_ladno_chance_command
+    change_chance_command,               \
+    get_chance_command,                  \
+    show_settings_command
 from commands.admin_commands import *
-from utils import send_ladno, get_adjectives_and_count_other_pos, answer_nu_poluchaetsya_or_not
+from utils import get_main_pos, answer_nu_poluchaetsya_or_not, \
+    answer_or_not, get_random_answer, generate_huy_word
+
+logger = logging.getLogger("main_logger")
+logging.basicConfig(filename="vk_bot.log", filemode="a",
+                             format=f"%(levelname)s\t\t%(asctime)s\t\t%(message)s",
+                    level=logging.INFO)
 
 sqlite = Sqlite(SQL_FILE_NAME)
+MY_NAMES = ("[club198181337|Ну получается ладно]", "[club198181337|@club198181337]")
 
 
 def check_command(all_data_message: dict, vk: vk_api.vk_api.VkApiMethod, user_id: int,
@@ -27,9 +38,14 @@ def check_command(all_data_message: dict, vk: vk_api.vk_api.VkApiMethod, user_id
 
     """
     message: str = all_data_message["text"]
+    logging.info("IN\t{}: {}".format(user_id, message))
+    if message.startswith(MY_NAMES):
+        for name in MY_NAMES:
+            message = message.replace(name, '')
+    message = message.lstrip().rstrip()
     # user commands
     if message.lower().startswith("ладно") and len(message) < 10:
-        send_message("Ну получается ладно", vk, user_id)
+        send_message("Ну получается ладно.", vk, user_id)
         return
     if message.lower().startswith("/gs"):
         get_syns(user_id, vk, message)
@@ -41,15 +57,53 @@ def check_command(all_data_message: dict, vk: vk_api.vk_api.VkApiMethod, user_id
         create_grain_command(user_id, vk, message, all_data_message, upload)
     elif message.lower().startswith("/ca"):
         create_arabic_funny_command(user_id, vk, message, all_data_message, upload)
-    elif message.lower().startswith("/cl"):
+
+    elif message.lower().startswith("/lc"):
         if user_id < 0:
-            change_ladno_chance_command(user_id, vk, message, sqlite)
+            change_chance_command(user_id, LADNO_CHANCE, vk, message, sqlite)
         else:
             send_message("Команда только для бесед", vk, user_id)
-    elif message.lower().startswith("/gcl"):
+    elif message.lower().startswith("/glc"):
         if user_id < 0:
-            send_message(f"Шанс ладно равен "
-                         f"{str(int(sqlite.get_ladno_chance(user_id) * 100))}%", vk, user_id)
+            get_chance_command(user_id, LADNO_CHANCE, vk, sqlite)
+        else:
+            send_message("Команда только для бесед", vk, user_id)
+
+    elif message.lower().startswith("/ac"):
+        if user_id < 0:
+            change_chance_command(user_id, ANSWER_CHANCE, vk, message, sqlite)
+        else:
+            send_message("Команда только для бесед", vk, user_id)
+    elif message.lower().startswith("/gac"):
+        if user_id < 0:
+            get_chance_command(user_id, ANSWER_CHANCE, vk, sqlite)
+        else:
+            send_message("Команда только для бесед", vk, user_id)
+
+    elif message.lower().startswith("/hc"):
+        if user_id < 0:
+            change_chance_command(user_id, HUY_CHANCE, vk, message, sqlite)
+        else:
+            send_message("Команда только для бесед", vk, user_id)
+    elif message.lower().startswith("/ghc"):
+        if user_id < 0:
+            get_chance_command(user_id, HUY_CHANCE, vk, sqlite)
+        else:
+            send_message("Команда только для бесед", vk, user_id)
+
+    elif message.lower().startswith("/nc"):
+        if user_id < 0:
+            change_chance_command(user_id, NU_POLUCHAETSYA_CHANCE, vk, message, sqlite)
+        else:
+            send_message("Команда только для бесед", vk, user_id)
+    elif message.lower().startswith("/gnc"):
+        if user_id < 0:
+            get_chance_command(user_id, NU_POLUCHAETSYA_CHANCE, vk, sqlite)
+        else:
+            send_message("Команда только для бесед", vk, user_id)
+    elif message.lower().startswith("/s"):
+        if user_id < 0:
+            show_settings_command(user_id, vk, sqlite)
         else:
             send_message("Команда только для бесед", vk, user_id)
     elif message.lower().startswith("/help"):
@@ -65,16 +119,33 @@ def check_command(all_data_message: dict, vk: vk_api.vk_api.VkApiMethod, user_id
         is_admin_command(user_id, vk, message, sqlite)
     elif message.lower().startswith("/bb"):
         bb_command(user_id, vk, sqlite)
+    # processing phrases
     else:
-        data = get_adjectives_and_count_other_pos(message)
-        answer = answer_nu_poluchaetsya_or_not(data)
-        if answer:
-            send_message(answer, vk, user_id)
-            return
         if user_id < 0:
-            send_ladno(vk, user_id, sqlite)
+            answer = answer_or_not(user_id, sqlite)
+            if answer:
+                what = get_random_answer(user_id, message, sqlite)
+                if what == "ladno_chance":
+                    send_message("Ладно.", vk, user_id)
+                elif what == "huy_chance":
+                    send_message(generate_huy_word(message), vk, user_id)
+                elif what == "nu_poluchaetsya_chance":
+                    data = get_main_pos(message)
+                    answer = answer_nu_poluchaetsya_or_not(data)
+                    if answer:
+                        send_message(answer, vk, user_id)
+            return
         else:
-            send_message("Список команд: /help", vk, user_id)
+            what = get_random_answer(0, message, weights=False)
+            if what == "ladno_chance":
+                send_message("Ладно.", vk, user_id)
+            elif what == "huy_chance":
+                send_message(generate_huy_word(message), vk, user_id)
+            elif what == "nu_poluchaetsya_chance":
+                data = get_main_pos(message)
+                answer = answer_nu_poluchaetsya_or_not(data)
+                if answer:
+                    send_message(answer, vk, user_id)
 
 
 def main():
@@ -121,6 +192,7 @@ def main():
                         send_message("Спасибо, что разрешил сообщения! Напиши /help, "
                                      "чтобы ознакомиться с функциями бота", vk, user_id)
         except Exception as e:
+            logging.error(repr(e))
             send_message(f"{repr(e)}\n{e}", vk, int(CHIEF_ADMIN))
 
 

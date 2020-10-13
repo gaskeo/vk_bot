@@ -5,6 +5,7 @@ import wikipediaapi
 import string
 import random
 import pymorphy2
+import json
 
 from sql.sql_api import Sqlite
 
@@ -12,6 +13,9 @@ WIKI_API = "https://ru.wikipedia.org/w/api.php"
 wiki_wiki = wikipediaapi.Wikipedia('ar')
 ALLOWED_SYMBOLS = "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХКЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхкцчшщъыьэюя"
 morph = pymorphy2.analyzer.MorphAnalyzer()
+RUSSIAN_VOWEL = "АЕЁИОУЫЭЮЯаеёиоуыэюя"
+MAIN_POS = ("NOUN",
+            "ADJF", "ADJS", "COMP", "VERB", "INFN", "PRTF", "PRTS", "GRND", "NUMR", "ADVB", "NPRO")
 
 
 def get_user_id_via_url(user_url: str, vk: vk_api.vk_api.VkApiMethod) -> int:
@@ -50,7 +54,8 @@ def get_user_id_via_url(user_url: str, vk: vk_api.vk_api.VkApiMethod) -> int:
 def send_message(message: str,
                  vk: vk_api.vk_api.VkApiMethod,
                  user_id: int = None, attachments:
-                 str or list = None):
+                 str or list = None,
+                 keyboard: dict = None):
     """
     handler for send message
     :param message: text of message 
@@ -63,20 +68,13 @@ def send_message(message: str,
         vk.messages.send(chat_id=-user_id,
                          message=message,
                          random_id=random.randint(0, 2 ** 64),
-                         attachment=attachments)
+                         attachment=attachments,
+                         keyboard=json.dumps(keyboard) if keyboard else None)
     else:
         vk.messages.send(user_id=user_id,
                          message=message,
                          random_id=random.randint(0, 2 ** 64),
                          attachment=attachments)
-
-
-def send_ladno(vk: vk_api.vk_api.VkApiMethod,
-               chat_id: int, sqlite: Sqlite):
-    chance = sqlite.get_ladno_chance(chat_id)
-    ladno = random.choices((1, 0), weights=(chance, 1 - chance))
-    if ladno[0]:
-        send_message("Ладно.", vk, -abs(chat_id))
 
 
 def get_random_wiki_page() -> str:
@@ -106,31 +104,60 @@ def get_random_funny_wiki_page():
     return random.choice(list(pages.categorymembers.keys()))
 
 
-def get_adjectives_and_count_other_pos(text) -> dict:
+def get_main_pos(text) -> dict:
     text_without_signs = ""
     for symbol in text:
         if symbol in ALLOWED_SYMBOLS or symbol == " ":
             text_without_signs += symbol
     words = text_without_signs.split()
-    adjectives = []
-    other = []
+    parts = {}
     for word in words:
         parse = morph.parse(word)
         if parse:
-            if parse[0].tag.POS == "ADJF":
-                adjectives.append(parse[0].word)
-            else:
-                other.append(parse[0].word)
-    return {"adjectives": adjectives,
-            "other": other
-            }
+            pos = parse[0].tag.POS
+            if pos in MAIN_POS:
+                if pos in parts:
+                    parts[pos].append(word)
+                else:
+                    parts[pos] = [word]
+    return parts
 
 
 def answer_nu_poluchaetsya_or_not(data: dict) -> str:
-    if len(data["adjectives"]) == 1 and len(data["other"]) < 5:
-        if "не" in data["other"]:
-            ne = "не "
-        else:
-            ne = ""
-        return f"Ну получается {ne}{data['adjectives'][0]}."
-    return ""
+    parts_reformed = list(filter(lambda x: len(x[1]) == 1, list(data.items())))
+    if len(parts_reformed) == 0:
+        return ""
+    else:
+        return f"Ну получается {random.choice(parts_reformed)[1][0]}."
+
+
+def generate_huy_word(word: str):
+    if word.startswith(tuple(RUSSIAN_VOWEL)):
+        return "Хуя" + word[1:].lower()
+    else:
+        if word[1] in RUSSIAN_VOWEL:
+            return "Ху" + word[1:].lower()
+        return "Ху" + word[2:].lower()
+
+
+def answer_or_not(chat_id: int, sqlite: Sqlite):
+    answer_chance = sqlite.get_chances(abs(chat_id), {"answer_chance": True})["answer_chance"]
+    print(answer_chance)
+    if answer_chance:
+        return random.choices((True, False), weights=(answer_chance, 1 - answer_chance))[0]
+    return False
+
+
+def get_random_answer(chat_id: int, message: str, sqlite: Sqlite = None, weights=True):
+    params = {"ladno_chance": True}
+    if len(message.split()) == 1 and len(message.split()[0]) >= 2:
+        params["huy_chance"] = True
+    if answer_nu_poluchaetsya_or_not(get_main_pos(message)):
+        params["nu_poluchaetsya_chance"] = True
+    if weights and sqlite:
+        weights = sqlite.get_chances(chat_id, params=params)
+        print(weights)
+        answer = random.choices(tuple(weights.keys()), weights=tuple(weights.values()))
+        if answer:
+            return answer[0]
+    return random.choice(tuple(params.keys()))

@@ -28,3 +28,8 @@ with open(os.getenv("help"), encoding="utf-8") as help_text:
 
 with open(os.getenv("admin_help"), encoding="utf-8") as help_admin_text:
     ADMIN_TEXT = help_admin_text.read()
+
+ANSWER_CHANCE = "answer_chance"
+LADNO_CHANCE = "ladno_chance"
+HUY_CHANCE = "huy_chance"
+NU_POLUCHAETSYA_CHANCE = "nu_poluchaetsya_chance"
