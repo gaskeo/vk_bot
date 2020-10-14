@@ -1,0 +1,247 @@
+{
+  "user_help": {
+    "main_user": {
+      "text": "Команды для ЛС:\n/ca - arabfunny\n/cs - шакал\n/cg - зернистость\n/gs - синонимы к слову\n/cp - постироничный текст\nПодробнее про все команды можно прочитать /help ca/cs...\n\n",
+      "attachments": null,
+      "keyboard": {
+        "buttons": [
+          [
+            {
+              "action": {
+                "type": "text",
+                "label": "/help ca",
+                "payload": ""
+              },
+              "color": "primary"
+            },
+            {
+              "action": {
+                "type": "text",
+                "label": "/help cs",
+                "payload": ""
+              },
+              "color": "primary"
+            }
+          ],
+          [
+            {
+              "action": {
+                "type": "text",
+                "label": "/help cg",
+                "payload": ""
+              },
+              "color": "primary"
+            },
+            {
+              "action": {
+                "type": "text",
+                "label": "/help gs",
+                "payload": ""
+              },
+              "color": "primary"
+            }
+          ],
+          [
+            {
+              "action": {
+                "type": "text",
+                "label": "/help cp",
+                "payload": ""
+              },
+              "color": "primary"
+            }
+          ]
+        ],
+        "inline": true
+      }
+    },
+    "main_conversation": {
+      "text": "Команды для беседы:\n/s - настройки\n/tac - переключить, кто может изменять настройки\n/ac - изменить шанс ответа\n/lc - изменить шанс Ладно\n/hc - изменить шанс Ху-\n/nc - изменить шанс НУ получается...\n/gac - получить шанс ответа\n/glc - получить шанс Ладно\n/ghc - получить шанс Ху-\n/gnc - получить шанс НУ получается...",
+      "attachments": null,
+      "keyboard": {
+        "buttons": [
+          [
+            {
+              "action": {
+                "type": "text",
+                "label": "/help ac",
+                "payload": ""
+              },
+              "color": "primary"
+            },
+            {
+              "action": {
+                "type": "text",
+                "label": "/help gac",
+                "payload": ""
+              },
+              "color": "primary"
+            }
+          ],
+          [
+            {
+              "action": {
+                "type": "text",
+                "label": "/help lc",
+                "payload": ""
+              },
+              "color": "primary"
+            },
+            {
+              "action": {
+                "type": "text",
+                "label": "/help glc",
+                "payload": ""
+              },
+              "color": "primary"
+            }
+          ],
+          [
+            {
+              "action": {
+                "type": "text",
+                "label": "/help hc",
+                "payload": ""
+              },
+              "color": "primary"
+            },
+            {
+              "action": {
+                "type": "text",
+                "label": "/help ghc",
+                "payload": ""
+              },
+              "color": "primary"
+            }
+          ],
+          [
+            {
+              "action": {
+                "type": "text",
+                "label": "/help nc",
+                "payload": ""
+              },
+              "color": "primary"
+            },
+            {
+              "action": {
+                "type": "text",
+                "label": "/help gnc",
+                "payload": ""
+              },
+              "color": "primary"
+            }
+          ],
+          [
+            {
+              "action": {
+                "type": "text",
+                "label": "/help s",
+                "payload": ""
+              },
+              "color": "primary"
+            },
+            {
+              "action": {
+                "type": "text",
+                "label": "/help tac",
+                "payload": ""
+              },
+              "color": "primary"
+            }
+          ]
+        ],
+        "inline": true
+      }
+    },
+    "ca": {
+      "text": "/ca (Create Arabfunny) - создать мем из вашей картинки и случайного текста на арабском языке.\nПараметры:\n1. Цвет текста (black, yellow, ...)\n2. Картинка или несколько картинок\nПример:\n/ca yellow [Photo]",
+      "attachments": null,
+      "keyboard": null
+    },
+    "cs": {
+      "text": "/cs (Create Shakal) - зашакалить картинку\nПараметры:\n1. Сепень шакала (по умолчанию: 50)\n2. Картинка или несколько картинок\nПример:\n/cs 25 [Photo]",
+      "attachments": null,
+      "keyboard": null
+    },
+    "cg": {
+      "text": "/cg (Create Grain) - сделать зернистость на картинку\nПараметры:\n1. Степень зернистости (по умолчанию: 50)\n2. Картинка или несколько картинок\nПример:\n/cg 25 [Photo]",
+      "attachments": null,
+      "keyboard": null
+    },
+    "gs": {
+      "text": "/gs (Get Synonyms) - подобрать синонимы к слову\nПараметры:\n1. Слово или несколько слов\nПример:\n/gs бот",
+      "attachments": null,
+      "keyboard": null
+    },
+    "cp": {
+      "text": "/cp (Create Posirony) - СозДатЬ пОсТИрОниЧНЫЙ теКсТ\nПараметры:\n1. Слово или несколько слов\nПример:\n/cp постироничный текст",
+      "attachments": null,
+      "keyboard": null
+    },
+    "ac": {
+      "text": "/ac (Answer Chance) - изменить шанс ответа на сообщение\nПараметры:\n1. Шанс (от 0 до 100) 0 - выключить\nПример:\n/ac 50\nТОЛЬКО ДЛЯ БЕСЕД",
+      "attachments": null,
+      "keyboard": null
+    },
+    "gac": {
+      "text": "/gac (Get Answer Chance) - получить шанс ответа на сообщение\nПример:\n/gac\nТОЛЬКО ДЛЯ БЕСЕД\n",
+      "attachments": null,
+      "keyboard": null
+    },
+    "lc": {
+      "text": "/lc (Ladno Chance) - изменить шанс ответа Ладно\nПараметры:\n1. Шанс (от 0 до 100) 0 - выключить\nПример:\n/lc 50\nТОЛЬКО ДЛЯ БЕСЕД",
+      "attachments": null,
+      "keyboard": null
+    },
+    "glc": {
+      "text": "/glc (Get Ladno Chance) - получить шанс Ладно\nПример:\n/glc\nТОЛЬКО ДЛЯ БЕСЕД",
+      "attachments": null,
+      "keyboard": null
+    },
+    "hc": {
+      "text": "/hc (Hy- Chance) - изменить шанс ответа Ху-\nПараметры:\n1. Шанс (от 0 до 100) 0 - выключить\nПример:\n/hc 50\nТОЛЬКО ДЛЯ БЕСЕД",
+      "attachments": null,
+      "keyboard": null
+    },
+    "ghc": {
+      "text": "/ghc (Get Hy- Chance) - получить шанс Ху-\nПример:\n/ghc\nТОЛЬКО ДЛЯ БЕСЕД",
+      "attachments": null,
+      "keyboard": null
+    },
+    "nc": {
+      "text": "/nc (Nu poluchaetsya... Chance) - изменить шанс ответа Ну получается...\nПараметры:\n1. Шанс (от 0 до 100) 0 - выключить\nПример:\n/nc 50\nТОЛЬКО ДЛЯ БЕСЕД",
+      "attachments": null,
+      "keyboard": null
+    },
+    "gnc": {
+      "text": "/gnc (Get Nu poluchaetsya... Chance) - получить шанс Ну получается...\nПример:\n/gnc\nТОЛЬКО ДЛЯ БЕСЕД",
+      "attachments": null,
+      "keyboard": null
+    },
+    "s": {
+      "text": "/s (Settings) - общая информация о настройках\nТОЛЬКО ДЛЯ БЕСЕД",
+      "attachments": null,
+      "keyboard": null
+    },
+    "tac": {
+      "text": "/tac (toggle access chances) - переключить доступ к настройкам шансов.\nЕсть 2 значения:\n1. только администраторы\n2. все участники\nИСПОЛЬЗОВАТЬ КОМАНДУ МОГУТ ТОЛЬКО АДМИНИСТРАТОРЫ",
+      "attachments": null,
+      "keyboard": {
+        "buttons": [
+          [
+            {
+              "action": {
+                "type": "text",
+                "label": "/tac",
+                "payload": ""
+              },
+              "color": "primary"
+            }
+          ]
+        ],
+        "inline": true
+      }
+    }
+  }
+}

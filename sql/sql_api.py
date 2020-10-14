@@ -34,7 +34,7 @@ class Sqlite:
     def add_chat(self, chat_id: int):
         if self.check_chat_in_db(abs(chat_id)):
             return
-        self.cur.execute("INSERT INTO chats VALUES ({}, {})".format(abs(chat_id), 0.30))
+        self.cur.execute("INSERT INTO chats VALUES ({})".format(abs(chat_id)))
         self.conn.commit()
 
     def check_chat_in_db(self, chat_id: int) -> bool:
@@ -74,33 +74,45 @@ class Sqlite:
         return answer
 
     def change_chances(self, chat_id: int, params: dict):
-        print(params)
         if not self.check_chat_in_db(abs(chat_id)):
-            print(123)
             self.add_chat(chat_id)
-        if params.get(ANSWER_CHANCE, False):
-            self.cur.execute(f"UPDATE chats SET {ANSWER_CHANCE} == {params[ANSWER_CHANCE]}"
+        if 0 <= params.get(ANSWER_CHANCE, -1) <= 100:
+            self.cur.execute(f"UPDATE chats SET {ANSWER_CHANCE} = {params[ANSWER_CHANCE]}"
                              f" WHERE id == {abs(chat_id)};")
             self.conn.commit()
 
-        if params.get(HUY_CHANCE, False):
-            self.cur.execute(f"UPDATE chats SET {HUY_CHANCE} == {params[HUY_CHANCE]}"
+        if 0 <= params.get(HUY_CHANCE, -1) <= 100:
+            self.cur.execute(f"UPDATE chats SET {HUY_CHANCE} = {params[HUY_CHANCE]}"
                              f" WHERE id == {abs(chat_id)};")
             self.conn.commit()
 
-        if params.get(LADNO_CHANCE, False):
-            self.cur.execute(f"UPDATE chats SET {LADNO_CHANCE} == {params[LADNO_CHANCE]}"
+        if 0 <= params.get(LADNO_CHANCE, -1) <= 100:
+            self.cur.execute(f"UPDATE chats SET {LADNO_CHANCE} = {params[LADNO_CHANCE]}"
                              f" WHERE id == {abs(chat_id)};")
             self.conn.commit()
-            print(abs(chat_id), LADNO_CHANCE, params[LADNO_CHANCE])
 
-        if params.get(NU_POLUCHAETSYA_CHANCE, False):
-            self.cur.execute(f"UPDATE chats SET {NU_POLUCHAETSYA_CHANCE} == "
+        if 0 <= params.get(NU_POLUCHAETSYA_CHANCE, -1) <= 100:
+            self.cur.execute(f"UPDATE chats SET {NU_POLUCHAETSYA_CHANCE} = "
                              f"{params[NU_POLUCHAETSYA_CHANCE]}"
                              f" WHERE id == {abs(chat_id)};")
             self.conn.commit()
-        print(self.cur.execute(f"SELECT {tuple(params.keys())[0]} FROM chats "
-                               f"WHERE id == {abs(chat_id)} LIMIT 1;").fetchone())
+
+    def get_who_can_change_chances(self, chat_id: int) -> int:
+        if not self.check_chat_in_db(abs(chat_id)):
+            self.add_chat(chat_id)
+        who = self.cur.execute(f"SELECT who_can_change_chances FROM chats "
+                               f"WHERE id == {abs(chat_id)} LIMIT 1;").fetchone()
+        return who[0]
+
+    def toggle_access_chances(self, chat_id) -> int:
+        if not self.check_chat_in_db(abs(chat_id)):
+            self.add_chat(chat_id)
+        who = 1 - self.get_who_can_change_chances(chat_id)
+        self.cur.execute(f"UPDATE chats SET who_can_change_chances = "
+                         f"{who}"
+                         f" WHERE id == {abs(chat_id)};")
+        self.conn.commit()
+        return who
 
     def set_admin(self, user_id: int, access_level: int) -> str:
         """

@@ -74,7 +74,8 @@ def send_message(message: str,
         vk.messages.send(user_id=user_id,
                          message=message,
                          random_id=random.randint(0, 2 ** 64),
-                         attachment=attachments)
+                         attachment=attachments,
+                         keyboard=json.dumps(keyboard) if keyboard else None)
 
 
 def get_random_wiki_page() -> str:
@@ -142,9 +143,8 @@ def generate_huy_word(word: str):
 
 def answer_or_not(chat_id: int, sqlite: Sqlite):
     answer_chance = sqlite.get_chances(abs(chat_id), {"answer_chance": True})["answer_chance"]
-    print(answer_chance)
     if answer_chance:
-        return random.choices((True, False), weights=(answer_chance, 1 - answer_chance))[0]
+        return random.choices((True, False), weights=(answer_chance, 100 - answer_chance))[0]
     return False
 
 
@@ -156,8 +156,20 @@ def get_random_answer(chat_id: int, message: str, sqlite: Sqlite = None, weights
         params["nu_poluchaetsya_chance"] = True
     if weights and sqlite:
         weights = sqlite.get_chances(chat_id, params=params)
-        print(weights)
-        answer = random.choices(tuple(weights.keys()), weights=tuple(weights.values()))
-        if answer:
-            return answer[0]
+        if weights["ladno_chance"] == 0:
+            weights.pop("ladno_chance")
+        if weights:
+            answer = random.choices(tuple(weights.keys()), weights=tuple(weights.values()))
+            if answer:
+                return answer[0]
+        return []
     return random.choice(tuple(params.keys()))
+
+
+def get_admins_in_chat(peer_id, vk, ):
+    members = \
+        vk.messages.getConversationMembers(
+            peer_id=peer_id, fields='items')["items"]
+    admins = map(lambda y: y["member_id"],
+                 tuple(filter(lambda x: x.get("is_admin", False), members)))
+    return admins

@@ -6,12 +6,14 @@ from io import BytesIO
 import os
 
 import random
+import json
 
 from sql.sql_api import Sqlite
 from .images_tool import create_arabic_meme, create_grain, create_shakal
 from utils import send_message
 from yandex.yandex_api import get_text_from_json_get_synonyms, get_synonyms
-from constants import HELP_TEXT, ANSWER_CHANCE, LADNO_CHANCE, HUY_CHANCE, NU_POLUCHAETSYA_CHANCE
+from constants import HELP_TEXT, ANSWER_CHANCE, LADNO_CHANCE, HUY_CHANCE, NU_POLUCHAETSYA_CHANCE, \
+    COMMANDS, WHO_CAN_TOGGLE_CHANCES
 
 CHANCES_ONE_ANSWER = {
     "answer_chance": "ответа",
@@ -277,18 +279,42 @@ def show_settings_command(chat_id: int, vk: vk_api.vk_api.VkApiMethod, sqlite: S
                                                            LADNO_CHANCE: True,
                                                            HUY_CHANCE: True,
                                                            NU_POLUCHAETSYA_CHANCE: True})
-    send_message("Настройки беседы:\n{}".format('\n'.join(
+    who = sqlite.get_who_can_change_chances(chat_id)
+    send_message("Настройки беседы:\n{}\n{}".format('\n'.join(
         [f'{CHANCES_ALL_SETTINGS[what]}: '
          f'{int(chance)}%' for what, chance in
-         tuple(all_chances.items())])), vk, chat_id, keyboard=SETTINGS_KEYBOARD
+         tuple(all_chances.items())]), WHO_CAN_TOGGLE_CHANCES.get(who)),
+        vk, chat_id, keyboard=SETTINGS_KEYBOARD
     )
 
 
-def help_command(user_id: int, vk: vk_api.vk_api.VkApiMethod):
+def help_command(user_id: int, vk: vk_api.vk_api.VkApiMethod, message: str):
     """
     command for help
     :param user_id: id of user who need help
     :param vk: vk_api for reply message
+    :param message: text
 
     """
-    send_message(HELP_TEXT, vk, user_id)
+
+    if len(message.split()) == 1:
+        if user_id > 0:
+            help_data = json.loads(HELP_TEXT)["user_help"]["main_user"]
+        else:
+            help_data = json.loads(HELP_TEXT)["user_help"]["main_conversation"]
+        help_text = help_data["text"]
+        help_attachments = help_data["attachments"]
+        help_keyboard = help_data["keyboard"]
+        send_message(help_text, vk, user_id, attachments=help_attachments, keyboard=help_keyboard)
+    else:
+        if message.split()[-1] in COMMANDS:
+            command = message.split()[-1]
+            help_data = json.loads(HELP_TEXT)["user_help"][command]
+            help_text = help_data["text"]
+            help_attachments = help_data["attachments"]
+            help_keyboard = help_data["keyboard"]
+            send_message(help_text, vk, user_id, attachments=help_attachments,
+                         keyboard=help_keyboard)
+
+
+

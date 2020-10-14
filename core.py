@@ -16,15 +16,37 @@ from commands.user_commands import       \
     show_settings_command
 from commands.admin_commands import *
 from utils import get_main_pos, answer_nu_poluchaetsya_or_not, \
-    answer_or_not, get_random_answer, generate_huy_word
+    answer_or_not, get_random_answer, generate_huy_word, get_admins_in_chat
 
 logger = logging.getLogger("main_logger")
 logging.basicConfig(filename="vk_bot.log", filemode="a",
-                             format=f"%(levelname)s\t\t%(asctime)s\t\t%(message)s",
+                    format=f"%(levelname)s\t\t%(asctime)s\t\t%(message)s",
                     level=logging.INFO)
 
 sqlite = Sqlite(SQL_FILE_NAME)
 MY_NAMES = ("[club198181337|Ну получается ладно]", "[club198181337|@club198181337]")
+HELP_KEYBOARD = {"buttons": [
+                    [
+                        {
+                            "action": {
+                                "type": "text",
+                                "label": "/help",
+                                "payload": ""
+                            },
+                            "color": "positive"
+                        }
+                    ]
+                ]
+                }
+
+GET_COMMANDS = {"/gac": ANSWER_CHANCE,
+                "/glc": LADNO_CHANCE,
+                "/ghc": HUY_CHANCE,
+                "/gnc": NU_POLUCHAETSYA_CHANCE}
+SET_COMMANDS = {"/ac": ANSWER_CHANCE,
+                "/lc": LADNO_CHANCE,
+                "/hc": HUY_CHANCE,
+                "/nc": NU_POLUCHAETSYA_CHANCE}
 
 
 def check_command(all_data_message: dict, vk: vk_api.vk_api.VkApiMethod, user_id: int,
@@ -38,18 +60,20 @@ def check_command(all_data_message: dict, vk: vk_api.vk_api.VkApiMethod, user_id
 
     """
     message: str = all_data_message["text"]
-    logging.info("IN\t{}: {}".format(user_id, message))
+    log = u"IN {}".format(abs(user_id))
+    logging.info(log)
     if message.startswith(MY_NAMES):
         for name in MY_NAMES:
             message = message.replace(name, '')
     message = message.lstrip().rstrip()
+
     # user commands
     if message.lower().startswith("ладно") and len(message) < 10:
         send_message("Ну получается ладно.", vk, user_id)
         return
     if message.lower().startswith("/gs"):
         get_syns(user_id, vk, message)
-    elif message.lower().startswith("/cyx"):
+    elif message.lower().startswith("/cp"):
         create_yaderniy_xyesos_2009_command(user_id, vk, message)
     elif message.lower().startswith("/cs"):
         create_shakal_command(user_id, vk, message, all_data_message, upload)
@@ -57,48 +81,31 @@ def check_command(all_data_message: dict, vk: vk_api.vk_api.VkApiMethod, user_id
         create_grain_command(user_id, vk, message, all_data_message, upload)
     elif message.lower().startswith("/ca"):
         create_arabic_funny_command(user_id, vk, message, all_data_message, upload)
+    elif message.lower().startswith("/tac"):
+        admins = get_admins_in_chat(all_data_message["peer_id"], vk)
+        if all_data_message["from_id"] in admins:
+            who = sqlite.toggle_access_chances(user_id)
+            send_message(WHO_CAN_TOGGLE_CHANCES.get(who), vk, user_id)
+    elif message.lower().startswith(tuple(GET_COMMANDS.keys())):
+        if user_id < 0:
+            get_chance_command(user_id,
+                               GET_COMMANDS.get(message.split()[0], ANSWER_CHANCE), vk, sqlite)
+        else:
+            send_message("Команда только для бесед", vk, user_id)
+    elif message.lower().startswith(tuple(SET_COMMANDS.keys())):
+        if user_id < 0:
+            who_can_change = sqlite.get_who_can_change_chances(user_id)
+            if who_can_change:
+                admins = get_admins_in_chat(all_data_message["peer_id"], vk)
+                if all_data_message["from_id"] in admins:
+                    change_chance_command(user_id,
+                                          SET_COMMANDS.get(message.split()[0], "gac"), vk, message,
+                                          sqlite)
+            else:
+                change_chance_command(user_id,
+                                      SET_COMMANDS.get(message.split()[0], "gac"), vk, message,
+                                      sqlite)
 
-    elif message.lower().startswith("/lc"):
-        if user_id < 0:
-            change_chance_command(user_id, LADNO_CHANCE, vk, message, sqlite)
-        else:
-            send_message("Команда только для бесед", vk, user_id)
-    elif message.lower().startswith("/glc"):
-        if user_id < 0:
-            get_chance_command(user_id, LADNO_CHANCE, vk, sqlite)
-        else:
-            send_message("Команда только для бесед", vk, user_id)
-
-    elif message.lower().startswith("/ac"):
-        if user_id < 0:
-            change_chance_command(user_id, ANSWER_CHANCE, vk, message, sqlite)
-        else:
-            send_message("Команда только для бесед", vk, user_id)
-    elif message.lower().startswith("/gac"):
-        if user_id < 0:
-            get_chance_command(user_id, ANSWER_CHANCE, vk, sqlite)
-        else:
-            send_message("Команда только для бесед", vk, user_id)
-
-    elif message.lower().startswith("/hc"):
-        if user_id < 0:
-            change_chance_command(user_id, HUY_CHANCE, vk, message, sqlite)
-        else:
-            send_message("Команда только для бесед", vk, user_id)
-    elif message.lower().startswith("/ghc"):
-        if user_id < 0:
-            get_chance_command(user_id, HUY_CHANCE, vk, sqlite)
-        else:
-            send_message("Команда только для бесед", vk, user_id)
-
-    elif message.lower().startswith("/nc"):
-        if user_id < 0:
-            change_chance_command(user_id, NU_POLUCHAETSYA_CHANCE, vk, message, sqlite)
-        else:
-            send_message("Команда только для бесед", vk, user_id)
-    elif message.lower().startswith("/gnc"):
-        if user_id < 0:
-            get_chance_command(user_id, NU_POLUCHAETSYA_CHANCE, vk, sqlite)
         else:
             send_message("Команда только для бесед", vk, user_id)
     elif message.lower().startswith("/s"):
@@ -107,7 +114,7 @@ def check_command(all_data_message: dict, vk: vk_api.vk_api.VkApiMethod, user_id
         else:
             send_message("Команда только для бесед", vk, user_id)
     elif message.lower().startswith("/help"):
-        help_command(user_id, vk)
+        help_command(user_id, vk, message)
     # admin commands
     elif message.lower().startswith("/sa"):
         set_admin_command(user_id, vk, message, sqlite)
@@ -158,14 +165,16 @@ def main():
         try:
             for event in longpoll.listen():
                 if event.type == VkBotEventType.MESSAGE_NEW:
-
                     if event.obj.message["from_id"] == event.obj.message["peer_id"]:
                         user_id = event.obj.message['from_id']
+                        if user_id == int(CHIEF_ADMIN):
+                            ...
                         old = sqlite.check_user_in_db(user_id)
                         if not old:
                             sqlite.add_user(user_id, "")
                             send_message("Ты теперь смешарик! Напиши /help, "
-                                         "чтобы узнать список команд", vk, user_id)
+                                         "чтобы узнать список команд", vk, user_id,
+                                         keyboard=HELP_KEYBOARD)
                         check_command(event.obj.message, vk, user_id, upload)
                     else:
                         action = event.obj["message"].get("action", 0)
