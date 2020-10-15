@@ -1,5 +1,4 @@
 import vk_api
-import requests
 import wikipediaapi
 
 import string
@@ -8,15 +7,13 @@ import pymorphy2
 import json
 
 from sql.sql_api import Sqlite
-from constants import CHIEF_ADMIN, LADNO_CHANCE, HUY_CHANCE, NU_POLUCHAETSYA_CHANCE
+from constants import CHIEF_ADMIN, LADNO_CHANCE, HUY_CHANCE, NU_POLUCHAETSYA_CHANCE, \
+    RUSSIAN_SYMBOLS, RUSSIAN_VOWEL, MAIN_POS
 
-WIKI_API = "https://ru.wikipedia.org/w/api.php"
 wiki_wiki = wikipediaapi.Wikipedia('ar')
-ALLOWED_SYMBOLS = "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХКЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхкцчшщъыьэюя"
+wikipediaapi.log.propagate = False
+
 morph = pymorphy2.analyzer.MorphAnalyzer()
-RUSSIAN_VOWEL = "АЕЁИОУЫЭЮЯаеёиоуыэюя"
-MAIN_POS = ("NOUN",
-            "ADJF", "ADJS", "COMP", "VERB", "INFN", "PRTF", "PRTS", "GRND", "NUMR", "ADVB", "NPRO")
 
 
 def get_user_id_via_url(user_url: str, vk: vk_api.vk_api.VkApiMethod) -> int:
@@ -63,6 +60,7 @@ def send_message(message: str,
     :param vk: vk_api for send message
     :param user_id: id of user who receive message 
     :param attachments: attachments in message
+    :param leyboard: keyboard in message
 
     """
     if user_id < 0:
@@ -79,21 +77,13 @@ def send_message(message: str,
                          keyboard=json.dumps(keyboard) if keyboard else None)
 
 
-def get_random_wiki_page() -> str:
-    params = {
-        "action": "query",
-        "format": "json",
-        "list": "random",
-        "rnlimit": 5,
-        "category": "humor",
-        "rvprop": "categories"
-    }
-    pages = requests.get(WIKI_API, params=params).json()["query"]["random"]
-    longest_page = max(pages, key=lambda page: page["title"])["title"]
-    return longest_page
-
-
 def get_only_symbols(text: str) -> str:
+    """
+    get only latin letters from string
+    :param text: string
+    :return: string including only latin letters
+
+    """
     final_text = ""
     for i in text:
         if (i.isalpha() and i not in string.ascii_letters) or i == " ":
@@ -101,15 +91,26 @@ def get_only_symbols(text: str) -> str:
     return final_text
 
 
-def get_random_funny_wiki_page():
+def get_random_funny_wiki_page() -> str:
+    """
+    get random wiki page header from category humor
+    :return: random wiki page header
+
+    """
     pages = wiki_wiki.page("Category:فكاهة")
     return random.choice(list(pages.categorymembers.keys()))
 
 
 def get_main_pos(text) -> dict:
+    """
+    get dict like {part of speech: [words], ...}
+    :param text: ext to work on
+    :return: dict like {part of speech: [words], ...}
+
+    """
     text_without_signs = ""
     for symbol in text:
-        if symbol in ALLOWED_SYMBOLS or symbol == " ":
+        if symbol.lower() in RUSSIAN_SYMBOLS or symbol == " ":
             text_without_signs += symbol
     words = text_without_signs.split()
     parts = {}
@@ -126,32 +127,76 @@ def get_main_pos(text) -> dict:
 
 
 def answer_nu_poluchaetsya_or_not(data: dict) -> str:
+    """
+    answer nu_poluchaetsya on message
+    :param data: dict like {part of speech: [words], ...}
+    :return: text like Ну получается... or ""
+
+    """
+    part = get_random_part_once(data)
+    if part:
+        return f"Ну получается {part}."
+    return ""
+
+
+def get_random_part_once(data) -> str:
+    """
+    get random word of part of speech that find once in dict
+    :param data: dict like {part of speech: [words], ...}
+    :return: word
+
+    """
     parts_reformed = list(filter(lambda x: len(x[1]) == 1, list(data.items())))
-    if len(parts_reformed) == 0:
+    if parts_reformed:
+        return random.choice(parts_reformed)[1][0]
+    return ""
+
+
+def generate_huy_word(data: dict) -> str:
+    """
+    generator huy word from random word from data
+    :param data: dict like {part of speech: [words], ...}
+    :return: huy-like word
+
+    """
+    word = get_random_part_once(data)
+    if word:
+        if word.lower().startswith(tuple(RUSSIAN_VOWEL)):
+            return "Хуя" + word[1:].lower()
+        else:
+            if word[1].lower() in RUSSIAN_VOWEL:
+                return "Ху" + word[1:].lower()
+            return "Ху" + word[2:].lower()
+    else:
         return ""
-    else:
-        return f"Ну получается {random.choice(parts_reformed)[1][0]}."
 
 
-def generate_huy_word(word: str):
-    if word.startswith(tuple(RUSSIAN_VOWEL)):
-        return "Хуя" + word[1:].lower()
-    else:
-        if word[1] in RUSSIAN_VOWEL:
-            return "Ху" + word[1:].lower()
-        return "Ху" + word[2:].lower()
+def answer_or_not(chat_id: int, sqlite: Sqlite) -> bool:
+    """
+    choose answer on message or not
+    :param chat_id: id of chat for get weights
+    :param sqlite: Sqlite object from sql_api
+    :return: True if answer else False
 
-
-def answer_or_not(chat_id: int, sqlite: Sqlite):
+    """
     answer_chance = sqlite.get_chances(abs(chat_id), {"answer_chance": True})["answer_chance"]
     if answer_chance:
         return random.choices((True, False), weights=(answer_chance, 100 - answer_chance))[0]
     return False
 
 
-def get_random_answer(chat_id: int, message: str, sqlite: Sqlite = None, weights: dict = None):
+def get_random_answer(chat_id: int, message: str, sqlite: Sqlite = None, weights: dict = None) \
+        -> str:
+    """
+    get random answer template name
+    :param chat_id: id of chat for get weights
+    :param message:
+    :param sqlite: Sqlite object from sql_api
+    :param weights: weights of answers. if refer, sqlite don't need
+    :return: random answer or "" if can't answer
+    """
     params = {"ladno_chance": True}
-    if len(message.split()) == 1 and len(message.split()[0]) >= 2:
+    if generate_huy_word(get_main_pos(message)):
         params["huy_chance"] = True
     if answer_nu_poluchaetsya_or_not(get_main_pos(message)):
         params["nu_poluchaetsya_chance"] = True
@@ -167,10 +212,17 @@ def get_random_answer(chat_id: int, message: str, sqlite: Sqlite = None, weights
         answer = random.choices(tuple(weights.keys()), weights=tuple(weights.values()))
         if answer:
             return answer[0]
-    return []
+    return ""
 
 
-def get_admins_in_chat(peer_id, vk, ):
+def get_admins_in_chat(peer_id, vk) -> list:
+    """
+    get all admins in chat
+    :param peer_id: peer id of chat
+    :param vk: vk_api for get admins
+    :return: list of admins
+
+    """
     members = \
         vk.messages.getConversationMembers(
             peer_id=peer_id, fields='items')["items"]
@@ -181,7 +233,15 @@ def get_admins_in_chat(peer_id, vk, ):
     return admins
 
 
-def send_answer(message: str, vk: vk_api.vk_api.VkApiMethod, user_id: int, sqlite: Sqlite):
+def send_answer(message: str, vk: vk_api.vk_api.VkApiMethod, user_id: int, sqlite: Sqlite) -> None:
+    """
+    send answer on non-command message
+    :param message: text of message
+    :param vk: vk_api for reply message
+    :param user_id: chat or user id
+    :param sqlite: Sqlite object
+
+    """
     answer = False
     if user_id < 0:
         answer = answer_or_not(user_id, sqlite)
@@ -193,12 +253,15 @@ def send_answer(message: str, vk: vk_api.vk_api.VkApiMethod, user_id: int, sqlit
             weights = None
             sq = sqlite
         what = get_random_answer(user_id, message, sq, weights=weights)
+        data = get_main_pos(message)
+
         if what == "ladno_chance":
             send_message("Ладно.", vk, user_id)
-        elif what == "huy_chance":
-            send_message(generate_huy_word(message), vk, user_id)
+        elif what == "huy_chance" and len(message) > 2:
+            text = generate_huy_word(data)
+            if text:
+                send_message(text, vk, user_id)
         elif what == "nu_poluchaetsya_chance":
-            data = get_main_pos(message)
             answer = answer_nu_poluchaetsya_or_not(data)
             if answer:
                 send_message(answer, vk, user_id)

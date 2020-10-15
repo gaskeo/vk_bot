@@ -4,12 +4,17 @@ from constants import ANSWER_CHANCE, LADNO_CHANCE, HUY_CHANCE, NU_POLUCHAETSYA_C
 
 
 class Sqlite:
-    def __init__(self, db_name: str):
+    def __init__(self, db_name: str) -> None:
+        """
+        init method
+        :param db_name: name of database file
+
+        """
         self.db_name = db_name
         self.conn = sqlite3.connect(db_name)
         self.cur = self.conn.cursor()
 
-    def add_user(self, user_id: int, name: str):
+    def add_user(self, user_id: int, name: str) -> None:
         """
         adding users in db or doing nothing if user already in db
         :param user_id: unique user id from vk
@@ -31,7 +36,12 @@ class Sqlite:
         user = self.cur.execute(f"SELECT id FROM users WHERE ID == {user_id} LIMIT 1;").fetchone()
         return True if user else False
 
-    def add_chat(self, chat_id: int):
+    def add_chat(self, chat_id: int) -> None:
+        """
+        add new chat in database or nothing if chat already in database
+        :param chat_id: id of new chat
+
+        """
         if self.check_chat_in_db(abs(chat_id)):
             return
         self.cur.execute("INSERT INTO chats VALUES ({}, {}, {}, {}, {}, {})".format(
@@ -39,12 +49,25 @@ class Sqlite:
         self.conn.commit()
 
     def check_chat_in_db(self, chat_id: int) -> bool:
+        """
+        checking if user in db via user's id
+        :param chat_id: chat's id
+        :return: True if chat in db or False if chat not in db
+
+        """
         chat = self.cur.execute(
             f"SELECT id FROM chats WHERE ID == {abs(chat_id)} LIMIT 1;"
         ).fetchone()
         return True if chat else False
 
     def get_chances(self, chat_id: int, params: dict) -> dict:
+        """
+        get weights of answers in chat
+        :param chat_id:  chat's id
+        :param params: answers that need weights like {ANSWER_CHANCE: True, ...}
+        :return: dict with weights like {ANSWER_CHANCE: 30, ...}
+
+        """
         if not self.check_chat_in_db(abs(chat_id)):
             return {}
         answer = {}
@@ -74,7 +97,13 @@ class Sqlite:
 
         return answer
 
-    def change_chances(self, chat_id: int, params: dict):
+    def change_chances(self, chat_id: int, params: dict) -> None:
+        """
+        change chances of answers
+        :param chat_id: chat's id
+        :param params: dict like {ANSWER_CHANCE: 100 (new chance), ...}
+
+        """
         if not self.check_chat_in_db(abs(chat_id)):
             self.add_chat(chat_id)
         if 0 <= params.get(ANSWER_CHANCE, -1) <= 100:
@@ -99,6 +128,12 @@ class Sqlite:
             self.conn.commit()
 
     def get_who_can_change_chances(self, chat_id: int) -> int:
+        """
+        get who can change chances in chat
+        :param chat_id: chat's id
+        :return: who can: 1 - admins only; 0 - all
+
+        """
         if not self.check_chat_in_db(abs(chat_id)):
             self.add_chat(chat_id)
         who = self.cur.execute(f"SELECT who_can_change_chances FROM chats "
@@ -106,6 +141,12 @@ class Sqlite:
         return who[0]
 
     def toggle_access_chances(self, chat_id) -> int:
+        """
+        toggle who can change chances
+        :param chat_id: chat's id
+        :return: who can change chances now
+
+        """
         if not self.check_chat_in_db(abs(chat_id)):
             self.add_chat(chat_id)
         who = 1 - self.get_who_can_change_chances(chat_id)

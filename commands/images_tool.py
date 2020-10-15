@@ -7,17 +7,7 @@ import string
 from utils import get_random_funny_wiki_page, get_only_symbols
 from constants import FONTS_PATH, ARABIC_FONT
 
-
-TEXT_COLORS = {
-    "black": "white",
-    "blue": "white",
-    "green": "white",
-    "orange": "black",
-    "purple": "black",
-    "red": "white",
-    "white": "black",
-    "yellow": "black"
-}
+from constants import TEXT_COLORS
 
 
 def create_grain(image: BytesIO or str, factor: int) -> str:
@@ -79,6 +69,13 @@ def create_shakal(image: BytesIO or str, factor: int) -> str:
 
 
 def create_arabic_meme(image: BytesIO or str, text_color: str = "black") -> tuple:
+    """
+    create arabic meme from source image
+    :param image: bytes of image or file's name
+    :param text_color: english text of text
+    :return: tuple like (name of file in /photos directory, text on mem)
+
+    """
     image = Image.open(image)
     draw = ImageDraw.Draw(image)
     text = get_random_funny_wiki_page()

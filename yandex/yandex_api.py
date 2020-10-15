@@ -1,6 +1,6 @@
 import requests
 
-SYNONYMS_API_ADDRESS = "https://dictionary.yandex.net/dicservice.json/lookupMultiple"
+from constants import SYNONYMS_API_ADDRESS
 
 
 def get_synonyms(text, dictionary="ru") -> dict:

@@ -1,4 +1,5 @@
 import logging
+import threading
 
 from constants import *
 from commands.user_commands import       \
@@ -11,7 +12,8 @@ from commands.user_commands import       \
     toggle_access_chances,               \
     get_chances_distributor,             \
     set_chances_distributor,             \
-    settings_command
+    settings_command,                    \
+    create_arabic_funny_gif_command
 from commands.admin_commands import *
 from utils import send_answer
 
@@ -22,7 +24,7 @@ logging.basicConfig(filename="vk_bot.log", filemode="a",
 
 
 def check_command(all_data_message: dict, vk: vk_api.vk_api.VkApiMethod, user_id: int,
-                  upload: vk_api.upload.VkUpload, sqlite):
+                  upload: vk_api.upload.VkUpload, sqlite) -> None:
     """
     main command checker
     :param all_data_message: all data from user's message
@@ -32,6 +34,8 @@ def check_command(all_data_message: dict, vk: vk_api.vk_api.VkApiMethod, user_id
 
     """
     message: str = all_data_message["text"]
+    if not message:
+        return
     if message.startswith(MY_NAMES):
         for name in MY_NAMES:
             message = message.replace(name, '')
@@ -49,6 +53,11 @@ def check_command(all_data_message: dict, vk: vk_api.vk_api.VkApiMethod, user_id
         create_shakal_command(user_id, vk, message, all_data_message, upload)
     elif message.lower().startswith("/cg"):
         create_grain_command(user_id, vk, message, all_data_message, upload)
+    elif message.lower().startswith("/cag"):
+        send_message("жди долго буду обрабатывать", vk, user_id)
+        thread = threading.Thread(target=create_arabic_funny_gif_command,
+                                  args=(user_id, vk, all_data_message, upload))
+        thread.start()
     elif message.lower().startswith("/ca"):
         create_arabic_funny_command(user_id, vk, message, all_data_message, upload)
     elif message.lower().startswith("/tac"):

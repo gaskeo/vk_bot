@@ -3,7 +3,6 @@ from sys import platform
 
 import os
 
-
 dotenv_path = os.path.join(os.path.dirname(__file__), 'config.env')
 
 if os.path.exists(dotenv_path):
@@ -66,4 +65,22 @@ CHANCES_ALL_SETTINGS = {
     "ladno_chance": "Шанс Ладно",
     "huy_chance": "Шанс Ху-",
     "nu_poluchaetsya_chance": "Шанс Ну получается..."
+}
+
+RUSSIAN_SYMBOLS = "абвгдеёжзийклмнопрстуфхкцчшщъыьэюя"
+RUSSIAN_VOWEL = "аеёиоуыэюя"
+MAIN_POS = ("NOUN",
+            "ADJF", "ADJS", "COMP", "VERB", "INFN", "PRTF", "PRTS", "GRND", "NUMR", "ADVB", "NPRO")
+
+SYNONYMS_API_ADDRESS = "https://dictionary.yandex.net/dicservice.json/lookupMultiple"
+
+TEXT_COLORS = {
+    "black": "white",
+    "blue": "white",
+    "green": "white",
+    "orange": "black",
+    "purple": "black",
+    "red": "white",
+    "white": "black",
+    "yellow": "black"
 }

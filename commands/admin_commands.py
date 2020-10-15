@@ -5,7 +5,7 @@ from constants import ADMIN_TEXT, CHIEF_ADMIN
 from utils import send_message, get_user_id_via_url
 
 
-def admin_help_command(user_id: int, vk: vk_api.vk_api.VkApiMethod, sqlite: Sqlite):
+def admin_help_command(user_id: int, vk: vk_api.vk_api.VkApiMethod, sqlite: Sqlite) -> None:
     """
     command for send message with admin commands
     :param user_id: id of user who need admin commands
@@ -20,7 +20,7 @@ def admin_help_command(user_id: int, vk: vk_api.vk_api.VkApiMethod, sqlite: Sqli
         send_message("У вас нет доступа к данной команде", vk, user_id)
 
 
-def get_all_admins_command(user_id: int, vk: vk_api.vk_api.VkApiMethod, sqlite: Sqlite):
+def get_all_admins_command(user_id: int, vk: vk_api.vk_api.VkApiMethod, sqlite: Sqlite) -> None:
     """
     get all admins and refactor answer
     :param user_id: id of user who need list of admins
@@ -39,7 +39,8 @@ def get_all_admins_command(user_id: int, vk: vk_api.vk_api.VkApiMethod, sqlite: 
     send_message("У вас нет прав для этой команды", vk, user_id)
 
 
-def is_admin_command(user_id: int, vk: vk_api.vk_api.VkApiMethod, message: str, sqlite: Sqlite):
+def is_admin_command(user_id: int, vk: vk_api.vk_api.VkApiMethod, message: str, sqlite: Sqlite) \
+        -> None:
     """
     checking if user is admin
     :param user_id: id of user who need check another user
@@ -66,7 +67,8 @@ def is_admin_command(user_id: int, vk: vk_api.vk_api.VkApiMethod, message: str, 
         send_message("У вас нет прав для этой команды", vk, user_id)
 
 
-def set_admin_command(user_id: int, vk: vk_api.vk_api.VkApiMethod, message: str, sqlite: Sqlite):
+def set_admin_command(user_id: int, vk: vk_api.vk_api.VkApiMethod, message: str, sqlite: Sqlite) \
+        -> None:
     """
     command for adding or editing admins
     :param user_id: id of user who need adding or editing admins
@@ -113,12 +115,13 @@ def set_admin_command(user_id: int, vk: vk_api.vk_api.VkApiMethod, message: str,
                      "Минимальный уровень администрирования для данной команды: 5", vk, user_id)
         
         
-def bb_command(user_id: int, vk: vk_api.vk_api.VkApiMethod, sqlite: Sqlite):
+def bb_command(user_id: int, vk: vk_api.vk_api.VkApiMethod, sqlite: Sqlite) -> None:
     """
     command for stop program
     :param user_id: id of user who need stop program
     :param vk: vk_api for reply message
-    :param sqlite: class for search admin in db
+    :param sqlite: class for exit db
+
     """
     if sqlite.get_admin(user_id) >= 5:
         send_message("Завершаю работу...", vk, user_id)

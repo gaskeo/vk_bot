@@ -13,7 +13,11 @@ logging.basicConfig(filename="vk_bot.log", filemode="a",
 sqlite = Sqlite(SQL_FILE_NAME)
 
 
-def main():
+def main() -> None:
+    """
+    main cycle of program
+
+    """
     vk_session: VkApi = vk_api.VkApi(
         token=TOKEN)
     longpoll = VkBotLongPoll(vk_session, GROUP_ID)
