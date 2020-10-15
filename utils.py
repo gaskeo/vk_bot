@@ -8,6 +8,7 @@ import pymorphy2
 import json
 
 from sql.sql_api import Sqlite
+from constants import CHIEF_ADMIN, LADNO_CHANCE, HUY_CHANCE, NU_POLUCHAETSYA_CHANCE
 
 WIKI_API = "https://ru.wikipedia.org/w/api.php"
 wiki_wiki = wikipediaapi.Wikipedia('ar')
@@ -148,22 +149,21 @@ def answer_or_not(chat_id: int, sqlite: Sqlite):
     return False
 
 
-def get_random_answer(chat_id: int, message: str, sqlite: Sqlite = None, weights=True):
+def get_random_answer(chat_id: int, message: str, sqlite: Sqlite = None, weights: dict = None):
     params = {"ladno_chance": True}
     if len(message.split()) == 1 and len(message.split()[0]) >= 2:
         params["huy_chance"] = True
     if answer_nu_poluchaetsya_or_not(get_main_pos(message)):
         params["nu_poluchaetsya_chance"] = True
-    if weights and sqlite:
+    if not weights and sqlite:
         weights = sqlite.get_chances(chat_id, params=params)
-        if weights["ladno_chance"] == 0:
-            weights.pop("ladno_chance")
-        if weights:
-            answer = random.choices(tuple(weights.keys()), weights=tuple(weights.values()))
-            if answer:
-                return answer[0]
-        return []
-    return random.choice(tuple(params.keys()))
+    if weights["ladno_chance"] == 0:
+        weights.pop("ladno_chance")
+    if weights:
+        answer = random.choices(tuple(weights.keys()), weights=tuple(weights.values()))
+        if answer:
+            return answer[0]
+    return []
 
 
 def get_admins_in_chat(peer_id, vk, ):
@@ -172,4 +172,29 @@ def get_admins_in_chat(peer_id, vk, ):
             peer_id=peer_id, fields='items')["items"]
     admins = map(lambda y: y["member_id"],
                  tuple(filter(lambda x: x.get("is_admin", False), members)))
+    admins = list(admins)
+    admins.append(int(CHIEF_ADMIN))
     return admins
+
+
+def send_answer(message: str, vk: vk_api.vk_api.VkApiMethod, user_id: int, sqlite: Sqlite):
+    answer = False
+    if user_id < 0:
+        answer = answer_or_not(user_id, sqlite)
+    if (answer and user_id < 0) or user_id > 0:
+        if user_id > 0:
+            weights = {LADNO_CHANCE: 1, HUY_CHANCE: 100, NU_POLUCHAETSYA_CHANCE: 100}
+            sq = None
+        else:
+            weights = None
+            sq = sqlite
+        what = get_random_answer(user_id, message, sq, weights=weights)
+        if what == "ladno_chance":
+            send_message("Ладно.", vk, user_id)
+        elif what == "huy_chance":
+            send_message(generate_huy_word(message), vk, user_id)
+        elif what == "nu_poluchaetsya_chance":
+            data = get_main_pos(message)
+            answer = answer_nu_poluchaetsya_or_not(data)
+            if answer:
+                send_message(answer, vk, user_id)

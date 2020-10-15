@@ -1,0 +1,100 @@
+{
+  "help_keyboard": {
+    "one_time": true,
+    "buttons": [
+      [
+        {
+          "action": {
+            "type": "text",
+            "label": "/help",
+            "payload": ""
+          },
+          "color": "positive"
+        }
+      ]
+    ]
+  },
+  "settings_keyboard": {
+    "buttons": [
+      [
+        {
+          "action": {
+            "type": "text",
+            "label": "/lc 0",
+            "payload": ""
+          },
+          "color": "negative"
+        },
+        {
+          "action": {
+            "type": "text",
+            "label": "/lc 50",
+            "payload": ""
+          },
+          "color": "secondary"
+        },
+        {
+          "action": {
+            "type": "text",
+            "label": "/lc 100",
+            "payload": ""
+          },
+          "color": "positive"
+        }
+      ],
+      [
+        {
+          "action": {
+            "type": "text",
+            "label": "/hc 0",
+            "payload": ""
+          },
+          "color": "negative"
+        },
+        {
+          "action": {
+            "type": "text",
+            "label": "/hc 50",
+            "payload": ""
+          },
+          "color": "secondary"
+        },
+        {
+          "action": {
+            "type": "text",
+            "label": "/hc 100",
+            "payload": ""
+          },
+          "color": "positive"
+        }
+      ],
+      [
+        {
+          "action": {
+            "type": "text",
+            "label": "/nc 0",
+            "payload": ""
+          },
+          "color": "negative"
+        },
+        {
+          "action": {
+            "type": "text",
+            "label": "/nc 50",
+            "payload": ""
+          },
+          "color": "secondary"
+        },
+        {
+          "action": {
+            "type": "text",
+            "label": "/nc 100",
+            "payload": ""
+          },
+          "color": "positive"
+        }
+      ]
+    ],
+    "inline": true
+  }
+}

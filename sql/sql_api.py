@@ -34,7 +34,8 @@ class Sqlite:
     def add_chat(self, chat_id: int):
         if self.check_chat_in_db(abs(chat_id)):
             return
-        self.cur.execute("INSERT INTO chats VALUES ({})".format(abs(chat_id)))
+        self.cur.execute("INSERT INTO chats VALUES ({}, {}, {}, {}, {}, {})".format(
+            abs(chat_id), 30, 30, 30, 30, 1))
         self.conn.commit()
 
     def check_chat_in_db(self, chat_id: int) -> bool:

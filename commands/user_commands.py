@@ -1,4 +1,5 @@
 import urllib.request
+import subprocess
 
 import vk_api
 
@@ -10,108 +11,11 @@ import json
 
 from sql.sql_api import Sqlite
 from .images_tool import create_arabic_meme, create_grain, create_shakal
-from utils import send_message
+from utils import send_message, get_admins_in_chat
 from yandex.yandex_api import get_text_from_json_get_synonyms, get_synonyms
 from constants import HELP_TEXT, ANSWER_CHANCE, LADNO_CHANCE, HUY_CHANCE, NU_POLUCHAETSYA_CHANCE, \
-    COMMANDS, WHO_CAN_TOGGLE_CHANCES
-
-CHANCES_ONE_ANSWER = {
-    "answer_chance": "ответа",
-    "ladno_chance": "Ладно",
-    "huy_chance": "Ху-",
-    "nu_poluchaetsya_chance": "Ну получается..."
-}
-
-CHANCES_ALL_SETTINGS = {
-    "answer_chance": "Шанс ответа",
-    "ladno_chance": "Шанс Ладно",
-    "huy_chance": "Шанс Ху-",
-    "nu_poluchaetsya_chance": "Шанс Ну получается..."
-}
-
-SETTINGS_KEYBOARD = {
-  "buttons": [
-    [
-      {
-        "action": {
-          "type": "text",
-          "label": "/lc 0",
-          "payload": ""
-        },
-        "color": "negative"
-      },
-      {
-        "action": {
-          "type": "text",
-          "label": "/lc 50",
-          "payload": ""
-        },
-        "color": "secondary"
-      },
-      {
-        "action": {
-          "type": "text",
-          "label": "/lc 100",
-          "payload": ""
-        },
-        "color": "positive"
-      }
-    ],
-    [
-      {
-        "action": {
-          "type": "text",
-          "label": "/hc 0",
-          "payload": ""
-        },
-        "color": "negative"
-      },
-      {
-        "action": {
-          "type": "text",
-          "label": "/hc 50",
-          "payload": ""
-        },
-        "color": "secondary"
-      },
-      {
-        "action": {
-          "type": "text",
-          "label": "/hc 100",
-          "payload": ""
-        },
-        "color": "positive"
-      }
-    ],
-    [
-      {
-        "action": {
-          "type": "text",
-          "label": "/nc 0",
-          "payload": ""
-        },
-        "color": "negative"
-      },
-      {
-        "action": {
-          "type": "text",
-          "label": "/nc 50",
-          "payload": ""
-        },
-        "color": "secondary"
-      },
-      {
-        "action": {
-          "type": "text",
-          "label": "/nc 100",
-          "payload": ""
-        },
-        "color": "positive"
-      }
-    ]
-  ],
-  "inline": True
-}
+    COMMANDS, WHO_CAN_TOGGLE_CHANCES, GET_COMMANDS, SET_COMMANDS, KEYBOARDS, CHANCES_ALL_SETTINGS, \
+    CHANCES_ONE_ANSWER
 
 
 def create_yaderniy_xyesos_2009_command(
@@ -167,7 +71,7 @@ def create_shakal_command(user_id: int, vk: vk_api.vk_api.VkApiMethod, message: 
 
     """
     if all_data_message["attachments"]:
-        factor = 50
+        factor = 10
         if len(message.split()) > 1:
             if message.split()[-1].isdigit():
                 factor = int(message.split()[-1])
@@ -284,8 +188,54 @@ def show_settings_command(chat_id: int, vk: vk_api.vk_api.VkApiMethod, sqlite: S
         [f'{CHANCES_ALL_SETTINGS[what]}: '
          f'{int(chance)}%' for what, chance in
          tuple(all_chances.items())]), WHO_CAN_TOGGLE_CHANCES.get(who)),
-        vk, chat_id, keyboard=SETTINGS_KEYBOARD
+        vk, chat_id, keyboard=json.loads(KEYBOARDS)["settings_keyboard"]
     )
+
+
+def toggle_access_chances(all_data: dict, vk, chat_id: int, sqlite: Sqlite):
+    if chat_id < 0:
+        admins = get_admins_in_chat(chat_id, vk)
+        if all_data["from_id"] in admins:
+            who = sqlite.toggle_access_chances(chat_id)
+            send_message(WHO_CAN_TOGGLE_CHANCES.get(who), vk, chat_id)
+    else:
+        send_message("Команда только для бесед", vk, chat_id)
+
+
+def get_chances_distributor(chat_id: int, message: str, vk: vk_api.vk_api.VkApiMethod,
+                            sqlite: Sqlite):
+    if chat_id < 0:
+        get_chance_command(chat_id,
+                           GET_COMMANDS.get(message.split()[0], ANSWER_CHANCE), vk, sqlite)
+    else:
+        send_message("Команда только для бесед", vk, chat_id)
+
+
+def set_chances_distributor(chat_id: int, message: str, all_data: dict,
+                            vk: vk_api.vk_api.VkApiMethod,
+                            sqlite: Sqlite):
+    if chat_id < 0:
+        who_can_change = sqlite.get_who_can_change_chances(chat_id)
+        if who_can_change:
+            admins = get_admins_in_chat(chat_id, vk)
+            if all_data["from_id"] in admins:
+                change_chance_command(chat_id,
+                                      SET_COMMANDS.get(message.split()[0], "gac"), vk, message,
+                                      sqlite)
+        else:
+            change_chance_command(chat_id,
+                                  SET_COMMANDS.get(message.split()[0], "gac"), vk, message,
+                                  sqlite)
+
+    else:
+        send_message("Команда только для бесед", vk, chat_id)
+
+
+def settings_command(chat_id: int, vk: vk_api.vk_api.VkApiMethod, sqlite: Sqlite):
+    if chat_id < 0:
+        show_settings_command(chat_id, vk, sqlite)
+    else:
+        send_message("Команда только для бесед", vk, chat_id)
 
 
 def help_command(user_id: int, vk: vk_api.vk_api.VkApiMethod, message: str):
@@ -315,6 +265,3 @@ def help_command(user_id: int, vk: vk_api.vk_api.VkApiMethod, message: str):
             help_keyboard = help_data["keyboard"]
             send_message(help_text, vk, user_id, attachments=help_attachments,
                          keyboard=help_keyboard)
-
-
-

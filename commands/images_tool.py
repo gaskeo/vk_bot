@@ -1,4 +1,4 @@
-from PIL import Image, ImageFont, ImageDraw
+from PIL import Image, ImageFont, ImageDraw, ImageSequence
 from io import BytesIO
 
 import random
@@ -120,3 +120,5 @@ def create_arabic_meme(image: BytesIO or str, text_color: str = "black") -> tupl
                                       + string.ascii_lowercase + string.digits) for _ in range(16)))
     image.save(name)
     return name, text
+
+
