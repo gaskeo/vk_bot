@@ -157,6 +157,10 @@ def get_random_answer(chat_id: int, message: str, sqlite: Sqlite = None, weights
         params["nu_poluchaetsya_chance"] = True
     if not weights and sqlite:
         weights = sqlite.get_chances(chat_id, params=params)
+    if weights.get(HUY_CHANCE, 1) == 0:
+        weights.pop(HUY_CHANCE)
+    if weights.get(NU_POLUCHAETSYA_CHANCE, 1) == 0:
+        weights.pop(NU_POLUCHAETSYA_CHANCE)
     if weights["ladno_chance"] == 0:
         weights.pop("ladno_chance")
     if weights:
