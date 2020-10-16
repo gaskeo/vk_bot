@@ -77,3 +77,39 @@ def create_arabic_meme_gif(gif: BytesIO or str) -> tuple:
 
     return name, text
 
+
+def create_shakal_gif(image: BytesIO or str, factor: int) -> str:
+    """
+    create shakal image from source image
+    :param image: bytes of image or file's name
+    :param factor: factor of image grain
+    :return: name of file in /photos directory
+
+    """
+    name = "photos/{}.gif" \
+        .format(''.join(random.choice(string.ascii_uppercase
+                                      + string.ascii_lowercase + string.digits) for _ in range(16)))
+    image = Image.open(image)
+    start_size = image.size
+    frames = []
+    duration = 0
+    for frame in ImageSequence.Iterator(image):
+        duration += frame.info.get("duration", 30)
+        frame = frame.convert('RGB')
+        b = BytesIO()
+        frame.save(b, format="JPEG")
+        for i in range(factor):
+            frame = Image.open(b)
+            frame = frame.resize((int(frame.size[0] / 1.1), int(frame.size[1] / 1.1)))
+            size = frame.size
+            del b
+            b = BytesIO()
+            frame.save(b, quality=5, format="JPEG")
+            if size[0] < 10 or size[1] < 10:
+                break
+        frame = frame.resize(start_size)
+        frame.save(b, format="GIF")
+        frames.append(frame)
+    frames[0].save(name, save_all=True, append_images=frames[1:], loop=True,
+                   duration=duration // len(frames))
+    return name

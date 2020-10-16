@@ -207,11 +207,14 @@ def get_random_answer(chat_id: int, message: str, sqlite: Sqlite = None, weights
     if not weights and sqlite:
         weights = sqlite.get_chances(chat_id, params=params)
     if weights.get(HUY_CHANCE, 1) == 0 or not params[HUY_CHANCE]:
-        weights.pop(HUY_CHANCE)
+        if weights.get(HUY_CHANCE, 1) == 0:
+            weights.pop(HUY_CHANCE)
     if weights.get(NU_POLUCHAETSYA_CHANCE, 1) == 0 or not params[NU_POLUCHAETSYA_CHANCE]:
-        weights.pop(NU_POLUCHAETSYA_CHANCE)
+        if weights.get(NU_POLUCHAETSYA_CHANCE, 1) == 0:
+            weights.pop(NU_POLUCHAETSYA_CHANCE)
     if weights.get(LADNO_CHANCE, 1) == 0 or not params[LADNO_CHANCE]:
-        weights.pop(LADNO_CHANCE)
+        if weights.get(LADNO_CHANCE, 1) == 0:
+            weights.pop(LADNO_CHANCE)
     if weights:
         answer = random.choices(tuple(weights.keys()), weights=tuple(weights.values()))
         if answer:

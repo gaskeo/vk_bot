@@ -56,14 +56,22 @@ def create_shakal(image: BytesIO or str, factor: int) -> str:
     :return: name of file in /photos directory
 
     """
-    image = Image.open(image)
-    width = image.size[0]
-    height = image.size[1]
-    image = image.resize((width // factor or 1, height // factor or 1))
-    image = image.resize((width, height))
     name = "photos/{}.jpg" \
         .format(''.join(random.choice(string.ascii_uppercase
                                       + string.ascii_lowercase + string.digits) for _ in range(16)))
+    image = Image.open(image)
+    start_size = image.size
+    image.save(name)
+    for i in range(factor):
+        image = Image.open(name)
+        image = image.resize((int(image.size[0] / 1.1), int(image.size[1] / 1.1)))
+        size = image.size
+        image.save(name, quality=5)
+        if size[0] < 10 or size[1] < 10:
+            break
+
+    image = Image.open(name)
+    image = image.resize(start_size)
     image.save(name)
     return name
 

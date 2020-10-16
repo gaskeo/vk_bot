@@ -13,7 +13,8 @@ from commands.user_commands import       \
     get_chances_distributor,             \
     set_chances_distributor,             \
     settings_command,                    \
-    create_arabic_funny_gif_command
+    create_arabic_funny_gif_command,     \
+    create_shakal_gif_command
 from commands.admin_commands import *
 from utils import send_answer
 
@@ -49,12 +50,15 @@ def check_command(all_data_message: dict, vk: vk_api.vk_api.VkApiMethod, user_id
         get_syns(user_id, vk, message)
     elif message.lower().startswith("/cp"):
         create_yaderniy_xyesos_2009_command(user_id, vk, message)
+    elif message.lower().startswith("/csg"):
+        thread = threading.Thread(target=create_shakal_gif_command,
+                                  args=(user_id, vk, message, all_data_message, upload))
+        thread.start()
     elif message.lower().startswith("/cs"):
         create_shakal_command(user_id, vk, message, all_data_message, upload)
     elif message.lower().startswith("/cg"):
         create_grain_command(user_id, vk, message, all_data_message, upload)
     elif message.lower().startswith("/cag"):
-        send_message("жди долго буду обрабатывать", vk, user_id)
         thread = threading.Thread(target=create_arabic_funny_gif_command,
                                   args=(user_id, vk, all_data_message, upload))
         thread.start()
