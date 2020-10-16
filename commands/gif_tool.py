@@ -5,7 +5,7 @@ import string
 from utils import get_random_funny_wiki_page, get_only_symbols
 import random
 
-from constants import TEXT_COLORS
+from constants import TEXT_COLORS, ARABIC_FONT, FONTS_PATH
 
 
 def create_arabic_meme_gif(gif: BytesIO or str) -> tuple:
@@ -20,7 +20,7 @@ def create_arabic_meme_gif(gif: BytesIO or str) -> tuple:
     only_symbols = get_only_symbols(text)[::-1]
     size = image.size[0], image.size[1]
     font_size = size[1] // 6
-    font = ImageFont.truetype(f"arial.ttf", font_size,
+    font = ImageFont.truetype(f"{FONTS_PATH}{ARABIC_FONT}", font_size,
                               layout_engine=ImageFont.LAYOUT_BASIC)
     frame0 = ImageSequence.Iterator(image)[0]
     draw = ImageDraw.Draw(frame0)
@@ -28,7 +28,7 @@ def create_arabic_meme_gif(gif: BytesIO or str) -> tuple:
     x, y = (size[0] - text_size[0]) // 2, (size[1] - int((text_size[1])) - 2)
     while x <= 0 and font_size > 1:
         font_size -= 1
-        font = ImageFont.truetype(f"arial.ttf", font_size,
+        font = ImageFont.truetype(f"{FONTS_PATH}{ARABIC_FONT}", font_size,
                                   layout_engine=ImageFont.LAYOUT_BASIC)
         text_size = draw.textsize(only_symbols, font=font)
         x = (size[0] - text_size[0]) // 2
