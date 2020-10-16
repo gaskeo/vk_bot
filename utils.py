@@ -195,19 +195,23 @@ def get_random_answer(chat_id: int, message: str, sqlite: Sqlite = None, weights
     :param weights: weights of answers. if refer, sqlite don't need
     :return: random answer or "" if can't answer
     """
-    params = {"ladno_chance": True}
+    params = {LADNO_CHANCE: True}
     if generate_huy_word(get_main_pos(message)):
-        params["huy_chance"] = True
+        params[HUY_CHANCE] = True
+    else:
+        params[HUY_CHANCE] = False
     if answer_nu_poluchaetsya_or_not(get_main_pos(message)):
-        params["nu_poluchaetsya_chance"] = True
+        params[NU_POLUCHAETSYA_CHANCE] = True
+    else:
+        params[NU_POLUCHAETSYA_CHANCE] = False
     if not weights and sqlite:
         weights = sqlite.get_chances(chat_id, params=params)
-    if weights.get(HUY_CHANCE, 1) == 0:
+    if weights.get(HUY_CHANCE, 1) == 0 or not params[HUY_CHANCE]:
         weights.pop(HUY_CHANCE)
-    if weights.get(NU_POLUCHAETSYA_CHANCE, 1) == 0:
+    if weights.get(NU_POLUCHAETSYA_CHANCE, 1) == 0 or not params[NU_POLUCHAETSYA_CHANCE]:
         weights.pop(NU_POLUCHAETSYA_CHANCE)
-    if weights["ladno_chance"] == 0:
-        weights.pop("ladno_chance")
+    if weights.get(LADNO_CHANCE, 1) == 0 or not params[LADNO_CHANCE]:
+        weights.pop(LADNO_CHANCE)
     if weights:
         answer = random.choices(tuple(weights.keys()), weights=tuple(weights.values()))
         if answer:
@@ -247,14 +251,13 @@ def send_answer(message: str, vk: vk_api.vk_api.VkApiMethod, user_id: int, sqlit
         answer = answer_or_not(user_id, sqlite)
     if (answer and user_id < 0) or user_id > 0:
         if user_id > 0:
-            weights = {LADNO_CHANCE: 1, HUY_CHANCE: 100, NU_POLUCHAETSYA_CHANCE: 100}
+            weights = {LADNO_CHANCE: 10, HUY_CHANCE: 100, NU_POLUCHAETSYA_CHANCE: 100}
             sq = None
         else:
             weights = None
             sq = sqlite
         what = get_random_answer(user_id, message, sq, weights=weights)
         data = get_main_pos(message)
-
         if what == "ladno_chance":
             send_message("Ладно.", vk, user_id)
         elif what == "huy_chance" and len(message) > 2:

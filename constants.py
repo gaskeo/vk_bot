@@ -35,7 +35,9 @@ ANSWER_CHANCE = "answer_chance"
 LADNO_CHANCE = "ladno_chance"
 HUY_CHANCE = "huy_chance"
 NU_POLUCHAETSYA_CHANCE = "nu_poluchaetsya_chance"
-COMMANDS = ("gs", "cp", "cs", "cg", "ca", "lc", "glc", "s", "tac", "ac", "gac", "hc", "ghc", "nc", "gnc")
+
+COMMANDS = ("gs", "cp", "cs", "cg", "ca", "lc",
+            "glc", "s", "tac", "ac", "gac", "hc", "ghc", "nc", "gnc")
 ADMIN_COMMANDS = ("sa", "ga", "ia", "/bb")
 WHO_CAN_TOGGLE_CHANCES = {
     0: "Менять настройки могут все пользователи",
