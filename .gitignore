@@ -1,7 +1,9 @@
 config.env
 db/data.db
 photos
+draft.md
 draft.py
+ai
 draft
 .idea
 vk_config.v2.json

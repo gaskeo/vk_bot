@@ -186,6 +186,7 @@ class Sqlite:
 
         """
         admin = self.cur.execute(f"SELECT * FROM admins WHERE ID == {user_id} LIMIT 1;").fetchone()
+        print(admin, user_id)
         if admin:
             return admin[1]
         return 0
@@ -198,6 +199,11 @@ class Sqlite:
         """
         admins = self.cur.execute(f"SELECT * FROM admins ORDER BY access_level").fetchall()
         return admins
+
+    def demote_admin(self, user_id: int):
+        self.cur.execute(f"DELETE FROM admins WHERE id == {user_id}")
+        self.conn.commit()
+        return f"@id{user_id} больше не администратор"
 
     def exit_db(self):
         self.conn.close()
