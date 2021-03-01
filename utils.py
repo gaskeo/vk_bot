@@ -5,10 +5,13 @@ import string
 import random
 import pymorphy2
 import json
+import logging
+from transliterate import translit
+import sys
 
 from sql.sql_api import Sqlite
 from constants import CHIEF_ADMIN, LADNO_CHANCE, HUY_CHANCE, NU_POLUCHAETSYA_CHANCE, \
-    RUSSIAN_SYMBOLS, RUSSIAN_VOWEL, MAIN_POS
+    RUSSIAN_SYMBOLS, RUSSIAN_VOWEL, MAIN_POS, MIN_CHAT_PEER_ID
 
 wiki_wiki = wikipediaapi.Wikipedia('ar')
 wikipediaapi.log.propagate = False
@@ -49,32 +52,32 @@ def get_user_id_via_url(user_url: str, vk: vk_api.vk_api.VkApiMethod) -> int:
     return 0
 
 
+def get_user_name(user_id: int, vk: vk_api.vk_api.VkApiMethod) -> str:
+    user = vk.users.get(user_ids=user_id)[0]
+    name = user.get("first_name", "Name")
+    last_name = user.get("last_name", "Last name")
+    return f"{name} {last_name}"
+
+
 def send_message(message: str,
                  vk: vk_api.vk_api.VkApiMethod,
-                 user_id: int = None, attachments:
+                 peer_id: int = None,
+                 attachments:
                  str or list = None,
                  keyboard: dict = None):
     """
     handler for send message
     :param message: text of message 
     :param vk: vk_api for send message
-    :param user_id: id of user who receive message 
+    :param peer_id: id of peer of chat who receive message 
     :param attachments: attachments in message
-    :param leyboard: keyboard in message
-
+    :param keyboard: keyboard in message
     """
-    if user_id < 0:
-        vk.messages.send(chat_id=-user_id,
-                         message=message,
-                         random_id=random.randint(0, 2 ** 64),
-                         attachment=attachments,
-                         keyboard=json.dumps(keyboard) if keyboard else None)
-    else:
-        vk.messages.send(user_id=user_id,
-                         message=message,
-                         random_id=random.randint(0, 2 ** 64),
-                         attachment=attachments,
-                         keyboard=json.dumps(keyboard) if keyboard else None)
+    vk.messages.send(peer_id=peer_id,
+                     message=message,
+                     random_id=random.randint(0, 2 ** 64),
+                     attachment=attachments,
+                     keyboard=json.dumps(keyboard) if keyboard else None)
 
 
 def get_only_symbols(text: str) -> str:
@@ -164,14 +167,14 @@ def generate_huy_word(data: dict) -> str:
         if word.lower().startswith(tuple(RUSSIAN_VOWEL)):
             return "Хуя" + word[1:].lower()
         else:
-            if word[1].lower() in RUSSIAN_VOWEL:
+            if len(word) > 1 and word[1].lower() in RUSSIAN_VOWEL:
                 return "Ху" + word[1:].lower()
             return "Ху" + word[2:].lower()
     else:
         return ""
 
 
-def answer_or_not(chat_id: int, sqlite: Sqlite) -> bool:
+def answer_or_not(chat_id: int, sqlite) -> bool:
     """
     choose answer on message or not
     :param chat_id: id of chat for get weights
@@ -179,13 +182,14 @@ def answer_or_not(chat_id: int, sqlite: Sqlite) -> bool:
     :return: True if answer else False
 
     """
-    answer_chance = sqlite.get_chances(abs(chat_id), {"answer_chance": True})["answer_chance"]
+    answer_chance = sqlite(Sqlite.get_chances, (chat_id,),
+                           {"params": {"answer_chance": True}})["answer_chance"]
     if answer_chance:
         return random.choices((True, False), weights=(answer_chance, 100 - answer_chance))[0]
     return False
 
 
-def get_random_answer(chat_id: int, message: str, sqlite: Sqlite = None, weights: dict = None) \
+def get_random_answer(chat_id: int, message: str, sqlite=None, weights: dict = None) \
         -> str:
     """
     get random answer template name
@@ -195,6 +199,7 @@ def get_random_answer(chat_id: int, message: str, sqlite: Sqlite = None, weights
     :param weights: weights of answers. if refer, sqlite don't need
     :return: random answer or "" if can't answer
     """
+    print(1)
     params = {LADNO_CHANCE: True}
     if generate_huy_word(get_main_pos(message)):
         params[HUY_CHANCE] = True
@@ -205,7 +210,7 @@ def get_random_answer(chat_id: int, message: str, sqlite: Sqlite = None, weights
     else:
         params[NU_POLUCHAETSYA_CHANCE] = False
     if not weights and sqlite:
-        weights = sqlite.get_chances(chat_id, params=params)
+        weights = sqlite(Sqlite.get_chances, (chat_id,), {"params": params})
     if weights.get(HUY_CHANCE, 1) == 0 or not params[HUY_CHANCE]:
         if weights.get(HUY_CHANCE, 1) == 0:
             weights.pop(HUY_CHANCE)
@@ -232,7 +237,7 @@ def get_admins_in_chat(peer_id, vk) -> list:
     """
     members = \
         vk.messages.getConversationMembers(
-            peer_id=peer_id, fields='items')["items"]
+            peer_id=peer_id - MIN_CHAT_PEER_ID, fields='items')["items"]
     admins = map(lambda y: y["member_id"],
                  tuple(filter(lambda x: x.get("is_admin", False), members)))
     admins = list(admins)
@@ -240,7 +245,7 @@ def get_admins_in_chat(peer_id, vk) -> list:
     return admins
 
 
-def send_answer(message: str, vk: vk_api.vk_api.VkApiMethod, user_id: int, sqlite: Sqlite) -> None:
+def send_answer(message: str, vk: vk_api.vk_api.VkApiMethod, user_id: int, sqlite) -> None:
     """
     send answer on non-command message
     :param message: text of message
@@ -250,10 +255,10 @@ def send_answer(message: str, vk: vk_api.vk_api.VkApiMethod, user_id: int, sqlit
 
     """
     answer = False
-    if user_id < 0:
+    if user_id > MIN_CHAT_PEER_ID:
         answer = answer_or_not(user_id, sqlite)
-    if (answer and user_id < 0) or user_id > 0:
-        if user_id > 0:
+    if (answer and user_id > MIN_CHAT_PEER_ID) or user_id < MIN_CHAT_PEER_ID:
+        if user_id < MIN_CHAT_PEER_ID:
             weights = {LADNO_CHANCE: 10, HUY_CHANCE: 100, NU_POLUCHAETSYA_CHANCE: 100}
             sq = None
         else:
@@ -271,3 +276,21 @@ def send_answer(message: str, vk: vk_api.vk_api.VkApiMethod, user_id: int, sqlit
             answer = answer_nu_poluchaetsya_or_not(data)
             if answer:
                 send_message(answer, vk, user_id)
+
+
+def exception_checker():
+    try:
+        type_ex, obj_ex, info = sys.exc_info()
+        line = info.tb_lineno
+        file = info.tb_frame.f_code.co_filename
+        while True:
+            info = info.tb_next
+            if info:
+                line = info.tb_lineno
+                file = info.tb_frame.f_code.co_filename
+            else:
+                break
+        logging.error(f"{type_ex} | msg: {translit(str(obj_ex), 'ru', reversed=True)}"
+                      f" | file: {file} | line: {line}")
+    except Exception:
+        pass

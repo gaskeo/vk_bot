@@ -86,3 +86,5 @@ TEXT_COLORS = {
     "white": "black",
     "yellow": "black"
 }
+
+MIN_CHAT_PEER_ID = 2000000000

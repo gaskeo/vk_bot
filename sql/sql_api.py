@@ -1,6 +1,8 @@
 import sqlite3
 
-from constants import ANSWER_CHANCE, LADNO_CHANCE, HUY_CHANCE, NU_POLUCHAETSYA_CHANCE
+from constants import ANSWER_CHANCE, LADNO_CHANCE, HUY_CHANCE, NU_POLUCHAETSYA_CHANCE, \
+    MIN_CHAT_PEER_ID
+from sql.redis_api import ADMIN_LEVELS
 
 
 class Sqlite:
@@ -69,6 +71,7 @@ class Sqlite:
 
         """
         if not self.check_chat_in_db(abs(chat_id)):
+            self.add_chat(chat_id)
             return {}
         answer = {}
         if params.get(ANSWER_CHANCE, False):
@@ -202,3 +205,19 @@ class Sqlite:
     def exit_db(self):
         self.conn.close()
         return True
+
+    def check_peer_id_in_db(self, peer_id):
+        if peer_id > MIN_CHAT_PEER_ID:
+            return True if self.check_chat_in_db(peer_id) else False
+        else:
+            return True if self.check_user_in_db(peer_id) else False
+
+    def add_peer_id(self, peer_id):
+        if peer_id > MIN_CHAT_PEER_ID:
+            self.add_chat(peer_id)
+        else:
+            self.add_user(peer_id)
+
+    def update_chat(self, peer_id):
+        self.cur.execute(f"UPDATE chats SET {ANSWER_CHANCE} = 30, {HUY_CHANCE} = 30, {LADNO_CHANCE} = 30, {NU_POLUCHAETSYA_CHANCE} = 30"
+                         f" WHERE id == {abs(peer_id)};")
