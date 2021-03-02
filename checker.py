@@ -10,6 +10,7 @@ from io import BytesIO
 import string
 import json
 from transliterate import translit
+from my_event import MyEvent
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -53,6 +54,7 @@ class Bot:
         self.uptime = time.time()
         self.commands = {
             # commands for all users
+            "/": self.redo_command,
             "/help": self.show_help,
             "/gs": self.get_synonyms,  # get synonyms
             "/cp": self.create_postirony,  # create postirony
@@ -60,12 +62,12 @@ class Bot:
             "/cg": self.create_grain,  # create grain
             "/ca": self.create_arabfunny,  # create arabfunny
             "/ut": self.get_uptime,
+            "/a": self.alive,
             # in chats only
             "/gac": self.get_chance,  # get answer chance
             "/glc": self.get_chance,  # get ladno chance
             "/ghc": self.get_chance,  # get huy chance
             "/gnc": self.get_chance,  # get nu... chance
-            "/a": self.alive,
             # for chat admins only
             "/tac": self.toggle_access_chat_settings,  # toggle access
             "/ac": self.set_chance,  # set answer chance
@@ -73,7 +75,7 @@ class Bot:
             "/hc": self.set_chance,  # set huy chance
             "/nc": self.set_chance,  # set nu... chance
             "/s": self.show_settings,  # settings
-            "/u": self.update_chat,
+            "/update": self.update_chat,
             # for bot admins only
             "/adm": self.admin_help,  # help admins
             "/sa": self.set_admin,  # set admin
@@ -94,11 +96,11 @@ class Bot:
     @staticmethod
     def logger(event):
         log = u"{} IN {}: {} | atts: {}".format(event.obj.message["from_id"],
-                                     event.obj.message["peer_id"],
-                                     translit(event.obj.message["text"],
-                                              "ru", reversed=True),
-                                     event.obj.message["attachments"]
-                                     )
+                                                event.obj.message["peer_id"],
+                                                translit(event.obj.message["text"],
+                                                         "ru", reversed=True),
+                                                event.obj.message["attachments"]
+                                                )
         logger.info(log)
 
     def start(self):
@@ -175,6 +177,32 @@ class Bot:
         answer = self.sqlitehook.get_answer(package_id)
         self.sqlitehook.del_answer(package_id)
         return answer
+
+    # /
+    def redo_command(self, event, _, peer_id):
+        if event.obj.message.get("reply_message", False):
+            message = event.obj.message["reply_message"]
+            message["out"] = 0
+            message["fwd_messages"] = []
+            message["important"] = False
+            message["random_id"] = 0
+            message["is_hidden"] = False
+            raw = {'type': 'message_new',
+                   'object': {'message': message},
+                   'client_info': {
+                       'button_actions': ['text', 'vkpay', 'open_app', 'location', 'open_link',
+                                          'intent_subscribe', 'intent_unsubscribe'],
+                       'keyboard': True,
+                       'inline_keyboard': True,
+                       'carousel': False,
+                       'lang_id': 0
+                   },
+                   'group_id': 198181337,
+                   }
+            e = MyEvent(raw)
+            self.add_event_in_queue(e)
+        else:
+            send_message("Ответь на сообщение с командой для ее повтора", self.vk, peer_id)
 
     # /help
     def show_help(self, _, message, peer_id):
