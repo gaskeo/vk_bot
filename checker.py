@@ -20,6 +20,7 @@ import urllib.request
 
 from sql.sqlitehook import SqliteHook, Nothing
 from sql.sql_api import Sqlite
+from speaker import Speaker
 from yandex.yandex_api import get_synonyms, get_text_from_json_get_synonyms
 
 from constants import *
@@ -32,7 +33,7 @@ from utils import \
     exception_checker, \
     send_message, \
     get_user_id_via_url, \
-    StopEvent
+    StopEvent, answer_or_not
 
 logger = logging.getLogger("main_logger")
 logging.basicConfig(filename="vk_bot.log", filemode="a",
@@ -52,6 +53,7 @@ class Bot:
         self.events = Queue()
         self.sqlitehook = sqlitehook
         self.uptime = time.time()
+        self.speaker = Speaker()
         self.commands = {
             # commands for all users
             "/": self.redo_command,
@@ -162,6 +164,7 @@ class Bot:
             for name in MY_NAMES:
                 message = message.replace(name, '')
         message = message.lstrip().rstrip()
+
         command = "" if len(message.split()) < 1 else message.split()[0].lower()
         self.commands.get(command, self.commands.get("other"))(event, message, peer_id)
 
@@ -638,6 +641,7 @@ class Bot:
     def bye_bye(self, _, __, peer_id):
         if not peer_id > MIN_CHAT_PEER_ID:
             if self.wait_sql(Sqlite.get_admin, (peer_id,)) >= 5:
+                self.speaker.disable_dump_thread()
                 send_message("Завершаю работу...", self.vk, peer_id=peer_id)
                 self.wait_sql(Sqlite.exit_db)
                 send_message("Закрыл базу", self.vk, peer_id=peer_id)
@@ -676,4 +680,10 @@ class Bot:
                 old = self.wait_sql(Sqlite.check_peer_id_in_db, (peer_id,))
                 if not old:
                     self.wait_sql(Sqlite.add_peer_id, (peer_id,))
-                send_answer(message, self.vk, peer_id, self.wait_sql)
+                self.speaker.add_words(peer_id, message)
+
+                if send_answer(message, self.vk, peer_id, self.wait_sql) is False:
+                    if answer_or_not(peer_id, self.wait_sql):
+                        text = self.speaker.generate_text(peer_id)
+                        send_message(text, self.vk, peer_id)
+

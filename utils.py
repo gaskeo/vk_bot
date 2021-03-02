@@ -199,7 +199,6 @@ def get_random_answer(chat_id: int, message: str, sqlite=None, weights: dict = N
     :param weights: weights of answers. if refer, sqlite don't need
     :return: random answer or "" if can't answer
     """
-    print(1)
     params = {LADNO_CHANCE: True}
     if generate_huy_word(get_main_pos(message)):
         params[HUY_CHANCE] = True
@@ -245,7 +244,7 @@ def get_admins_in_chat(peer_id, vk) -> list:
     return admins
 
 
-def send_answer(message: str, vk: vk_api.vk_api.VkApiMethod, user_id: int, sqlite) -> None:
+def send_answer(message: str, vk: vk_api.vk_api.VkApiMethod, user_id: int, sqlite) -> None or bool:
     """
     send answer on non-command message
     :param message: text of message
@@ -268,14 +267,18 @@ def send_answer(message: str, vk: vk_api.vk_api.VkApiMethod, user_id: int, sqlit
         data = get_main_pos(message)
         if what == "ladno_chance":
             send_message("Ладно.", vk, user_id)
+            return True
         elif what == "huy_chance" and len(message) > 2:
             text = generate_huy_word(data)
             if text:
                 send_message(text, vk, user_id)
+                return True
         elif what == "nu_poluchaetsya_chance":
             answer = answer_nu_poluchaetsya_or_not(data)
             if answer:
                 send_message(answer, vk, user_id)
+                return True
+    return False
 
 
 def exception_checker():

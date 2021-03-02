@@ -22,7 +22,7 @@ def main() -> None:
     main cycle of program
 
     """
-    FRO_EVERYONE = False
+    FOR_EVERYONE = False
     vk_session: VkApi = VkApi(
         token=TOKEN)
     sql = SqliteStart()
@@ -40,7 +40,7 @@ def main() -> None:
         for event in longpoll.listen():
             if event.type == VkBotEventType.MESSAGE_NEW and \
                     str(event.obj.message["peer_id"]) in ("2000000002", CHIEF_ADMIN)\
-                    or FRO_EVERYONE:
+                    or FOR_EVERYONE:
                 bot.add_event_in_queue(event)
             if threading.active_count() == 2:
                 sql.get_sqlkook().add_in_q(StopEvent)
