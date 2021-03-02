@@ -88,3 +88,6 @@ TEXT_COLORS = {
 }
 
 MIN_CHAT_PEER_ID = 2000000000
+
+ADMIN_LEVELS = "admin_levels"
+WHO_CAN_TOGGLE_CHANCES_TEXT = "who_can_change_chances"

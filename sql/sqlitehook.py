@@ -1,12 +1,7 @@
 from queue import Queue
 
 from sql.sql_api import Sqlite
-from utils import exception_checker
-import threading
-
-
-class Nothing:
-    ...
+from utils import exception_checker, StopEvent, Nothing
 
 
 class SqliteHook:
@@ -19,6 +14,8 @@ class SqliteHook:
         while True:
             try:
                 for event in iter(self.events.get, None):
+                    if event[0] == StopEvent:
+                        return
                     z, args, kwargs, package_id = event
                     self.answers[package_id] = z(self.sqlite, *args, **kwargs)
             except Exception:

@@ -294,3 +294,11 @@ def exception_checker():
                       f" | file: {file} | line: {line}")
     except Exception:
         pass
+
+
+class StopEvent:
+    ...
+
+
+class Nothing:
+    ...

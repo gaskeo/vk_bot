@@ -1,8 +1,7 @@
 import sqlite3
 
 from constants import ANSWER_CHANCE, LADNO_CHANCE, HUY_CHANCE, NU_POLUCHAETSYA_CHANCE, \
-    MIN_CHAT_PEER_ID
-from sql.redis_api import ADMIN_LEVELS
+    MIN_CHAT_PEER_ID, ADMIN_LEVELS
 
 
 class Sqlite:
@@ -204,6 +203,7 @@ class Sqlite:
 
     def exit_db(self):
         self.conn.close()
+        print("db exit")
         return True
 
     def check_peer_id_in_db(self, peer_id):

@@ -1,22 +1,27 @@
 import logging
+
 import threading
-import time
 from queue import Queue
+
+import time
+import datetime
 import random
 from io import BytesIO
 import string
 import json
+from transliterate import translit
 
 from PIL import Image, ImageDraw, ImageFont
 
-import vk_api
 from vk_api.bot_longpoll import VkBotMessageEvent, VkBotEventType
+from vk_api import vk_api, upload
 import urllib.request
 
-from constants import *
+from sql.sqlitehook import SqliteHook, Nothing
+from sql.sql_api import Sqlite
+from yandex.yandex_api import get_synonyms, get_text_from_json_get_synonyms
 
-from commands.admin_commands import *
-from sqlitehook import Nothing
+from constants import *
 from utils import \
     send_answer, \
     get_random_funny_wiki_page, \
@@ -25,9 +30,8 @@ from utils import \
     get_user_name, \
     exception_checker, \
     send_message, \
-    get_user_id_via_url
-from sql.sql_api import Sqlite
-from yandex.yandex_api import get_synonyms, get_text_from_json_get_synonyms
+    get_user_id_via_url, \
+    StopEvent
 
 logger = logging.getLogger("main_logger")
 logging.basicConfig(filename="vk_bot.log", filemode="a",
@@ -35,21 +39,18 @@ logging.basicConfig(filename="vk_bot.log", filemode="a",
                     level=logging.INFO)
 
 
-class StopEvent:
-    ...
-
-
 class Bot:
-    def __init__(self, vk: vk_api.vk_api.VkApiMethod,
+    def __init__(self, vk: vk_api.VkApiMethod,
                  sqlite: Sqlite,
-                 upload: vk_api.upload.VkUpload,
+                 upload: upload.VkUpload,
                  n_threads=8,
-                 sqlitehook=None):
+                 sqlitehook: SqliteHook = None):
         self.sqlite = sqlite
         self.vk = vk
         self.upload = upload
         self.events = Queue()
         self.sqlitehook = sqlitehook
+        self.uptime = time.time()
         self.commands = {
             # commands for all users
             "/help": self.show_help,
@@ -58,6 +59,7 @@ class Bot:
             "/cs": self.create_shakal,  # create shakal
             "/cg": self.create_grain,  # create grain
             "/ca": self.create_arabfunny,  # create arabfunny
+            "/ut": self.get_uptime,
             # in chats only
             "/gac": self.get_chance,  # get answer chance
             "/glc": self.get_chance,  # get ladno chance
@@ -72,7 +74,6 @@ class Bot:
             "/nc": self.set_chance,  # set nu... chance
             "/s": self.show_settings,  # settings
             "/u": self.update_chat,
-            "/d": self.delete_history,
             # for bot admins only
             "/adm": self.admin_help,  # help admins
             "/sa": self.set_admin,  # set admin
@@ -82,7 +83,6 @@ class Bot:
             # experimental
             "/csg": None,  # create gif shakal
             "/cag": None,  # create gif arabfunny
-            # nn
             # other
             "other": self.send_answer  # answer on simple message
 
@@ -91,15 +91,28 @@ class Bot:
         self.n_threads = n_threads
         self.start()
 
+    @staticmethod
+    def logger(event):
+        log = u"{} IN {}: {} | atts: {}".format(event.obj.message["from_id"],
+                                     event.obj.message["peer_id"],
+                                     translit(event.obj.message["text"],
+                                              "ru", reversed=True),
+                                     event.obj.message["attachments"]
+                                     )
+        logger.info(log)
+
     def start(self):
         for th in range(self.n_threads):
             event_checker = threading.Thread(target=self.check_event_type)
             self.threads.append(event_checker)
+            event_checker.setName(str(th + 2))
             event_checker.start()
+            print(f"thread {event_checker.name} started")
 
     @staticmethod
     def check_stop(event):
         if event == StopEvent:
+            print(f"thread {threading.currentThread().name} stopped")
             exit()
 
     @staticmethod
@@ -132,8 +145,15 @@ class Bot:
                 exception_checker()
 
     def message_checker(self, event: VkBotMessageEvent):
+        self.logger(event)
         message: str = event.obj.message["text"]
         peer_id = event.obj.message["peer_id"]
+        action = event.obj.message.get("action", None)
+        if action:
+            action_type = action["type"]
+            if action_type == "chat_invite_user" and action["member_id"] == -int(GROUP_ID):
+                self.wait_sql(Sqlite.add_peer_id, (peer_id,))
+                send_message("дайте админку пжпж", self.vk, peer_id)
         if not message:
             return
         if message.startswith(MY_NAMES):
@@ -146,7 +166,7 @@ class Bot:
     def add_event_in_queue(self, event):
         self.events.put(event)
 
-    def wait_answer(self, z, args=None, kwargs=None):
+    def wait_sql(self, z, args=None, kwargs=None):
         package_id = random.randint(0, 100000)
         self.sqlitehook.add_in_q(z, args,
                                  kwargs, package_id=package_id)
@@ -414,9 +434,10 @@ class Bot:
         else:
             send_message("Прикрепи фото", self.vk, peer_id=peer_id)
 
-    # /a
-    def alive(self, _, __, peer_id):
-        send_message("я не лежу", self.vk, peer_id)
+    # /ut
+    def get_uptime(self, _, __, peer_id):
+        send_message(str(datetime.timedelta(seconds=int(time.time() - self.uptime))), self.vk,
+                     peer_id)
 
     # /gac /glc...
     def get_chance(self, _, message, peer_id):
@@ -424,14 +445,28 @@ class Bot:
             what = GET_COMMANDS.get(
                 "" if len(message.split()) < 1 else message.split()[0].lower(), ""
             )
-            chance = self.wait_answer(Sqlite.get_chances, (peer_id,),
-                                      {"params": {what: True}})
+            chance = self.wait_sql(Sqlite.get_chances, (peer_id,),
+                                   {"params": {what: True}})
             send_message(f"Шанс {CHANCES_ONE_ANSWER[what]} равен "
                          f"{int(chance[what])}%", self.vk, peer_id=peer_id)
         else:
             send_message(f"Команда только для бесед", self.vk, user_id=peer_id)
 
-    # /sac / slc...
+    # /a
+    def alive(self, _, __, peer_id):
+        send_message("я не лежу", self.vk, peer_id)
+
+    # /tac
+    def toggle_access_chat_settings(self, event, _, peer_id):
+        if peer_id > MIN_CHAT_PEER_ID:
+            admins = get_admins_in_chat(peer_id, self.vk)
+            if event.obj.message["from_id"] in admins:
+                who = self.wait_sql(Sqlite.toggle_access_chances, (peer_id,))
+                send_message(WHO_CAN_TOGGLE_CHANCES.get(who), self.vk, peer_id=peer_id)
+        else:
+            send_message("Команда только для бесед", self.vk, peer_id=peer_id)
+
+    # /ac / lc...
     def set_chance(self, event, message, peer_id):
         if peer_id > MIN_CHAT_PEER_ID:
             what = SET_COMMANDS.get(
@@ -442,8 +477,8 @@ class Bot:
                 if event.obj.message["from_id"] in admins:
                     chance = message.split()[1]
                     if chance.isdigit() and 0 <= int(chance) <= 100:
-                        self.wait_answer(Sqlite.change_chances, (peer_id,),
-                                         {"params": {what: int(chance)}})
+                        self.wait_sql(Sqlite.change_chances, (peer_id,),
+                                      {"params": {what: int(chance)}})
                         send_message(f"Шанс {CHANCES_ONE_ANSWER.get(what, '...')}"
                                      f" успешно изменен на {chance}%", self.vk, peer_id=peer_id)
                     else:
@@ -456,13 +491,13 @@ class Bot:
     # /s
     def show_settings(self, _, __, peer_id):
         if peer_id > MIN_CHAT_PEER_ID:
-            all_chances = self.wait_answer(Sqlite.get_chances, (peer_id,), {
+            all_chances = self.wait_sql(Sqlite.get_chances, (peer_id,), {
                 "params": {ANSWER_CHANCE: True,
                            LADNO_CHANCE: True,
                            HUY_CHANCE: True,
                            NU_POLUCHAETSYA_CHANCE: True}
             })
-            who = self.wait_answer(Sqlite.get_who_can_change_chances, (peer_id, ))
+            who = self.wait_sql(Sqlite.get_who_can_change_chances, (peer_id,))
             send_message("Настройки беседы:\n{}\n{}".format('\n'.join(
                 [f'{CHANCES_ALL_SETTINGS[what]}: '
                  f'{int(chance)}%' for what, chance in
@@ -472,34 +507,20 @@ class Bot:
         else:
             send_message(f"Команда только для бесед", self.vk, peer_id=peer_id)
 
-    # /tac
-    def toggle_access_chat_settings(self, event, _, peer_id):
-        if peer_id > MIN_CHAT_PEER_ID:
-            admins = get_admins_in_chat(peer_id, self.vk)
-            if event.obj.message["from_id"] in admins:
-                who = self.wait_answer(Sqlite.toggle_access_chances, (peer_id, ))
-                send_message(WHO_CAN_TOGGLE_CHANCES.get(who), self.vk, peer_id=peer_id)
-        else:
-            send_message("Команда только для бесед", self.vk, peer_id=peer_id)
-
     # /u
     def update_chat(self, event, _, peer_id):
         if peer_id > MIN_CHAT_PEER_ID:
             admins = get_admins_in_chat(peer_id, self.vk)
             if event.obj.message["from_id"] in admins:
-                self.wait_answer(Sqlite.update_chat, (peer_id,))
+                self.wait_sql(Sqlite.update_chat, (peer_id,))
         else:
             send_message("Команда только для бесед", self.vk, peer_id=peer_id)
-
-    # /d
-    def delete_history(self, event, _, peer_id):
-        ...
 
     # /adm
     def admin_help(self, _, __, peer_id):
         if not peer_id > MIN_CHAT_PEER_ID:
 
-            level: int = self.wait_answer(Sqlite.get_admin, (peer_id, ))
+            level: int = self.wait_sql(Sqlite.get_admin, (peer_id,))
             if level > 0:
                 send_message(ADMIN_TEXT, self.vk, peer_id=peer_id)
             else:
@@ -510,7 +531,7 @@ class Bot:
         def set_admin_function(
                 user_url: str,
                 admin_access_level: int,
-                vk_api_method: vk_api.vk_api.VkApiMethod
+                vk_api_method: vk_api.VkApiMethod
         ) -> str:
             """
             set admin's access for user
@@ -522,13 +543,13 @@ class Bot:
             user_url: int = get_user_id_via_url(user_url, vk_api_method)
             if user_url:
                 if str(user_url) != CHIEF_ADMIN:
-                    return self.wait_answer(Sqlite.set_admin, (user_url, admin_access_level))
+                    return self.wait_sql(Sqlite.set_admin, (user_url, admin_access_level))
                 else:
                     return "Невозможно поменять уровень администрирования"
             return "Такого пользователя не существует"
 
         if not peer_id > MIN_CHAT_PEER_ID:
-            if self.wait_answer(Sqlite.get_admin, (peer_id, )) == 5:
+            if self.wait_sql(Sqlite.get_admin, (peer_id,)) == 5:
                 if len(message.split()) == 3:
                     new_admin_id, access_level = message.split()[1:]
                     if not access_level.isdigit() or not (1 <= int(access_level) <= 5):
@@ -548,8 +569,8 @@ class Bot:
     # /ga
     def get_admin(self, _, __, peer_id):
         if not peer_id > MIN_CHAT_PEER_ID:
-            if peer_id == int(CHIEF_ADMIN) or self.wait_answer(Sqlite.get_admin, (peer_id, )) == 5:
-                admins = self.wait_answer(Sqlite.get_all_admins)
+            if peer_id == int(CHIEF_ADMIN) or self.wait_sql(Sqlite.get_admin, (peer_id,)) == 5:
+                admins = self.wait_sql(Sqlite.get_all_admins)
                 if admins:
                     admins_str = f"Всего админов: {len(admins)}\n"
                     for (id_temp, access_level_temp) in admins:
@@ -564,12 +585,12 @@ class Bot:
     # /ia
     def is_admin(self, _, message, peer_id):
         if not peer_id > MIN_CHAT_PEER_ID:
-            if self.wait_answer(Sqlite.get_admin, (peer_id,)):
+            if self.wait_sql(Sqlite.get_admin, (peer_id,)):
                 if len(message.split()) == 2:
                     admin_url = message.split()[-1]
                     admin_id = get_user_id_via_url(admin_url, self.vk)
                     if admin_id:
-                        is_admin = self.wait_answer(Sqlite.get_admin, (admin_id,))
+                        is_admin = self.wait_sql(Sqlite.get_admin, (admin_id,))
                         if is_admin:
                             name = get_user_name(int(admin_id), self.vk)
                             send_message(f"@id{admin_id} ({name}) - Администратор уровня "
@@ -588,9 +609,9 @@ class Bot:
     # /bb
     def bye_bye(self, _, __, peer_id):
         if not peer_id > MIN_CHAT_PEER_ID:
-            if self.wait_answer(Sqlite.get_admin, (peer_id,)) >= 5:
+            if self.wait_sql(Sqlite.get_admin, (peer_id,)) >= 5:
                 send_message("Завершаю работу...", self.vk, peer_id=peer_id)
-                self.wait_answer(Sqlite.exit_db)
+                self.wait_sql(Sqlite.exit_db)
                 send_message("Закрыл базу", self.vk, peer_id=peer_id)
 
                 if peer_id != int(CHIEF_ADMIN):
@@ -599,31 +620,32 @@ class Bot:
                 send_message("Завершаю работу всей программы", self.vk, peer_id=peer_id)
                 [self.add_event_in_queue(StopEvent) for _ in range(self.n_threads)]
                 logging.info(f"exit by {peer_id} | uptime: ")
+                print(f"thread {threading.currentThread().name} stopped")
                 exit(0)
             else:
                 send_message("У вас нет доступа к данной команде", self.vk, peer_id=peer_id)
 
     def send_answer(self, event, message, peer_id):
         if not peer_id > MIN_CHAT_PEER_ID:
-            old = self.wait_answer(Sqlite.check_peer_id_in_db, (peer_id,))
+            old = self.wait_sql(Sqlite.check_peer_id_in_db, (peer_id,))
             if not old:
-                self.wait_answer(Sqlite.add_peer_id, (peer_id,))
+                self.wait_sql(Sqlite.add_peer_id, (peer_id,))
                 send_message("Напиши /help, "
                              "чтобы узнать список команд", self.vk, peer_id=peer_id,
                              keyboard=json.loads(KEYBOARDS)["help_keyboard"])
             else:
-                send_answer(message, self.vk, peer_id, self.wait_answer)
+                send_answer(message, self.vk, peer_id, self.wait_sql)
         else:
             action = event.obj["message"].get("action", 0)
             if action:
                 if action["type"] == "chat_invite_user" and \
                         action["member_id"] == -int(GROUP_ID):
-                    self.wait_answer(Sqlite.add_peer_id, (peer_id,))
+                    self.wait_sql(Sqlite.add_peer_id, (peer_id,))
                     send_message("Дайте права админа пожалуйста "
                                  "а то я вас не слышу я глухой",
                                  self.vk, peer_id=peer_id)
             else:
-                old = self.wait_answer(Sqlite.check_peer_id_in_db, (peer_id,))
+                old = self.wait_sql(Sqlite.check_peer_id_in_db, (peer_id,))
                 if not old:
-                    self.wait_answer(Sqlite.add_peer_id, (peer_id,))
-                send_answer(message, self.vk, peer_id, self.wait_answer)
+                    self.wait_sql(Sqlite.add_peer_id, (peer_id,))
+                send_answer(message, self.vk, peer_id, self.wait_sql)
