@@ -7,7 +7,7 @@ import time
 class Speaker:
     def __init__(self, messages=None):
         self.messages = messages if messages else {}
-        self.flag = True
+        self.__flag = True
         with open("history.json") as f:
             self.messages = json.load(f)
         dump = threading.Thread(target=self.create_dump)
@@ -26,6 +26,8 @@ class Speaker:
             elif s in " \n\t":
                 text_formatted += " "
         text_formatted = text_formatted.split()
+        if not text_formatted:
+            return
         if text_formatted[0] in self.messages[peer_id]["///start"]:
             self.messages[peer_id]["///start"][text_formatted[0]] += 1
         else:
@@ -50,27 +52,37 @@ class Speaker:
         if peer_id not in self.messages:
             self.messages[peer_id] = {"///start": {}, "///end": {}}
             return ""
-        word = random.choices(tuple(self.messages[peer_id]["///start"].keys()))[0]
+        starts = list(self.messages[peer_id].keys())
+        starts.remove("///end")
+        starts.remove("///start")
+        word = random.choices(starts)[0]
+        starts.remove(word)
         sent = [word]
+        n_max = random.randint(4, 20)
+        n = 0
         while word != "///end":
+            if n > n_max:
+                break
             word = \
                 random.choices(
                     tuple(self.messages[peer_id][word].keys()),
                     weights=tuple(self.messages[peer_id][word].values())
                 )[0]
             sent.append(word)
-        return " ".join(sent[:-1])
+        if sent[-1] == "///end":
+            sent.pop(-1)
+        return " ".join(sent)
 
     def create_dump(self):
-        while self.flag:
+        while self.__flag:
             with open("history.json", "w") as f:
                 json.dump(self.messages, f)
             print("dump written")
-            time.sleep(30)
+            time.sleep(300)
         print("dump stopped")
 
     def disable_dump_thread(self):
-        self.flag = False
+        self.__flag = False
 
     def clear_chat(self, peer_id):
         peer_id = str(peer_id)

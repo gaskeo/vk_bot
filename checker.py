@@ -71,6 +71,7 @@ class Bot:
             "/ghc": self.get_chance,  # get huy chance
             "/gnc": self.get_chance,  # get nu... chance
             "/gcw": self.get_count_words,
+            "/g": self.generate_speak,
             # for chat admins only
             "/tac": self.toggle_access_chat_settings,  # toggle access
             "/ac": self.set_chance,  # set answer chance
@@ -91,7 +92,6 @@ class Bot:
             "/cag": None,  # create gif arabfunny
             # other
             "other": self.send_answer  # answer on simple message
-
         }
         self.threads = []
         self.n_threads = n_threads
@@ -486,10 +486,16 @@ class Bot:
             send_message(f"Команда только для бесед", self.vk, user_id=peer_id)
 
     # /gcw
-    def get_count_words(self, event, message, peer_id):
+    def get_count_words(self, _, __, peer_id):
         a = str(self.speaker.get_count_words(peer_id))
-        print(a)
-        send_message(a, self.vk, peer_id)
+        if a:
+            send_message(a, self.vk, peer_id)
+
+    # /g
+    def generate_speak(self, _, __, peer_id):
+        message = self.speaker.generate_text(peer_id)
+        if message:
+            send_message(message, self.vk, peer_id)
 
     # /a
     def alive(self, _, __, peer_id):
@@ -701,5 +707,6 @@ class Bot:
                 if send_answer(message, self.vk, peer_id, self.wait_sql) is False:
                     if answer_or_not(peer_id, self.wait_sql):
                         text = self.speaker.generate_text(peer_id)
-                        send_message(text, self.vk, peer_id)
+                        if text:
+                            send_message(text, self.vk, peer_id)
 
