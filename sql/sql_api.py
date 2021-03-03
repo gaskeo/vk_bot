@@ -15,7 +15,7 @@ class Sqlite:
         self.conn = sqlite3.connect(db_name)
         self.cur = self.conn.cursor()
 
-    def add_user(self, user_id: int, name: str) -> None:
+    def add_user(self, user_id: int, name: str = "") -> None:
         """
         adding users in db or doing nothing if user already in db
         :param user_id: unique user id from vk
