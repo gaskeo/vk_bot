@@ -95,3 +95,8 @@ class Speaker:
             self.messages[peer_id] = {"///start": {}, "///end": {}}
             return 0
         return len(self.messages[peer_id]) - 2
+
+    def get_words_after_that(self, peer_id, word):
+        peer_id = str(peer_id)
+        if peer_id in self.messages:
+            return self.messages[peer_id].get(word, {})
