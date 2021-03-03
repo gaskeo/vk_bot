@@ -22,7 +22,7 @@ def main() -> None:
     main cycle of program
 
     """
-    FOR_EVERYONE = True
+    FOR_EVERYONE = False
     vk_session: VkApi = VkApi(
         token=TOKEN)
     sql = SqliteStart()

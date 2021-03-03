@@ -70,6 +70,7 @@ class Bot:
             "/glc": self.get_chance,  # get ladno chance
             "/ghc": self.get_chance,  # get huy chance
             "/gnc": self.get_chance,  # get nu... chance
+            "/gcw": self.get_count_words,
             # for chat admins only
             "/tac": self.toggle_access_chat_settings,  # toggle access
             "/ac": self.set_chance,  # set answer chance
@@ -77,6 +78,7 @@ class Bot:
             "/hc": self.set_chance,  # set huy chance
             "/nc": self.set_chance,  # set nu... chance
             "/s": self.show_settings,  # settings
+            "/clear": self.clear_chat_speaker,
             "/update": self.update_chat,
             # for bot admins only
             "/adm": self.admin_help,  # help admins
@@ -483,6 +485,12 @@ class Bot:
         else:
             send_message(f"Команда только для бесед", self.vk, user_id=peer_id)
 
+    # /gcw
+    def get_count_words(self, event, message, peer_id):
+        a = str(self.speaker.get_count_words(peer_id))
+        print(a)
+        send_message(a, self.vk, peer_id)
+
     # /a
     def alive(self, _, __, peer_id):
         send_message("я не лежу", self.vk, peer_id)
@@ -537,6 +545,14 @@ class Bot:
             )
         else:
             send_message(f"Команда только для бесед", self.vk, peer_id=peer_id)
+
+    # /clear
+    def clear_chat_speaker(self, event, _, peer_id):
+        if peer_id > MIN_CHAT_PEER_ID:
+            admins = get_admins_in_chat(peer_id, self.vk)
+            if event.obj.message["from_id"] in admins:
+                self.speaker.clear_chat(peer_id)
+                send_message("слова очищены", self.vk, peer_id)
 
     # /u
     def update_chat(self, event, _, peer_id):

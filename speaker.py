@@ -15,8 +15,10 @@ class Speaker:
         dump.start()
 
     def add_words(self, peer_id, text):
+        peer_id = str(peer_id)
         if self.messages.get(peer_id, -1) == -1:
             self.messages[peer_id] = {"///start": {}, "///end": {}}
+        text = text.lower()
         text_formatted = ""
         for s in text:
             if s.isalpha():
@@ -44,6 +46,7 @@ class Speaker:
             self.messages[peer_id][text_formatted[-1]]["///end"] = 1
 
     def generate_text(self, peer_id):
+        peer_id = str(peer_id)
         if peer_id not in self.messages:
             self.messages[peer_id] = {"///start": {}, "///end": {}}
             return ""
@@ -68,3 +71,15 @@ class Speaker:
 
     def disable_dump_thread(self):
         self.flag = False
+
+    def clear_chat(self, peer_id):
+        peer_id = str(peer_id)
+        if peer_id in self.messages:
+            self.messages[peer_id] = {"///start": {}, "///end": {}}
+
+    def get_count_words(self, peer_id):
+        peer_id = str(peer_id)
+        if peer_id not in self.messages:
+            self.messages[peer_id] = {"///start": {}, "///end": {}}
+            return 0
+        return len(self.messages[peer_id]) - 2
