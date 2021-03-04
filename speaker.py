@@ -23,6 +23,8 @@ class Speaker:
         for s in text:
             if s.isalpha():
                 text_formatted += s
+            elif str(s.encode('unicode-escape')).startswith("b'\\\\U"):
+                text_formatted += f" {s} "
             elif s in " \n\t":
                 text_formatted += " "
         text_formatted = text_formatted.split()

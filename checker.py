@@ -100,13 +100,17 @@ class Bot:
 
     @staticmethod
     def logger(event):
-        log = u"{} IN {}: {} | atts: {}".format(event.obj.message["from_id"],
-                                                event.obj.message["peer_id"],
-                                                translit(event.obj.message["text"],
-                                                         "ru", reversed=True),
-                                                event.obj.message["attachments"]
-                                                )
-        logger.info(log)
+        try:
+            log = u"{} IN {}: {} | atts: {}".format(event.obj.message["from_id"],
+                                                    event.obj.message["peer_id"],
+                                                    translit(event.obj.message["text"],
+                                                             "ru", reversed=True
+                                                             ).encode('unicode-escape'),
+                                                    event.obj.message["attachments"]
+                                                    )
+            logger.info(log)
+        except UnicodeEncodeError:
+            pass
 
     def start(self):
         for th in range(self.n_threads):
@@ -509,7 +513,6 @@ class Bot:
             send_message((f"после {message} идет:\n" +
                           "\n".join(("- " + i for i in words))), self.vk, peer_id)
         message = message.replace("/at", "").strip()
-        print([message])
         if not message or message == " ":
             if event.obj.message.get("reply_message", False):
                 message = event.obj.message["reply_message"]["text"]
