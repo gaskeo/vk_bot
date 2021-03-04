@@ -18,6 +18,11 @@ wikipediaapi.log.propagate = False
 
 morph = pymorphy2.analyzer.MorphAnalyzer()
 
+logger = logging.getLogger("main_logger")
+logging.basicConfig(filename="vk_bot.log", filemode="a",
+                    format=f"%(levelname)s\t\t%(asctime)s\t\t%(message)s",
+                    level=logging.INFO)
+
 
 def get_user_id_via_url(user_url: str, vk: vk_api.vk_api.VkApiMethod) -> int:
     """
@@ -78,6 +83,13 @@ def send_message(message: str,
                      random_id=random.randint(0, 2 ** 64),
                      attachment=attachments,
                      keyboard=json.dumps(keyboard) if keyboard else None)
+    try:
+        log = u"ANSWER IN {}: {} | atts: {}".format(
+            peer_id, translit(str(message), 'ru', reversed=True), attachments
+        )
+        logger.info(log)
+    except UnicodeEncodeError:
+        pass
 
 
 def get_only_symbols(text: str) -> str:

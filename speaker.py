@@ -14,14 +14,14 @@ class Speaker:
         dump.setName("dump")
         dump.start()
 
-    def add_words(self, peer_id, text):
+    def add_words(self, peer_id, text: str):
         peer_id = str(peer_id)
         if self.messages.get(peer_id, -1) == -1:
             self.messages[peer_id] = {"///start": {}, "///end": {}}
         text = text.lower()
         text_formatted = ""
         for s in text:
-            if s.isalpha():
+            if s.isalpha() or s.isdigit():
                 text_formatted += s
             elif str(s.encode('unicode-escape')).startswith("b'\\\\U"):
                 text_formatted += f" {s} "
