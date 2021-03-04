@@ -236,10 +236,11 @@ def get_admins_in_chat(peer_id, vk) -> list:
     """
     members = \
         vk.messages.getConversationMembers(
-            peer_id=peer_id - MIN_CHAT_PEER_ID, fields='items')["items"]
+            peer_id=peer_id)["items"]
     admins = map(lambda y: y["member_id"],
                  tuple(filter(lambda x: x.get("is_admin", False), members)))
     admins = list(admins)
+
     admins.append(int(CHIEF_ADMIN))
     return admins
 

@@ -545,7 +545,8 @@ class Bot:
             )
             if len(message.split()) == 2:
                 admins = get_admins_in_chat(peer_id, self.vk)
-                if event.obj.message["from_id"] in admins:
+                if event.obj.message["from_id"] in admins or \
+                        self.wait_sql(Sqlite.get_who_can_change_chances, (peer_id,)):
                     chance = message.split()[1]
                     if chance.isdigit() and 0 <= int(chance) <= 100:
                         self.wait_sql(Sqlite.change_chances, (peer_id,),
