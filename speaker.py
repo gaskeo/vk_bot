@@ -125,7 +125,7 @@ class Speaker:
     def get_similar_word(self, peer_id):
         peer_id = str(peer_id)
         words = []
-        for i, word in enumerate(self.messages[peer_id], 1):
+        for i, word in enumerate(dict(self.messages[peer_id]), 1):
             for word_after in tuple(self.messages[peer_id])[i:]:
                 if SequenceMatcher(None, word, word_after).ratio() > self.SIMILAR_COEF:
                     words.append((word, word_after))
