@@ -297,9 +297,7 @@ class Bot:
                                 range(16)))
             image_sh = Image.open(image_sh)
             start_size = image_sh.size
-            image_sh.save(name)
             for i in range(factor_sh):
-                image_sh = Image.open(name)
                 image_sh = image_sh.resize((int(image_sh.size[0] / 1.1),
                                             int(image_sh.size[1] / 1.1)))
                 size = image_sh.size
@@ -322,7 +320,7 @@ class Bot:
                     send_message("Степеь должна быть целым числом", self.vk, peer_id=peer_id)
                     return
             for image in photos:
-                url = image["photo"]["sizes"][-1]["url"]
+                url = max(image["photo"]["sizes"], key=lambda x: x["width"])["url"]
                 img = urllib.request.urlopen(url).read()
                 bytes_img = BytesIO(img)
                 photo_bytes = create_shakal_function(bytes_img, factor)
@@ -384,7 +382,7 @@ class Bot:
                     send_message("Степеь должна быть целым числом", self.vk, peer_id=peer_id)
                     return
             for image in photos:
-                url = image["photo"]["sizes"][-1]["url"]
+                url = max(image["photo"]["sizes"], key=lambda x: x["width"])["url"]
                 img = urllib.request.urlopen(url).read()
                 bytes_img = BytesIO(img)
                 name_final_file = create_grain_function(bytes_img, factor)
@@ -463,7 +461,7 @@ class Bot:
             if len(message.split()) > 1:
                 color = message.split()[-1]
             for image in photos:
-                url = max(image["photo"]["sizes"], key=lambda x: x["height"])["url"]
+                url = max(image["photo"]["sizes"], key=lambda x: x["width"])["url"]
                 img = urllib.request.urlopen(url).read()
                 bytes_img = BytesIO(img)
                 name_final_file, text = create_arabfunny_function(bytes_img, color)
@@ -628,7 +626,7 @@ class Bot:
         if similar_words:
             similar_words = ' | '.join(tuple(
                 map(lambda x: ' и '.join(x), similar_words)))
-            send_message(f"похожие слова (всего: {n}):\n{similar_words[:4000]}", self.vk, peer_id)
+            send_message(f"похожие слова (всего: {n}):\n{similar_words}", self.vk, peer_id)
         else:
             send_message("нет похожих слов", self.vk, peer_id)
 
