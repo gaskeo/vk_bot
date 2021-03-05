@@ -624,10 +624,11 @@ class Bot:
     # /gsw
     def get_similarity_words(self, _, __, peer_id):
         similar_words = self.speaker.get_similar_word(peer_id)
+        n = len(similar_words)
         if similar_words:
-            similar_words = '\n'.join(tuple(
+            similar_words = ' | '.join(tuple(
                 map(lambda x: ' и '.join(x), similar_words)))
-            send_message(f"похожие слова:\n{similar_words}", self.vk, peer_id)
+            send_message(f"похожие слова (всего: {n}):\n{similar_words[:4000]}", self.vk, peer_id)
         else:
             send_message("нет похожих слов", self.vk, peer_id)
 
