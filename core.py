@@ -39,7 +39,7 @@ def main() -> None:
     while True:
         for event in longpoll.listen():
             if event.type == VkBotEventType.MESSAGE_NEW and \
-                    str(event.obj.message["peer_id"]) in ("2000000002", CHIEF_ADMIN)\
+                    str(event.obj.message["peer_id"]) in ("2000000002", "2000000005", CHIEF_ADMIN)\
                     or FOR_EVERYONE:
                 bot.add_event_in_queue(event)
             if threading.active_count() == 2:

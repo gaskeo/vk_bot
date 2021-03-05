@@ -2,9 +2,12 @@ import json
 import random
 import threading
 import time
+from difflib import SequenceMatcher
 
 
 class Speaker:
+    SIMILAR_COEF = 0.7
+
     def __init__(self, messages=None):
         self.messages = messages if messages else {}
         self.__flag = True
@@ -14,10 +17,8 @@ class Speaker:
         dump.setName("dump")
         dump.start()
 
-    def add_words(self, peer_id, text: str):
-        peer_id = str(peer_id)
-        if self.messages.get(peer_id, -1) == -1:
-            self.messages[peer_id] = {"///start": {}, "///end": {}}
+    @staticmethod
+    def format_text(text):
         text = text.lower()
         text_formatted = ""
         for s in text:
@@ -27,13 +28,15 @@ class Speaker:
                 text_formatted += f" {s} "
             elif s in " \n\t":
                 text_formatted += " "
-        text_formatted = text_formatted.split()
+        return text_formatted.split()
+
+    def add_words(self, peer_id, text: str):
+        peer_id = str(peer_id)
+        if self.messages.get(peer_id, -1) == -1:
+            self.messages[peer_id] = {"///start": {}, "///end": {}}
+        text_formatted = self.format_text(text)
         if not text_formatted:
             return
-        if text_formatted[0] in self.messages[peer_id]["///start"]:
-            self.messages[peer_id]["///start"][text_formatted[0]] += 1
-        else:
-            self.messages[peer_id]["///start"][text_formatted[0]] = 1
         for i, j in zip(text_formatted[:-1], text_formatted[1:]):
             if i not in self.messages[peer_id]:
                 self.messages[peer_id][i] = {}
@@ -80,7 +83,12 @@ class Speaker:
             with open("history.json", "w") as f:
                 json.dump(self.messages, f)
             print("dump written")
-            time.sleep(300)
+            start = time.time()
+            while time.time() - start < 300:
+                if not self.__flag:
+                    print("dump stopped")
+                    return
+                time.sleep(5)
         print("dump stopped")
 
     def disable_dump_thread(self):
@@ -102,3 +110,33 @@ class Speaker:
         peer_id = str(peer_id)
         if peer_id in self.messages:
             return self.messages[peer_id].get(word, {})
+
+    def delete_words(self, peer_id, text: str):
+        peer_id = str(peer_id)
+        words = self.format_text(text)
+        for word in words:
+            if self.messages[peer_id].get(word, False):
+                self.messages[peer_id].pop(word)
+        for word, word_after in self.messages[peer_id].items():
+            for delete_word in words:
+                if delete_word in word_after:
+                    self.messages[peer_id][word].pop(delete_word)
+
+    def get_similar_word(self, peer_id):
+        peer_id = str(peer_id)
+        words = []
+        for i, word in enumerate(self.messages[peer_id], 1):
+            for word_after in tuple(self.messages[peer_id])[i:]:
+                if SequenceMatcher(None, word, word_after).ratio() > self.SIMILAR_COEF:
+                    words.append((word, word_after))
+        return words
+
+    def clear_similar_word(self, peer_id):
+        peer_id = str(peer_id)
+        words = []
+        for i, word in enumerate(self.messages[peer_id], 1):
+            for word_after in tuple(self.messages[peer_id])[i:]:
+                if SequenceMatcher(None, word, word_after).ratio() > self.SIMILAR_COEF:
+                    words.append(word)
+        self.delete_words(peer_id, " ".join(words))
+        return words

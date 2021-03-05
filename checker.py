@@ -70,7 +70,8 @@ class Bot:
             "/glc": self.get_chance,  # get ladno chance
             "/ghc": self.get_chance,  # get huy chance
             "/gnc": self.get_chance,  # get nu... chance
-            "/gcw": self.get_count_words,
+            "/gc": self.get_count_words,
+            "/gsw": self.get_similarity_words,
             "/g": self.generate_speak,
             "/at": self.get_words_after_that,
             # for chat admins only
@@ -82,6 +83,8 @@ class Bot:
             "/s": self.show_settings,  # settings
             "/clear": self.clear_chat_speaker,
             "/update": self.update_chat,
+            "/dt": self.delete_this,
+            "/dsw": self.clear_similarity_words,
             # for bot admins only
             "/adm": self.admin_help,  # help admins
             "/sa": self.set_admin,  # set admin
@@ -192,6 +195,7 @@ class Bot:
     def redo_command(self, event, _, peer_id):
         if event.obj.message.get("reply_message", False):
             message = event.obj.message["reply_message"]
+            message["peer_id"] = peer_id
             message["out"] = 0
             message["fwd_messages"] = []
             message["important"] = False
@@ -207,9 +211,9 @@ class Bot:
                        'carousel': False,
                        'lang_id': 0
                    },
-                   'group_id': 198181337,
+                   'group_id': int(GROUP_ID),
                    }
-            e = MyEvent(raw)
+            e = VkBotMessageEvent(raw)
             self.add_event_in_queue(e)
         else:
             send_message("Ответь на сообщение с командой для ее повтора", self.vk, peer_id)
@@ -474,8 +478,9 @@ class Bot:
 
     # /ut
     def get_uptime(self, _, __, peer_id):
-        send_message(str(datetime.timedelta(seconds=int(time.time() - self.uptime))), self.vk,
-                     peer_id)
+        send_message("я живу уже "
+                     f"{str(datetime.timedelta(seconds=int(time.time() - self.uptime)))}",
+                     self.vk, peer_id)
 
     # /gac /glc...
     def get_chance(self, _, message, peer_id):
@@ -494,7 +499,7 @@ class Bot:
     def get_count_words(self, _, __, peer_id):
         a = str(self.speaker.get_count_words(peer_id))
         if a:
-            send_message(a, self.vk, peer_id)
+            send_message(f"количество слов: {a}", self.vk, peer_id)
 
     # /g
     def generate_speak(self, _, __, peer_id):
@@ -586,6 +591,8 @@ class Bot:
             if event.obj.message["from_id"] in admins:
                 self.speaker.clear_chat(peer_id)
                 send_message("слова очищены", self.vk, peer_id)
+            else:
+                send_message("чел ты не админ...", self.vk, peer_id)
 
     # /u
     def update_chat(self, event, _, peer_id):
@@ -595,6 +602,43 @@ class Bot:
                 self.wait_sql(Sqlite.update_chat, (peer_id,))
         else:
             send_message("Команда только для бесед", self.vk, peer_id=peer_id)
+
+    # /dt
+    def delete_this(self, event, message, peer_id):
+        admins = get_admins_in_chat(peer_id, self.vk)
+        if event.obj.message["from_id"] in admins:
+            if len(message.split()) > 1:
+                self.speaker.delete_words(peer_id, message)
+                send_message(f"очищены слова: {message[3:]}", self.vk, peer_id)
+            else:
+                if event.obj.message.get("reply_message", False):
+                    message = event.obj.message["reply_message"]["text"]
+                    if len(message.split()) > 0:
+                        self.speaker.delete_words(peer_id, message)
+                        send_message(f"очищены слова: {message[3:]}", self.vk, peer_id)
+                else:
+                    send_message("ответь на сообщение или напиши текст после команды")
+        else:
+            send_message("чел ты не админ...", self.vk, peer_id)
+
+    # /gsw
+    def get_similarity_words(self, _, __, peer_id):
+        similar_words = self.speaker.get_similar_word(peer_id)
+        if similar_words:
+            similar_words = '\n'.join(tuple(
+                map(lambda x: ' и '.join(x), similar_words)))
+            send_message(f"похожие слова:\n{similar_words}", self.vk, peer_id)
+        else:
+            send_message("нет похожих слов", self.vk, peer_id)
+
+    # /csw
+    def clear_similarity_words(self, event, _, peer_id):
+        admins = get_admins_in_chat(peer_id, self.vk)
+        if event.obj.message["from_id"] in admins:
+            words = self.speaker.clear_similar_word(peer_id)
+            send_message(f"удалено слов: {len(words)}", self.vk, peer_id)
+        else:
+            send_message("чел ты не админ...", self.vk, peer_id)
 
     # /adm
     def admin_help(self, _, __, peer_id):
