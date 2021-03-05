@@ -626,7 +626,7 @@ class Bot:
         if similar_words:
             similar_words = ' | '.join(tuple(
                 map(lambda x: ' и '.join(x), similar_words)))
-            send_message(f"похожие слова (всего: {n}):\n{similar_words}", self.vk, peer_id)
+            send_message(f"похожие слова (всего: {n}):\n{similar_words[:4000]}", self.vk, peer_id)
         else:
             send_message("нет похожих слов", self.vk, peer_id)
 
