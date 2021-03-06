@@ -6,7 +6,7 @@ from difflib import SequenceMatcher
 
 
 class Speaker:
-    SIMILAR_COEF = 0.7
+    SIMILAR_COEF = 0.8
 
     def __init__(self, messages=None):
         self.messages = messages if messages else {}
