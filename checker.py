@@ -77,6 +77,7 @@ class Bot:
             "/gsw": self.get_similarity_words,
             "/g": self.generate_speak,
             "/at": self.get_words_after_that,
+            "/peer": self.get_peer,
             # for chat admins only
             "/tac": self.toggle_access_chat_settings,  # toggle access
             "/ac": self.set_chance,  # set answer chance
@@ -639,6 +640,10 @@ class Bot:
         words = list(self.speaker.get_words_after_that(peer_id, message).keys())
         send_ans()
 
+    # /peer
+    def get_peer(self, _, __, peer_id):
+        send_message(f"peer_id: {str(peer_id)}", self.vk, peer_id)
+
     # /a
     def alive(self, _, __, peer_id):
         send_message("я не лежу", self.vk, peer_id)
@@ -662,7 +667,7 @@ class Bot:
             if len(message.split()) == 2:
                 admins = get_admins_in_chat(peer_id, self.vk)
                 if event.obj.message["from_id"] in admins or \
-                        self.wait_sql(Sqlite.get_who_can_change_chances, (peer_id,)):
+                        not self.wait_sql(Sqlite.get_who_can_change_chances, (peer_id,)):
                     chance = message.split()[1]
                     if chance.isdigit() and 0 <= int(chance) <= 100:
                         self.wait_sql(Sqlite.change_chances, (peer_id,),
