@@ -10,9 +10,9 @@ from io import BytesIO
 import string
 import json
 from transliterate import translit
-from my_event import MyEvent
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, JpegImagePlugin
+import cv2
 
 from vk_api.bot_longpoll import VkBotMessageEvent, VkBotEventType
 from vk_api import vk_api, upload
@@ -40,6 +40,8 @@ logging.basicConfig(filename="vk_bot.log", filemode="a",
                     format=f"%(levelname)s\t\t%(asctime)s\t\t%(message)s",
                     level=logging.INFO)
 
+face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+
 
 class Bot:
     def __init__(self, vk: vk_api.VkApiMethod,
@@ -63,6 +65,7 @@ class Bot:
             "/cs": self.create_shakal,  # create shakal
             "/cg": self.create_grain,  # create grain
             "/ca": self.create_arabfunny,  # create arabfunny
+            "/cd": self.create_dab,
             "/ut": self.get_uptime,
             "/a": self.alive,
             # in chats only
@@ -474,6 +477,115 @@ class Bot:
         else:
             send_message("Прикрепи фото", self.vk, peer_id=peer_id)
 
+    def create_dab(self, event, _, peer_id):
+        def create_dab_function(image_sh: BytesIO or str) -> str:
+            """
+            create shakal image from source image
+            :param image_sh: bytes of image or file's name
+            :param factor_sh: factor of image grain
+            :return: name of file in /photos directory
+            """
+
+            def get_angles():
+                qx, qy, qw, qh = 0, 0, 0, 0
+                right = top = 0
+                point = picture_center[0] - center[0], picture_center[1] - center[1]
+                if point[0] > 0:
+                    qx = x + w + int(size[0] * 0.1)
+                    qw = size[0] - int(size[0] * 0.1) - qx
+                    right = -1
+                elif point[0] < 0:
+                    qx = int(size[0] * 0.1)
+                    qw = x - 2 * int(size[0] * 0.1)
+                    right = 1
+                if point[1] < 0:
+                    qy = int(size[1] * 0.1)
+                    qh = size[1] - int(size[1] * 0.1) - (size[1] - y)
+                    top = -1
+                elif point[1] > 0:
+                    qy = y + h + int(size[1] * 0.1)
+                    qh = size[1] - int(size[1] * 0.1) - qy
+                    top = 1
+                angle = qx + qw if right == 1 else qx, qy if top == 1 else qy + qh
+                r = (w + 60) // 2
+
+                angle_c = (center[0] - r * (2 ** 0.5 / 2)) if right == 1 else \
+                          (center[0] + r * (2 ** 0.5 / 2)), \
+                          (center[1] + r * (2 ** 0.5 / 2)) if top == 1 else \
+                          (center[1] - r * (2 ** 0.5 / 2))
+                return qx, qy, qw, qh, angle, angle_c, right, top
+
+            def insert_dab(rect_l: tuple):
+                rect_size = rect_l[2], rect_l[3]
+                dab: JpegImagePlugin.JpegImageFile = Image.open(second_image)
+                dab = dab.resize(rect_size)
+
+                image_sh.paste(dab, (rect_l[0], rect_l[1]))
+                image_sh.save(name)
+                return rect_l
+            name = "photos/{}.jpg".format(''.join(
+                random.choice(
+                    string.ascii_uppercase + string.ascii_lowercase + string.digits
+                ) for _ in range(16)))
+            with open(name, "wb") as f:
+                f.write(image_sh.getbuffer())
+            image_sh = Image.open(image_sh)
+            size = image_sh.size
+            draw = ImageDraw.Draw(image_sh)
+            image_cv2 = cv2.imread(name)
+            image_cv2 = cv2.cvtColor(image_cv2, cv2.COLOR_BGR2GRAY)
+            faces = face_cascade.detectMultiScale(image_cv2, 1.1, 19)
+            if len(faces):
+                x, y, w, h = faces[0]
+            else:
+                w = h = random.randint(int(size[0] * 0.1), int(size[0] * 0.5))
+                x, y = random.randint(0, size[0]), random.randint(0, size[0])
+            draw.ellipse(((x - 30, y - 30), (x + w + 30, y + h + 30)), outline=(255, 0, 0),
+                         width=5)
+            center = (2 * x + w) // 2, (2 * y + h) // 2
+            picture_center = image_sh.size[0] // 2, image_sh.size[1] // 2
+            rect = get_angles()
+            rect = insert_dab(rect)
+            draw.rectangle(((rect[0], rect[1]), (rect[0] + rect[2], rect[1] + rect[3])),
+                           outline=(255, 0, 0), width=5)
+            draw.line((rect[4], rect[5]), width=5, fill=(255, 0, 0))
+            image_sh.save(name)
+            return name
+
+        photos = self.find_image(event)
+        if len(photos) == 2:
+            image, second_image = photos
+        elif len(photos) == 1:
+            image = photos[0]
+            second_image = None
+        else:
+            send_message("Прикрепи 1 или 2 фото", self.vk, peer_id=peer_id)
+            return
+        if second_image:
+            url = max(second_image["photo"]["sizes"], key=lambda x: x["width"])["url"]
+            img = urllib.request.urlopen(url).read()
+            second_image = BytesIO(img)
+            dab_name = "photos/{}.jpg" \
+                .format(''.join(random.choice(string.ascii_uppercase
+                                              + string.ascii_lowercase + string.digits)))
+            with open(dab_name, "wb") as f:
+                f.write(second_image.getbuffer())
+            second_image = dab_name
+        else:
+            second_image = "photos/examples/dab.jpg"
+        url = max(image["photo"]["sizes"], key=lambda x: x["width"])["url"]
+        img = urllib.request.urlopen(url).read()
+        bytes_img = BytesIO(img)
+        photo_bytes = create_dab_function(bytes_img)
+        photo = self.upload.photo_messages(photos=[photo_bytes],
+                                           peer_id=peer_id)
+        vk_photo_id = \
+            f"photo{photo[0]['owner_id']}_{photo[0]['id']}_{photo[0]['access_key']}"
+        send_message("", self.vk, peer_id=peer_id, attachments=vk_photo_id)
+        os.remove(photo_bytes)
+        if second_image != "photos/examples/dab.jpg":
+            os.remove(second_image)
+
     # /ut
     def get_uptime(self, _, __, peer_id):
         send_message("я живу уже "
@@ -515,6 +627,7 @@ class Bot:
                 return
             send_message((f"после {message} идет:\n" +
                           "\n".join(("- " + i for i in words))), self.vk, peer_id)
+
         message = message.replace("/at", "").strip()
         if not message or message == " ":
             if event.obj.message.get("reply_message", False):
@@ -779,4 +892,3 @@ class Bot:
                         text = self.speaker.generate_text(peer_id)
                         if text:
                             send_message(text, self.vk, peer_id)
-
