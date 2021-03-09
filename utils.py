@@ -11,7 +11,7 @@ import sys
 
 from sql.sql_api import Sqlite
 from constants import CHIEF_ADMIN, LADNO_CHANCE, HUY_CHANCE, NU_POLUCHAETSYA_CHANCE, \
-    RUSSIAN_SYMBOLS, RUSSIAN_VOWEL, MAIN_POS, MIN_CHAT_PEER_ID
+    RUSSIAN_SYMBOLS, RUSSIAN_VOWEL, MAIN_POS, MIN_CHAT_PEER_ID, ANSWER_CHANCE
 
 wiki_wiki = wikipediaapi.Wikipedia('ar')
 wikipediaapi.log.propagate = False
@@ -257,41 +257,21 @@ def get_admins_in_chat(peer_id, vk) -> list:
     return admins
 
 
-def send_answer(message: str, vk: vk_api.vk_api.VkApiMethod, user_id: int, sqlite) -> None or bool:
+def send_answer(message: str, chances: dict) -> str:
     """
     send answer on non-command message
     :param message: text of message
     :param vk: vk_api for reply message
     :param user_id: chat or user id
-    :param sqlite: Sqlite object
+    :param chances: chances
 
     """
-    answer = False
-    if user_id > MIN_CHAT_PEER_ID:
-        answer = answer_or_not(user_id, sqlite)
-    if (answer and user_id > MIN_CHAT_PEER_ID) or user_id < MIN_CHAT_PEER_ID:
-        if user_id < MIN_CHAT_PEER_ID:
-            weights = {LADNO_CHANCE: 10, HUY_CHANCE: 100, NU_POLUCHAETSYA_CHANCE: 100}
-            sq = None
-        else:
-            weights = None
-            sq = sqlite
-        what = get_random_answer(user_id, message, sq, weights=weights)
-        data = get_main_pos(message)
-        if what == "ladno_chance":
-            send_message("Ладно.", vk, user_id)
-            return True
-        elif what == "huy_chance" and len(message) > 2:
-            text = generate_huy_word(data)
-            if text:
-                send_message(text, vk, user_id)
-                return True
-        elif what == "nu_poluchaetsya_chance":
-            answer = answer_nu_poluchaetsya_or_not(data)
-            if answer:
-                send_message(answer, vk, user_id)
-                return True
-    return False
+    if not generate_huy_word(get_main_pos(message)):
+        chances[HUY_CHANCE] = 0
+    if not chances[HUY_CHANCE] and not chances[ANSWER_CHANCE]:
+        return ""
+    what = random.choices(tuple(chances.keys()), weights=tuple(chances.values()))[0]
+    return what
 
 
 def exception_checker():

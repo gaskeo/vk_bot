@@ -14,6 +14,8 @@ GROUP_ID: str = os.getenv("vk_group_id")
 TOKEN: str = os.getenv("vk_group_token")
 CHIEF_ADMIN: str = os.getenv("chief_admin")
 
+REDIS_PASSWORD: str = os.getenv("redis_pass")
+
 if platform in ("linux", "linux2"):
     FONTS_PATH: str = os.getenv("font_linux")
 elif platform == "win32":
@@ -90,4 +92,7 @@ TEXT_COLORS = {
 MIN_CHAT_PEER_ID = 2000000000
 
 ADMIN_LEVELS = "admin_levels"
-WHO_CAN_TOGGLE_CHANCES_TEXT = "who_can_change_chances"
+WHO_CAN_TOGGLE_CHANCES_TEXT = "who_can"
+ADMINS_ONLY = 1
+ALL = 0
+

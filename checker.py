@@ -20,6 +20,7 @@ import urllib.request
 
 from sql.sqlitehook import SqliteHook, Nothing
 from sql.sql_api import Sqlite
+from rds.redis_api import RedisApi
 from speaker import Speaker
 from yandex.yandex_api import get_synonyms, get_text_from_json_get_synonyms
 
@@ -33,7 +34,7 @@ from utils import \
     exception_checker, \
     send_message, \
     get_user_id_via_url, \
-    StopEvent, answer_or_not
+    StopEvent, answer_or_not, get_main_pos, generate_huy_word
 
 logger = logging.getLogger("main_logger")
 logging.basicConfig(filename="vk_bot.log", filemode="a",
@@ -45,17 +46,15 @@ face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_fronta
 
 class Bot:
     def __init__(self, vk: vk_api.VkApiMethod,
-                 sqlite: Sqlite,
+                 redis: RedisApi,
                  upload: upload.VkUpload,
-                 n_threads=8,
-                 sqlitehook: SqliteHook = None):
-        self.sqlite = sqlite
+                 n_threads=8):
+        self.redis = redis
         self.vk = vk
         self.upload = upload
         self.events = Queue()
-        self.sqlitehook = sqlitehook
         self.uptime = time.time()
-        self.speaker = Speaker()
+        self.speaker = Speaker(redis)
         self.commands = {
             # commands for all users
             "/": self.redo_command,
@@ -74,7 +73,7 @@ class Bot:
             "/ghc": self.get_chance,  # get huy chance
             "/gnc": self.get_chance,  # get nu... chance
             "/gc": self.get_count_words,
-            "/gsw": self.get_similarity_words,
+            # "/gsw": self.get_similarity_words,
             "/g": self.generate_speak,
             "/at": self.get_words_after_that,
             "/peer": self.get_peer,
@@ -88,7 +87,7 @@ class Bot:
             "/clear": self.clear_chat_speaker,
             "/update": self.update_chat,
             "/dt": self.delete_this,
-            "/dsw": self.clear_similarity_words,
+            # "/dsw": self.clear_similarity_words,
             # for bot admins only
             "/adm": self.admin_help,  # help admins
             "/sa": self.set_admin,  # set admin
@@ -184,16 +183,6 @@ class Bot:
 
     def add_event_in_queue(self, event):
         self.events.put(event)
-
-    def wait_sql(self, z, args=None, kwargs=None):
-        package_id = random.randint(0, 100000)
-        self.sqlitehook.add_in_q(z, args,
-                                 kwargs, package_id=package_id)
-        while self.sqlitehook.get_answer(package_id) == Nothing:
-            time.sleep(0.1)
-        answer = self.sqlitehook.get_answer(package_id)
-        self.sqlitehook.del_answer(package_id)
-        return answer
 
     # /
     def redo_command(self, event, _, peer_id):
@@ -593,24 +582,30 @@ class Bot:
                      f"{str(datetime.timedelta(seconds=int(time.time() - self.uptime)))}",
                      self.vk, peer_id)
 
-    # /gac /glc...
+    # /gac /ghc...
     def get_chance(self, _, message, peer_id):
         if peer_id > MIN_CHAT_PEER_ID:
             what = GET_COMMANDS.get(
                 "" if len(message.split()) < 1 else message.split()[0].lower(), ""
             )
-            chance = self.wait_sql(Sqlite.get_chances, (peer_id,),
-                                   {"params": {what: True}})
+            if what == ANSWER_CHANCE:
+                chance = self.redis.get_answer_chance(str(peer_id))
+            elif what == HUY_CHANCE:
+                chance = self.redis.get_huy_chance(str(peer_id))
+            else:
+                send_message("эта команда была выпилена в марте 21 года... помянем",
+                             self.vk, peer_id)
+                return
             send_message(f"Шанс {CHANCES_ONE_ANSWER[what]} равен "
-                         f"{int(chance[what])}%", self.vk, peer_id=peer_id)
+                         f"{chance}%", self.vk, peer_id=peer_id)
         else:
-            send_message(f"Команда только для бесед", self.vk, user_id=peer_id)
+            send_message(f"Команда только для бесед", self.vk, peer_id=peer_id)
 
     # /gcw
     def get_count_words(self, _, __, peer_id):
-        a = str(self.speaker.get_count_words(peer_id))
-        if a:
-            send_message(f"количество слов: {a}", self.vk, peer_id)
+        c = str(self.speaker.get_count_words(peer_id))
+        if c:
+            send_message(f"количество слов: {c}", self.vk, peer_id)
 
     # /g
     def generate_speak(self, _, __, peer_id):
@@ -653,7 +648,7 @@ class Bot:
         if peer_id > MIN_CHAT_PEER_ID:
             admins = get_admins_in_chat(peer_id, self.vk)
             if event.obj.message["from_id"] in admins:
-                who = self.wait_sql(Sqlite.toggle_access_chances, (peer_id,))
+                who = self.redis.toggle_access_chances(str(peer_id))
                 send_message(WHO_CAN_TOGGLE_CHANCES.get(who), self.vk, peer_id=peer_id)
         else:
             send_message("Команда только для бесед", self.vk, peer_id=peer_id)
@@ -664,14 +659,21 @@ class Bot:
             what = SET_COMMANDS.get(
                 "" if len(message.split()) < 1 else message.split()[0].lower(), ""
             )
+            if what not in (ANSWER_CHANCE, HUY_CHANCE):
+                if what in (LADNO_CHANCE, NU_POLUCHAETSYA_CHANCE):
+                    send_message("эта команда была выпилена в марте 21 года... помянем",
+                                 self.vk, peer_id)
+                return
             if len(message.split()) == 2:
                 admins = get_admins_in_chat(peer_id, self.vk)
                 if event.obj.message["from_id"] in admins or \
-                        not self.wait_sql(Sqlite.get_who_can_change_chances, (peer_id,)):
+                        not self.redis.get_who_can_change_chances(str(peer_id)):
                     chance = message.split()[1]
                     if chance.isdigit() and 0 <= int(chance) <= 100:
-                        self.wait_sql(Sqlite.change_chances, (peer_id,),
-                                      {"params": {what: int(chance)}})
+                        if what == ANSWER_CHANCE:
+                            self.redis.change_answer_chance(str(peer_id), int(chance))
+                        elif what == HUY_CHANCE:
+                            self.redis.change_huy_chance(str(peer_id), int(chance))
                         send_message(f"Шанс {CHANCES_ONE_ANSWER.get(what, '...')}"
                                      f" успешно изменен на {chance}%", self.vk, peer_id=peer_id)
                     else:
@@ -684,13 +686,11 @@ class Bot:
     # /s
     def show_settings(self, _, __, peer_id):
         if peer_id > MIN_CHAT_PEER_ID:
-            all_chances = self.wait_sql(Sqlite.get_chances, (peer_id,), {
-                "params": {ANSWER_CHANCE: True,
-                           LADNO_CHANCE: True,
-                           HUY_CHANCE: True,
-                           NU_POLUCHAETSYA_CHANCE: True}
-            })
-            who = self.wait_sql(Sqlite.get_who_can_change_chances, (peer_id,))
+            all_chances = {
+                HUY_CHANCE: self.redis.get_huy_chance(str(peer_id)),
+                ANSWER_CHANCE: self.redis.get_answer_chance(str(peer_id))
+            }
+            who = self.redis.get_who_can_change_chances(str(peer_id))
             send_message("Настройки беседы:\n{}\n{}".format('\n'.join(
                 [f'{CHANCES_ALL_SETTINGS[what]}: '
                  f'{int(chance)}%' for what, chance in
@@ -715,7 +715,7 @@ class Bot:
         if peer_id > MIN_CHAT_PEER_ID:
             admins = get_admins_in_chat(peer_id, self.vk)
             if event.obj.message["from_id"] in admins:
-                self.wait_sql(Sqlite.update_chat, (peer_id,))
+                self.redis.update_chat(str(peer_id))
         else:
             send_message("Команда только для бесед", self.vk, peer_id=peer_id)
 
@@ -737,31 +737,31 @@ class Bot:
         else:
             send_message("чел ты не админ...", self.vk, peer_id)
 
-    # /gsw
-    def get_similarity_words(self, _, __, peer_id):
-        similar_words = self.speaker.get_similar_word(peer_id)
-        n = len(similar_words)
-        if similar_words:
-            similar_words = ' | '.join(tuple(
-                map(lambda x: ' и '.join(x), similar_words)))
-            send_message(f"похожие слова (всего: {n}):\n{similar_words[:500]}", self.vk, peer_id)
-        else:
-            send_message("нет похожих слов", self.vk, peer_id)
+    # # /gsw
+    # def get_similarity_words(self, _, __, peer_id):
+    #     similar_words = self.speaker.get_similar_word(peer_id)
+    #     n = len(similar_words)
+    #     if similar_words:
+    #         similar_words = ' | '.join(tuple(
+    #             map(lambda x: ' и '.join(x), similar_words)))
+    #         send_message(f"похожие слова (всего: {n}):\n{similar_words[:500]}", self.vk, peer_id)
+    #     else:
+    #         send_message("нет похожих слов", self.vk, peer_id)
 
     # /csw
-    def clear_similarity_words(self, event, _, peer_id):
-        admins = get_admins_in_chat(peer_id, self.vk)
-        if event.obj.message["from_id"] in admins:
-            words = self.speaker.clear_similar_word(peer_id)
-            send_message(f"удалено слов: {len(words)}", self.vk, peer_id)
-        else:
-            send_message("чел ты не админ...", self.vk, peer_id)
+    # def clear_similarity_words(self, event, _, peer_id):
+    #     admins = get_admins_in_chat(peer_id, self.vk)
+    #     if event.obj.message["from_id"] in admins:
+    #         words = self.speaker.clear_similar_word(peer_id)
+    #         send_message(f"удалено слов: {len(words)}", self.vk, peer_id)
+    #     else:
+    #         send_message("чел ты не админ...", self.vk, peer_id)
 
     # /adm
     def admin_help(self, _, __, peer_id):
         if not peer_id > MIN_CHAT_PEER_ID:
 
-            level: int = self.wait_sql(Sqlite.get_admin, (peer_id,))
+            level: int = self.redis.get_admin(str(peer_id))
             if level > 0:
                 send_message(ADMIN_TEXT, self.vk, peer_id=peer_id)
             else:
@@ -784,13 +784,13 @@ class Bot:
             user_url: int = get_user_id_via_url(user_url, vk_api_method)
             if user_url:
                 if str(user_url) != CHIEF_ADMIN:
-                    return self.wait_sql(Sqlite.set_admin, (user_url, admin_access_level))
+                    return self.redis.set_admin(str(user_url), admin_access_level)
                 else:
                     return "Невозможно поменять уровень администрирования"
             return "Такого пользователя не существует"
 
         if not peer_id > MIN_CHAT_PEER_ID:
-            if self.wait_sql(Sqlite.get_admin, (peer_id,)) == 5:
+            if self.redis.get_admin(str(peer_id)) == 5:
                 if len(message.split()) == 3:
                     new_admin_id, access_level = message.split()[1:]
                     if not access_level.isdigit() or not (1 <= int(access_level) <= 5):
@@ -810,8 +810,8 @@ class Bot:
     # /ga
     def get_admin(self, _, __, peer_id):
         if not peer_id > MIN_CHAT_PEER_ID:
-            if peer_id == int(CHIEF_ADMIN) or self.wait_sql(Sqlite.get_admin, (peer_id,)) == 5:
-                admins = self.wait_sql(Sqlite.get_all_admins)
+            if peer_id == int(CHIEF_ADMIN) or self.redis.get_admin(peer_id) == 5:
+                admins = self.redis.get_all_admins()
                 if admins:
                     admins_str = f"Всего админов: {len(admins)}\n"
                     for (id_temp, access_level_temp) in admins:
@@ -826,12 +826,12 @@ class Bot:
     # /ia
     def is_admin(self, _, message, peer_id):
         if not peer_id > MIN_CHAT_PEER_ID:
-            if self.wait_sql(Sqlite.get_admin, (peer_id,)):
+            if self.redis.get_admin(str(peer_id)):
                 if len(message.split()) == 2:
                     admin_url = message.split()[-1]
                     admin_id = get_user_id_via_url(admin_url, self.vk)
                     if admin_id:
-                        is_admin = self.wait_sql(Sqlite.get_admin, (admin_id,))
+                        is_admin = self.redis.get_admin(admin_id)
                         if is_admin:
                             name = get_user_name(int(admin_id), self.vk)
                             send_message(f"@id{admin_id} ({name}) - Администратор уровня "
@@ -850,10 +850,9 @@ class Bot:
     # /bb
     def bye_bye(self, _, __, peer_id):
         if not peer_id > MIN_CHAT_PEER_ID:
-            if self.wait_sql(Sqlite.get_admin, (peer_id,)) >= 5:
-                self.speaker.disable_dump_thread()
+            if self.redis.get_admin(peer_id) >= 5:
                 send_message("Завершаю работу...", self.vk, peer_id=peer_id)
-                self.wait_sql(Sqlite.exit_db)
+                self.redis.redis.save()
                 send_message("Закрыл базу", self.vk, peer_id=peer_id)
 
                 if peer_id != int(CHIEF_ADMIN):
@@ -869,31 +868,34 @@ class Bot:
 
     def send_answer(self, event, message, peer_id):
         if not peer_id > MIN_CHAT_PEER_ID:
-            old = self.wait_sql(Sqlite.check_peer_id_in_db, (peer_id,))
+            old = self.redis.check_peer_id(str(peer_id))
             if not old:
-                self.wait_sql(Sqlite.add_peer_id, (peer_id,))
+                self.redis.add_peer_id(str(peer_id))
                 send_message("Напиши /help, "
                              "чтобы узнать список команд", self.vk, peer_id=peer_id,
                              keyboard=json.loads(KEYBOARDS)["help_keyboard"])
             else:
-                send_answer(message, self.vk, peer_id, self.wait_sql)
+                send_message("в лс делаю только "
+                             "смешнявки, отвечаю в беседе",
+                             self.vk, peer_id)
         else:
             action = event.obj["message"].get("action", 0)
             if action:
                 if action["type"] == "chat_invite_user" and \
                         action["member_id"] == -int(GROUP_ID):
-                    self.wait_sql(Sqlite.add_peer_id, (peer_id,))
+                    self.redis.add_peer_id(str(peer_id))
                     send_message("Дайте права админа пожалуйста "
                                  "а то я вас не слышу я глухой",
                                  self.vk, peer_id=peer_id)
             else:
-                old = self.wait_sql(Sqlite.check_peer_id_in_db, (peer_id,))
-                if not old:
-                    self.wait_sql(Sqlite.add_peer_id, (peer_id,))
                 self.speaker.add_words(peer_id, message)
-
-                if send_answer(message, self.vk, peer_id, self.wait_sql) is False:
-                    if answer_or_not(peer_id, self.wait_sql):
-                        text = self.speaker.generate_text(peer_id)
-                        if text:
-                            send_message(text, self.vk, peer_id)
+                what = send_answer(message, chances={
+                    ANSWER_CHANCE: self.redis.get_answer_chance(str(peer_id)),
+                    HUY_CHANCE: self.redis.get_huy_chance(str(peer_id))
+                })
+                if what == ANSWER_CHANCE:
+                    text = self.speaker.generate_text(peer_id)
+                    if text:
+                        send_message(text, self.vk, peer_id)
+                elif what == HUY_CHANCE:
+                    send_message(generate_huy_word(get_main_pos(message)), self.vk, peer_id)

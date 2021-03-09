@@ -10,7 +10,8 @@ from checker import Bot
 from utils import exception_checker, StopEvent
 
 from sql.sqlstart import SqliteStart
-from constants import TOKEN, GROUP_ID, CHIEF_ADMIN
+from rds.redis_api import RedisApi
+from constants import TOKEN, GROUP_ID, CHIEF_ADMIN, REDIS_PASSWORD
 
 logging.basicConfig(filename="vk_bot.log", filemode="a",
                     format=f"%(levelname)s\t\t%(asctime)s\t\t%(message)s",
@@ -25,17 +26,11 @@ def main() -> None:
     FOR_EVERYONE = True
     vk_session: VkApi = VkApi(
         token=TOKEN)
-    sql = SqliteStart()
-    sql_thread = threading.Thread(target=sql.create)
-    sql_thread.setName("sql")
-    sql_thread.start()
-    while not sql.get_sqlkook():
-        time.sleep(0.1)
-
     longpoll = MyVkLongPoll(vk_session, GROUP_ID)
     upload = VkUpload(vk_session)
     vk = vk_session.get_api()
-    bot = Bot(vk, sql.get_sql(), upload, sqlitehook=sql.get_sqlkook())
+    rds = RedisApi(password=REDIS_PASSWORD)
+    bot = Bot(vk, rds, upload)
     while True:
         for event in longpoll.listen():
             if event.type == VkBotEventType.MESSAGE_NEW and \
