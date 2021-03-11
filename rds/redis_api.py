@@ -103,7 +103,6 @@ class RedisApi:
 
     def get_all_admins(self):
         levels = self.redis.hgetall(ADMIN_LEVELS)
-        print(levels)
         if levels:
             return dict(filter(lambda y: y[1] > 0,
                                map(lambda x: (int(x[0]), int(x[1])), levels.items())))
@@ -136,8 +135,6 @@ class RedisApi:
         if not word:
             return ""
         start = self.decode_bytes(word)
-        print(start)
-
         sent = [start]
         n_max = random.randint(4, 20)
         n = 0

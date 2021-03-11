@@ -69,7 +69,8 @@ def send_message(message: str,
                  peer_id: int = None,
                  attachments:
                  str or list = None,
-                 keyboard: dict = None):
+                 keyboard: dict = None,
+                 template=None):
     """
     handler for send message
     :param message: text of message 
@@ -77,12 +78,14 @@ def send_message(message: str,
     :param peer_id: id of peer of chat who receive message 
     :param attachments: attachments in message
     :param keyboard: keyboard in message
+    :param template: template in message
     """
     vk.messages.send(peer_id=peer_id,
                      message=message,
                      random_id=random.randint(0, 2 ** 64),
                      attachment=attachments,
-                     keyboard=json.dumps(keyboard) if keyboard else None)
+                     keyboard=json.dumps(keyboard) if keyboard else None,
+                     template=json.dumps(template) if template else None)
     try:
         log = u"ANSWER IN {}: {} | atts: {}".format(
             peer_id, translit(str(message), 'ru', reversed=True), attachments
@@ -261,8 +264,6 @@ def send_answer(message: str, chances: dict) -> str:
     """
     send answer on non-command message
     :param message: text of message
-    :param vk: vk_api for reply message
-    :param user_id: chat or user id
     :param chances: chances
 
     """
@@ -270,7 +271,10 @@ def send_answer(message: str, chances: dict) -> str:
         chances[HUY_CHANCE] = 0
     if not chances[HUY_CHANCE] and not chances[ANSWER_CHANCE]:
         return ""
-    what = random.choices(tuple(chances.keys()), weights=tuple(chances.values()))[0]
+    nc = 100 - chances[HUY_CHANCE] - chances[ANSWER_CHANCE]
+    variants = tuple(chances.keys()) + ("Nothing",)
+    weights = tuple(chances.values()) + (nc,)
+    what = random.choices(variants, weights=weights)[0]
     return what
 
 

@@ -18,8 +18,6 @@ from vk_api.bot_longpoll import VkBotMessageEvent, VkBotEventType
 from vk_api import vk_api, upload
 import urllib.request
 
-from sql.sqlitehook import SqliteHook, Nothing
-from sql.sql_api import Sqlite
 from rds.redis_api import RedisApi
 from speaker import Speaker
 from yandex.yandex_api import get_synonyms, get_text_from_json_get_synonyms
@@ -34,7 +32,7 @@ from utils import \
     exception_checker, \
     send_message, \
     get_user_id_via_url, \
-    StopEvent, answer_or_not, get_main_pos, generate_huy_word
+    StopEvent, get_main_pos, generate_huy_word
 
 logger = logging.getLogger("main_logger")
 logging.basicConfig(filename="vk_bot.log", filemode="a",
@@ -47,11 +45,11 @@ face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_fronta
 class Bot:
     def __init__(self, vk: vk_api.VkApiMethod,
                  redis: RedisApi,
-                 upload: upload.VkUpload,
+                 upl: upload.VkUpload,
                  n_threads=8):
         self.redis = redis
         self.vk = vk
-        self.upload = upload
+        self.upload = upl
         self.events = Queue()
         self.uptime = time.time()
         self.speaker = Speaker(redis)
@@ -69,9 +67,7 @@ class Bot:
             "/a": self.alive,
             # in chats only
             "/gac": self.get_chance,  # get answer chance
-            "/glc": self.get_chance,  # get ladno chance
             "/ghc": self.get_chance,  # get huy chance
-            "/gnc": self.get_chance,  # get nu... chance
             "/gc": self.get_count_words,
             # "/gsw": self.get_similarity_words,
             "/g": self.generate_speak,
@@ -80,9 +76,7 @@ class Bot:
             # for chat admins only
             "/tac": self.toggle_access_chat_settings,  # toggle access
             "/ac": self.set_chance,  # set answer chance
-            "/lc": self.set_chance,  # set ladno chance
             "/hc": self.set_chance,  # set huy chance
-            "/nc": self.set_chance,  # set nu... chance
             "/s": self.show_settings,  # settings
             "/clear": self.clear_chat_speaker,
             "/update": self.update_chat,
@@ -98,7 +92,13 @@ class Bot:
             "/csg": None,  # create gif shakal
             "/cag": None,  # create gif arabfunny
             # other
-            "other": self.send_answer  # answer on simple message
+            "other": self.send_answer,  # answer on simple message
+            # archive
+            "/glc": self.archived,  # get ladno chance
+            "/gnc": self.archived,  # get nu... chance
+            "/lc": self.archived,  # set ladno chance
+            "/nc": self.archived,  # set nu... chance
+            "/test": self.test
         }
         self.threads = []
         self.n_threads = n_threads
@@ -122,14 +122,14 @@ class Bot:
         for th in range(self.n_threads):
             event_checker = threading.Thread(target=self.check_event_type)
             self.threads.append(event_checker)
-            event_checker.setName(str(th + 2))
+            event_checker.setName(str(th + 1))
             event_checker.start()
-            print(f"thread {event_checker.name} started")
+            logger.info(f"thread {event_checker.name} started")
 
     @staticmethod
     def check_stop(event):
         if event == StopEvent:
-            print(f"thread {threading.currentThread().name} stopped")
+            logger.info(f"thread {threading.currentThread().name} stopped")
             exit()
 
     @staticmethod
@@ -169,7 +169,7 @@ class Bot:
         if action:
             action_type = action["type"]
             if action_type == "chat_invite_user" and action["member_id"] == -int(GROUP_ID):
-                self.wait_sql(Sqlite.add_peer_id, (peer_id,))
+                self.redis.add_peer_id(str(peer_id))
                 send_message("дайте админку пжпж", self.vk, peer_id)
         if not message:
             return
@@ -179,7 +179,8 @@ class Bot:
         message = message.lstrip().rstrip()
 
         command = "" if len(message.split()) < 1 else message.split()[0].lower()
-        self.commands.get(command, self.commands.get("other"))(event, message, peer_id)
+        c: callable = self.commands.get(command, self.commands.get("other"))
+        c(event, message, peer_id)
 
     def add_event_in_queue(self, event):
         self.events.put(event)
@@ -212,19 +213,27 @@ class Bot:
             send_message("Ответь на сообщение с командой для ее повтора", self.vk, peer_id)
 
     # /help
-    def show_help(self, _, message, peer_id):
+    def show_help(self, event, message, peer_id):
         if len(message.split()) == 1:
+            help_template = None
             if peer_id > MIN_CHAT_PEER_ID:
                 help_data = json.loads(HELP_TEXT)["user_help"]["main_conversation"]
+                help_text_all = help_data["text"]
+                help_keyboard = help_data["keyboard"]
             else:
                 help_data = json.loads(HELP_TEXT)["user_help"]["main_user"]
-            help_text_all = help_data["text"]
+                if event.obj["client_info"].get("carousel", False):
+                    help_template = help_data["template"]
+                    help_text_all = help_data["text_template"]
+                    help_keyboard = help_data["keyboard_template"]
+                else:
+                    help_text_all = help_data["text_no_template"]
+                    help_keyboard = help_data["keyboard_no_template"]
             help_attachments = help_data["attachments"]
-            help_keyboard = help_data["keyboard"]
             send_message(help_text_all, self.vk, peer_id=peer_id, attachments=help_attachments,
-                         keyboard=help_keyboard)
+                         keyboard=help_keyboard, template=help_template)
         else:
-            if message.split()[-1] in COMMANDS:
+            if message.split()[-1] in json.loads(HELP_TEXT)["user_help"]:
                 command = message.split()[-1]
                 help_data = json.loads(HELP_TEXT)["user_help"][command]
                 help_text_command = help_data["text"]
@@ -470,9 +479,8 @@ class Bot:
     def create_dab(self, event, _, peer_id):
         def create_dab_function(image_sh: BytesIO or str) -> str:
             """
-            create shakal image from source image
+            create dab image from source image
             :param image_sh: bytes of image or file's name
-            :param factor_sh: factor of image grain
             :return: name of file in /photos directory
             """
 
@@ -517,8 +525,8 @@ class Bot:
                 random.choice(
                     string.ascii_uppercase + string.ascii_lowercase + string.digits
                 ) for _ in range(16)))
-            with open(name, "wb") as f:
-                f.write(image_sh.getbuffer())
+            with open(name, "wb") as dfn:
+                dfn.write(image_sh.getbuffer())
             image_sh = Image.open(image_sh)
             size = image_sh.size
             draw = ImageDraw.Draw(image_sh)
@@ -559,7 +567,7 @@ class Bot:
                 .format(''.join(random.choice(string.ascii_uppercase
                                               + string.ascii_lowercase + string.digits)))
             with open(dab_name, "wb") as f:
-                f.write(second_image.getbuffer())
+                f.write(bytes(second_image.getbuffer()))
             second_image = dab_name
         else:
             second_image = "photos/examples/dab.jpg"
@@ -733,7 +741,8 @@ class Bot:
                         self.speaker.delete_words(peer_id, message)
                         send_message(f"очищены слова: {message[3:]}", self.vk, peer_id)
                 else:
-                    send_message("ответь на сообщение или напиши текст после команды")
+                    send_message("ответь на сообщение или напиши текст после команды",
+                                 self.vk, peer_id)
         else:
             send_message("чел ты не админ...", self.vk, peer_id)
 
@@ -860,8 +869,8 @@ class Bot:
                                  peer_id=int(CHIEF_ADMIN))
                 send_message("Завершаю работу всей программы", self.vk, peer_id=peer_id)
                 [self.add_event_in_queue(StopEvent) for _ in range(self.n_threads)]
-                logging.info(f"exit by {peer_id} | uptime: ")
-                print(f"thread {threading.currentThread().name} stopped")
+                logging.info(f"exit by {peer_id} | uptime: {int(time.time() - self.uptime)}s")
+                logger.info(f"thread {threading.currentThread().name} stopped")
                 exit(0)
             else:
                 send_message("У вас нет доступа к данной команде", self.vk, peer_id=peer_id)
@@ -899,3 +908,9 @@ class Bot:
                         send_message(text, self.vk, peer_id)
                 elif what == HUY_CHANCE:
                     send_message(generate_huy_word(get_main_pos(message)), self.vk, peer_id)
+
+    def archived(self, _, __, peer_id):
+        send_message("данная команда была удалена...", self.vk, peer_id)
+
+    def test(self, _, __, ___):
+        ...

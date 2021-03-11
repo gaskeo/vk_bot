@@ -1,9 +1,10 @@
 {
   "user_help": {
     "main_user": {
-      "text": "Команды для ЛС:\n/ca - arabfunny\n/cs - шакал\n/cg - зернистость\n/gs - синонимы к слову\n/cp - постироничный текст\nПодробнее про все команды можно прочитать /help ca/cs...\n\nДругие команды:\n/ - повторить команду, которая передана в ответном сообщении\n/a - проверить, живой ли бот\n/ut - сколько бот живет",
+      "text_no_template": "Команды для ЛС:\n/ca - сделать arabfunny из вашей картинки\n/cs - зашакалить вашу картинку\n/cg - наложить зернистость на вашу картинку\n/cd - сделать дэба из картинки\n/gs - получить синонимы слова\n/cp - ПоСтиРОничНый тЕкСт\n/help - собственно это сообщение...\n\nДругие команды:\n/ - повторить команду, которая передана в ответном сообщении\n/a - проверить, живой ли бот\n/ut - сколько бот живет\n\nПодробнее про все команды можно прочитать /help ca/cs...\n",
+      "text_template": "Команды для ЛС\nПодробнее про все команды можно прочитать /help ca/cs...",
       "attachments": null,
-      "keyboard": {
+      "keyboard_no_template": {
         "buttons": [
           [
             {
@@ -53,10 +54,151 @@
           ]
         ],
         "inline": true
-      }
+      },
+      "keyboard_template": null,
+      "template": {
+            "type": "carousel",
+            "elements":
+                [
+                    {
+                        "title": "/ca",
+                        "description": "сделать arabfunny из вашей картинки",
+                        "photo_id": "-198181337_457239035",
+                        "buttons": [
+                            {
+                            "action":
+                                {
+                                "type": "text",
+                                "label": "/help ca"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "title": "/cs",
+                        "description": "зашакалить вашу картинку",
+                        "photo_id": "-198181337_457239040",
+                        "buttons": [
+                            {
+                                "action":
+                                    {
+                                        "type": "text",
+                                        "label": "/help cs"
+                                    }
+                            }
+
+                        ]
+                    },
+                    {
+                        "title": "/cg",
+                        "description": "наложить зернистость на вашу картинку",
+                        "photo_id": "-198181337_457239043",
+                        "buttons": [
+                            {
+                                "action":
+                                    {
+                                        "type": "text",
+                                        "label": "/help cg"
+                                    }
+                            }
+
+                        ]
+                    },
+                    {
+                        "title": "/cd",
+                        "description": "сделать дэба из картинки",
+                        "photo_id": "-198181337_457239044",
+                        "buttons": [
+                            {
+                                "action":
+                                    {
+                                        "type": "text",
+                                        "label": "/help cd"
+                                    }
+                            }
+
+                        ]
+                    },
+                    {
+                        "title": "/gs",
+                        "description": "получить синонимы слова",
+                        "photo_id": "-198181337_457239045",
+                        "buttons": [
+                            {
+                                "action":
+                                    {
+                                        "type": "text",
+                                        "label": "/help gs"
+                                    }
+                            }
+
+                        ]
+                    },
+                    {
+                        "title": "/cp",
+                        "description": "ПоСтиРОничНый тЕкСт",
+                        "photo_id": "-198181337_457239045",
+                        "buttons": [
+                            {
+                                "action":
+                                    {
+                                        "type": "text",
+                                        "label": "/help cp"
+                                    }
+                            }
+
+                        ]
+                    },
+                    {
+                        "title": "/",
+                        "description": "повторить команду из ответного сообщения",
+                        "photo_id": "-198181337_457239045",
+                        "buttons": [
+                            {
+                                "action":
+                                    {
+                                        "type": "text",
+                                        "label": "/help re"
+                                    }
+                            }
+
+                        ]
+                    },
+                    {
+                        "title": "/a",
+                        "description": "проверить, жив ли бот",
+                        "photo_id": "-198181337_457239045",
+                        "buttons": [
+                            {
+                                "action":
+                                    {
+                                        "type": "text",
+                                        "label": "/help a"
+                                    }
+                            }
+
+                        ]
+                    },
+                    {
+                        "title": "/ut",
+                        "description": "посмотреть, сколько бот живет",
+                        "photo_id": "-198181337_457239045",
+                        "buttons": [
+                            {
+                                "action":
+                                    {
+                                        "type": "text",
+                                        "label": "/help ut"
+                                    }
+                            }
+
+                        ]
+                    }
+                ]
+            }
     },
     "main_conversation": {
-      "text": "Команды для беседы:\n/s - настройки\n/tac - переключить, кто может изменять настройки\n/ac - изменить шанс ответа\n/lc - изменить шанс Ладно\n/hc - изменить шанс Ху-\n/nc - изменить шанс НУ получается...\n/gac - получить шанс ответа\n/glc - получить шанс Ладно\n/ghc - получить шанс Ху-\n/gnc - получить шанс НУ получается...\n\n/g - сгенерировать предложение \n/gc - получить количество слов в словаре бота\n/gsw - получить похожие слова из словаря бота\n/dsw - удалить одно слово их всех пар похожих слов из словаря бота (останется только одно слово из пары похожих)\n/dt - удалить слова из ответного сообщения или слова в сообщении после dt\n\n\nДругие команды:\n/ - повторить команду, которая передана в ответном сообщении\n/a - проверить, живой ли бот\n/ut - сколько бот живет\n/update - сбросить беседу, если что-то произошло",
+      "text": "Команды для беседы:\n/s - настройки\n/tac - переключить, кто может изменять настройки\n/ac - изменить шанс ответа\n/hc - изменить шанс Ху-\n/gac - получить шанс ответа\n/ghc - получить шанс Ху-\n\n/g - сгенерировать предложение \n/at - получить слова, которые идут после этого\n/gc - получить количество слов в словаре бота\n/dt - удалить слова из ответного сообщения или слова в сообщении после dt\n/clear - очистить словарь бота\n/update - обновить беседу, если вдруг бот умер\n\nДругие команды:\n/ - повторить команду, которая передана в ответном сообщении\n/a - проверить, живой ли бот\n/ut - сколько бот живет",
       "attachments": null,
       "keyboard": {
         "buttons": [
@@ -82,24 +224,6 @@
             {
               "action": {
                 "type": "text",
-                "label": "/help lc",
-                "payload": ""
-              },
-              "color": "primary"
-            },
-            {
-              "action": {
-                "type": "text",
-                "label": "/help glc",
-                "payload": ""
-              },
-              "color": "primary"
-            }
-          ],
-          [
-            {
-              "action": {
-                "type": "text",
                 "label": "/help hc",
                 "payload": ""
               },
@@ -109,24 +233,6 @@
               "action": {
                 "type": "text",
                 "label": "/help ghc",
-                "payload": ""
-              },
-              "color": "primary"
-            }
-          ],
-          [
-            {
-              "action": {
-                "type": "text",
-                "label": "/help nc",
-                "payload": ""
-              },
-              "color": "primary"
-            },
-            {
-              "action": {
-                "type": "text",
-                "label": "/help gnc",
                 "payload": ""
               },
               "color": "primary"
@@ -169,6 +275,11 @@
       "attachments": null,
       "keyboard": null
     },
+    "cd": {
+      "text": "/cd (Create Dab) - сделать дэб из фото\nПараметры:\n1. Картинка или две картинки: вторая встанет вместо стандартного дэба\nПример:\n/cd [Photo]",
+      "attachments": null,
+      "keyboard": null
+    },
     "gs": {
       "text": "/gs (Get Synonyms) - подобрать синонимы к слову\nПараметры:\n1. Слово или несколько слов\nПример:\n/gs бот",
       "attachments": null,
@@ -184,18 +295,28 @@
       "attachments": null,
       "keyboard": null
     },
+    "re": {
+      "text": "/ - сделать ту же команду, что в ответном сообщении\nПараметры:\n1. Сообщение в качестве ответа\nПример:\n/ [Ответ]",
+      "attachments": null,
+      "keyboard": null
+    },
+    "a": {
+      "text": "/a (Alive) - просто проверка на то, жив ли бот",
+      "attachments": null,
+      "keyboard": null
+    },
+    "ut": {
+      "text": "/ut (Uptime) - посмотреть, сколько живет бот",
+      "attachments": null,
+      "keyboard": null
+    },
+    "help": {
+      "text": "чел... рял?",
+      "attachments": null,
+      "keyboard": null
+    },
     "gac": {
       "text": "/gac (Get Answer Chance) - получить шанс ответа на сообщение\nПример:\n/gac\nТОЛЬКО ДЛЯ БЕСЕД\n",
-      "attachments": null,
-      "keyboard": null
-    },
-    "lc": {
-      "text": "/lc (Ladno Chance) - изменить шанс ответа Ладно\nПараметры:\n1. Шанс (от 0 до 100) 0 - выключить\nПример:\n/lc 50\nТОЛЬКО ДЛЯ БЕСЕД",
-      "attachments": null,
-      "keyboard": null
-    },
-    "glc": {
-      "text": "/glc (Get Ladno Chance) - получить шанс Ладно\nПример:\n/glc\nТОЛЬКО ДЛЯ БЕСЕД",
       "attachments": null,
       "keyboard": null
     },
@@ -206,16 +327,6 @@
     },
     "ghc": {
       "text": "/ghc (Get Hy- Chance) - получить шанс Ху-\nПример:\n/ghc\nТОЛЬКО ДЛЯ БЕСЕД",
-      "attachments": null,
-      "keyboard": null
-    },
-    "nc": {
-      "text": "/nc (Nu poluchaetsya... Chance) - изменить шанс ответа Ну получается...\nПараметры:\n1. Шанс (от 0 до 100) 0 - выключить\nПример:\n/nc 50\nТОЛЬКО ДЛЯ БЕСЕД",
-      "attachments": null,
-      "keyboard": null
-    },
-    "gnc": {
-      "text": "/gnc (Get Nu poluchaetsya... Chance) - получить шанс Ну получается...\nПример:\n/gnc\nТОЛЬКО ДЛЯ БЕСЕД",
       "attachments": null,
       "keyboard": null
     },
@@ -242,6 +353,36 @@
         ],
         "inline": true
       }
+    },
+    "g": {
+      "text": "/g (generate) - сгенерировать текст для смешнявки",
+      "attachments": null,
+      "keyboard": null
+    },
+    "at": {
+      "text": "/at - список всех слов, которые идут после данного\nПараметры:\n1. слово\nПример:\n/at привет",
+      "attachments": null,
+      "keyboard": null
+    },
+    "gc": {
+      "text": "/gc (get count) - количество слов в словаре для этой беседы",
+      "attachments": null,
+      "keyboard": null
+    },
+    "dt": {
+      "text": "/dt - удалить слова из словаря \nПараметры:\n1. слова или ответное сообщение\nПример:\n/dt привет\n/dt [ответ]",
+      "attachments": null,
+      "keyboard": null
+    },
+    "clear": {
+      "text": "/clear - просто очищает словарь, чтобы вы могли заново обучить бота",
+      "attachments": null,
+      "keyboard": null
+    },
+    "update": {
+      "text": "/update - нужно только, если бот сломался: меняет шансы на стандартные (30), словарь остается",
+      "attachments": null,
+      "keyboard": null
     }
   }
 }
