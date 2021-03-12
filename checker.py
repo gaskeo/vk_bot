@@ -477,59 +477,73 @@ class Bot:
             send_message("Прикрепи фото", self.vk, peer_id=peer_id)
 
     def create_dab(self, event, _, peer_id):
-        def create_dab_function(image_sh: BytesIO or str) -> str:
-            """
-            create dab image from source image
-            :param image_sh: bytes of image or file's name
-            :return: name of file in /photos directory
-            """
+        def create_dab_function(image_dab: BytesIO or str) -> str:
+            def create_rect():
+                def check_compatibility(s: tuple):
+                    rw = abs(s[2] - s[0])
+                    rh = abs(s[3] - s[1])
+                    dr = dab_w / dab_h
+                    pr = rw / rh
+                    return abs(dr - pr)
 
-            def get_angles():
-                qx, qy, qw, qh = 0, 0, 0, 0
-                right = top = 0
-                point = picture_center[0] - center[0], picture_center[1] - center[1]
-                if point[0] > 0:
-                    qx = x + w + int(size[0] * 0.1)
-                    qw = size[0] - int(size[0] * 0.1) - qx
-                    right = -1
-                elif point[0] < 0:
-                    qx = int(size[0] * 0.1)
-                    qw = x - 2 * int(size[0] * 0.1)
-                    right = 1
-                if point[1] < 0:
-                    qy = int(size[1] * 0.1)
-                    qh = size[1] - int(size[1] * 0.1) - (size[1] - y)
-                    top = -1
-                elif point[1] > 0:
-                    qy = y + h + int(size[1] * 0.1)
-                    qh = size[1] - int(size[1] * 0.1) - qy
-                    top = 1
-                angle = qx + qw if right == 1 else qx, qy if top == 1 else qy + qh
+                def resize(dw, dh):
+                    if dw + start[0] > ds[0]:
+                        dh = int((ds[0] / dw) * dh) - coef - coef
+                        dw = ds[0] - coef - coef
+                    if dh + start[1] > ds[1]:
+                        dw = int((ds[1] / dh) * dw) - coef - coef
+                        dh = ds[1] - coef - coef
+                    return dw, dh
+
+                def distance_to_rangle(s: tuple):
+                    return ((s[0] - rangle[0]) ** 2 + (s[1] - rangle[1]) ** 2) ** 0.5
+
+                sizes = {
+                    # 0 1
+                    # 2 3
+                    (0, 0, size[0], y): 3,   # top
+                    (0, 0, x, size[1]): 3,  # left
+                    (0, y + h, size[0], size[1]): 1,  # bottom
+                    (x + w, 0, size[0], size[1]): 2   # right
+                }
                 r = (w + 60) // 2
-
-                angle_c = (center[0] - r * (2 ** 0.5 / 2)) if right == 1 else \
-                          (center[0] + r * (2 ** 0.5 / 2)), \
-                          (center[1] + r * (2 ** 0.5 / 2)) if top == 1 else \
-                          (center[1] - r * (2 ** 0.5 / 2))
-                return qx, qy, qw, qh, angle, angle_c, right, top
-
-            def insert_dab(rect_l: tuple):
-                rect_size = rect_l[2], rect_l[3]
                 dab: JpegImagePlugin.JpegImageFile = Image.open(second_image)
-                dab = dab.resize(rect_size)
+                dab_w, dab_h = dab.size
+                where = min(tuple(sizes.keys()), key=check_compatibility)
+                coef = int(abs(where[2] - where[0]) * 0.2)
+                start = (where[0] + coef, where[1] + coef)
+                angle = sizes[where]
+                ds = [abs(where[2] - where[0]), abs(where[3] - where[1])]
+                dab_w, dab_h = resize(dab_w, dab_h)
+                angles = (
+                             (center[0] - r * (2 ** 0.5 / 2), (center[1] - r * (2 ** 0.5 / 2))),
+                             (center[0] + r * (2 ** 0.5 / 2), (center[1] - r * (2 ** 0.5 / 2))),
+                             (center[0] - r * (2 ** 0.5 / 2), (center[1] + r * (2 ** 0.5 / 2))),
+                             (center[0] + r * (2 ** 0.5 / 2), (center[1] + r * (2 ** 0.5 / 2)))
+                )
+                if angle == 3:
+                    rangle = start[0] + dab_w, start[1] + dab_h
+                elif angle == 1:
+                    rangle = start[0] + dab_w, start[1]
+                else:
+                    rangle = start[0], start[1] + dab_h
+                cangle = min(angles, key=distance_to_rangle)
+                dab = dab.resize((dab_w, dab_h))
+                image_dab.paste(dab, start)
+                draw.rectangle((start, (start[0] + dab_w, start[1] + dab_h)),
+                               outline=(255, 0, 0), width=5)
+                draw.line((rangle, cangle), width=5, fill=(255, 0, 0))
+                image_dab.save(name)
 
-                image_sh.paste(dab, (rect_l[0], rect_l[1]))
-                image_sh.save(name)
-                return rect_l
             name = "photos/{}.jpg".format(''.join(
                 random.choice(
                     string.ascii_uppercase + string.ascii_lowercase + string.digits
                 ) for _ in range(16)))
             with open(name, "wb") as dfn:
-                dfn.write(image_sh.getbuffer())
-            image_sh = Image.open(image_sh)
-            size = image_sh.size
-            draw = ImageDraw.Draw(image_sh)
+                dfn.write(image_dab.getbuffer())
+            image_dab = Image.open(image_dab)
+            size = image_dab.size
+            draw = ImageDraw.Draw(image_dab)
             image_cv2 = cv2.imread(name)
             image_cv2 = cv2.cvtColor(image_cv2, cv2.COLOR_BGR2GRAY)
             faces = face_cascade.detectMultiScale(image_cv2, 1.1, 19)
@@ -537,17 +551,11 @@ class Bot:
                 x, y, w, h = faces[0]
             else:
                 w = h = random.randint(int(size[0] * 0.1), int(size[0] * 0.5))
-                x, y = random.randint(0, size[0]), random.randint(0, size[0])
+                x, y = random.randint(w, size[0] - w), random.randint(h, size[0] - h)
             draw.ellipse(((x - 30, y - 30), (x + w + 30, y + h + 30)), outline=(255, 0, 0),
                          width=5)
             center = (2 * x + w) // 2, (2 * y + h) // 2
-            picture_center = image_sh.size[0] // 2, image_sh.size[1] // 2
-            rect = get_angles()
-            rect = insert_dab(rect)
-            draw.rectangle(((rect[0], rect[1]), (rect[0] + rect[2], rect[1] + rect[3])),
-                           outline=(255, 0, 0), width=5)
-            draw.line((rect[4], rect[5]), width=5, fill=(255, 0, 0))
-            image_sh.save(name)
+            create_rect()
             return name
 
         photos = self.find_image(event)
