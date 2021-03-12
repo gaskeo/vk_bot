@@ -20,7 +20,7 @@
         {
           "action": {
             "type": "text",
-            "label": "/lc 0",
+            "label": "/ac 0",
             "payload": ""
           },
           "color": "negative"
@@ -28,7 +28,7 @@
         {
           "action": {
             "type": "text",
-            "label": "/lc 50",
+            "label": "/ac 50",
             "payload": ""
           },
           "color": "secondary"
@@ -36,7 +36,7 @@
         {
           "action": {
             "type": "text",
-            "label": "/lc 100",
+            "label": "/ac 100",
             "payload": ""
           },
           "color": "positive"
@@ -63,32 +63,6 @@
           "action": {
             "type": "text",
             "label": "/hc 100",
-            "payload": ""
-          },
-          "color": "positive"
-        }
-      ],
-      [
-        {
-          "action": {
-            "type": "text",
-            "label": "/nc 0",
-            "payload": ""
-          },
-          "color": "negative"
-        },
-        {
-          "action": {
-            "type": "text",
-            "label": "/nc 50",
-            "payload": ""
-          },
-          "color": "secondary"
-        },
-        {
-          "action": {
-            "type": "text",
-            "label": "/nc 100",
             "payload": ""
           },
           "color": "positive"
