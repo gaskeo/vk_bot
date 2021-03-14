@@ -1,9 +1,9 @@
 import random
 
 import redis
-from constants import CHIEF_ADMIN, MIN_CHAT_PEER_ID, ANSWER_CHANCE, LADNO_CHANCE, HUY_CHANCE,\
-    NU_POLUCHAETSYA_CHANCE,\
-    WHO_CAN_TOGGLE_CHANCES_TEXT, ADMIN_LEVELS, ADMINS_ONLY, ALL
+from constants import CHIEF_ADMIN, MIN_CHAT_PEER_ID, ANSWER_CHANCE, LADNO_CHANCE, HUY_CHANCE, \
+    NU_POLUCHAETSYA_CHANCE, \
+    WHO_CAN_TOGGLE_CHANCES_TEXT, ADMIN_LEVELS, ADMINS_ONLY, ALL, STOP_WORDS
 
 
 class RedisApi:
@@ -14,6 +14,7 @@ class RedisApi:
     # peer_id:word --> word_after -> chance (hash) (int)
     #              `-> word_after -> chance
     # peer_id:_all_ -> all_words (set)
+    # peer_id:_start_ -> all_starts (set)
 
     # get user             +
     # add user             +
@@ -114,24 +115,31 @@ class RedisApi:
         if not text:
             return
         elif len(text) == 1:
-            self.redis.sadd(f"{peer_id}:_all_", text[0])
-            self.redis.hset(f"{peer_id}:{text[0]}", "///end", 1)
+            if text[0] not in STOP_WORDS:
+                self.redis.sadd(f"{peer_id}:_start_", text[0])
+                self.redis.sadd(f"{peer_id}:_all_", text[0])
+                self.redis.hset(f"{peer_id}:{text[0]}", "///end", 1)
             return
         for word, word_after in zip(text[:-1], text[1:]):
+            if word in STOP_WORDS:
+                continue
             has_word_after = self.redis.hget(f"{peer_id}:{word}", word_after)
             if not has_word_after:
                 self.redis.hset(f"{peer_id}:{word}", word_after, 1)
             else:
                 self.redis.hincrby(f"{peer_id}:{word}", word_after)
             self.redis.sadd(f"{peer_id}:_all_", word)
-        self.redis.sadd(f"{peer_id}:_all_", text[-1])
-        self.redis.hset(f"{peer_id}:{text[-1]}", "///end", 1)
+        if text[0] not in STOP_WORDS:
+            self.redis.sadd(f"{peer_id}:_start_", text[0])
+        if text[-1] not in STOP_WORDS:
+            self.redis.sadd(f"{peer_id}:_all_", text[-1])
+            self.redis.hset(f"{peer_id}:{text[-1]}", "///end", 1)
 
     def generate_text(self, peer_id: str):
         if int(peer_id) <= MIN_CHAT_PEER_ID:
             return
         self.check_and_add_peer_id(peer_id)
-        word = self.redis.srandmember(f"{peer_id}:_all_")
+        word = self.redis.srandmember(f"{peer_id}:_start_")
         if not word:
             return ""
         start = self.decode_bytes(word)

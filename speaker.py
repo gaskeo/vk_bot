@@ -1,8 +1,3 @@
-import json
-import random
-import threading
-import time
-from difflib import SequenceMatcher
 from rds.redis_api import RedisApi
 
 
@@ -28,13 +23,6 @@ class Speaker:
 
     def add_words(self, peer_id, text: str):
         words = self.format_text(text)
-        if self.nearest_words.get(str(peer_id), False):
-            print(self.nearest_words[str(peer_id)])
-            w, t = self.nearest_words[str(peer_id)]
-            if time.time() - t < 20:
-                words.insert(0, w)
-        self.nearest_words[str(peer_id)] = (words[-1], time.time())
-        print(words)
         self.redis.add_text(str(peer_id), words)
 
     def generate_text(self, peer_id):
