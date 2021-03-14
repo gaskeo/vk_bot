@@ -88,6 +88,7 @@ class Bot:
             "/ga": self.get_admin,  # get admin
             "/ia": self.is_admin,  # is admin
             "/bb": self.bye_bye,  # exit program
+            "/th": self.alive_threads,
             # experimental
             "/csg": None,  # create gif shakal
             "/cag": None,  # create gif arabfunny
@@ -100,7 +101,7 @@ class Bot:
             "/nc": self.archived,  # set nu... chance
             "/test": self.test
         }
-        self.threads = []
+        self.threads = {}
         self.n_threads = n_threads
         self.start()
 
@@ -121,8 +122,8 @@ class Bot:
     def start(self):
         for th in range(self.n_threads):
             event_checker = threading.Thread(target=self.check_event_type)
-            self.threads.append(event_checker)
             event_checker.setName(str(th + 1))
+            self.threads[event_checker.name] = 1
             event_checker.start()
             logger.info(f"thread {event_checker.name} started")
 
@@ -155,9 +156,11 @@ class Bot:
         while True:
             try:
                 for event in iter(self.events.get, None):
+                    self.threads[threading.currentThread().name] = 0
                     self.check_stop(event)
                     if event.type == VkBotEventType.MESSAGE_NEW:
                         self.message_checker(event)
+                    self.threads[threading.currentThread().name] = 1
             except Exception:
                 exception_checker()
 
@@ -882,6 +885,15 @@ class Bot:
                 exit(0)
             else:
                 send_message("У вас нет доступа к данной команде", self.vk, peer_id=peer_id)
+
+    # /th
+    def alive_threads(self, _, __, peer_id):
+        if not peer_id > MIN_CHAT_PEER_ID:
+            if self.redis.get_admin(peer_id) >= 5:
+                threads = "тред " + \
+                          '\nтред '.join((y[0] for y in
+                                          tuple(filter(lambda x: x[1] == 1, self.threads.items()))))
+                send_message(f"живые треды (из {self.n_threads}):\n{threads}", self.vk, peer_id)
 
     def send_answer(self, event, message, peer_id):
         if not peer_id > MIN_CHAT_PEER_ID:
