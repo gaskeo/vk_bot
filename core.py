@@ -5,12 +5,11 @@ from longpoll import MyVkLongPoll
 import threading
 
 import logging
-# from checker import Bot
 from bot import Bot
-from utils import exception_checker, StopEvent
+from utils import exception_checker
 
 from rds.redis_api import RedisApi
-from constants import TOKEN, GROUP_ID, CHIEF_ADMIN, REDIS_PASSWORD, ACCEPTED_PEERS_ON_DEBUG
+from constants import TOKEN, GROUP_ID, REDIS_PASSWORD, ACCEPTED_PEERS_ON_DEBUG
 
 logging.basicConfig(filename="vk_bot.log", filemode="a",
                     format=f"%(levelname)s\t\t%(asctime)s\t\t%(message)s",
