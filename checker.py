@@ -25,7 +25,7 @@ from yandex.yandex_api import get_synonyms, get_text_from_json_get_synonyms
 
 from constants import *
 from utils import \
-    send_answer, \
+    what_answer, \
     get_random_funny_wiki_page, \
     get_only_symbols, \
     get_admins_in_chat, \
@@ -930,7 +930,7 @@ class Bot:
                                  self.vk, peer_id=peer_id)
             else:
                 self.speaker.add_words(peer_id, message)
-                what = send_answer(message, chances={
+                what = what_answer(message, chances={
                     ANSWER_CHANCE: self.redis.get_answer_chance(str(peer_id)),
                     HUY_CHANCE: self.redis.get_huy_chance(str(peer_id))
                 })

@@ -5,7 +5,8 @@ from longpoll import MyVkLongPoll
 import threading
 
 import logging
-from checker import Bot
+# from checker import Bot
+from bot import Bot
 from utils import exception_checker, StopEvent
 
 from rds.redis_api import RedisApi

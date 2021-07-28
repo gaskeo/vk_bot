@@ -260,7 +260,7 @@ def get_admins_in_chat(peer_id, vk) -> list:
     return admins
 
 
-def send_answer(message: str, chances: dict) -> str:
+def what_answer(message: str, chances: dict) -> str:
     """
     send answer on non-command message
     :param message: text of message
