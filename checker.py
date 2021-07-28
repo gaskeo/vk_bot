@@ -10,6 +10,7 @@ from io import BytesIO
 import string
 import json
 from transliterate import translit
+from secrets import token_hex
 
 from PIL import Image, ImageDraw, ImageFont, JpegImagePlugin
 import cv2
@@ -48,7 +49,7 @@ class Bot:
                  upl: upload.VkUpload,
                  n_threads=8):
         self.redis = redis
-        self.vk = vk
+        self.vk: vk_api.VkApiMethod = vk
         self.upload = upl
         self.events = Queue()
         self.uptime = time.time()
@@ -73,6 +74,9 @@ class Bot:
             "/g": self.generate_speak,
             "/at": self.get_words_after_that,
             "/peer": self.get_peer,
+            "/generate": self.generate_token,
+            "/connect": self.connect,
+            "/send": self.send_other_chat,
             # for chat admins only
             "/tac": self.toggle_access_chat_settings,  # toggle access
             "/ac": self.set_chance,  # set answer chance
@@ -81,6 +85,7 @@ class Bot:
             "/clear": self.clear_chat_speaker,
             "/update": self.update_chat,
             "/dt": self.delete_this,
+            "/accept_connect": self.accept_connect,
             # "/dsw": self.clear_similarity_words,
             # for bot admins only
             "/adm": self.admin_help,  # help admins
@@ -158,30 +163,38 @@ class Bot:
                 for event in iter(self.events.get, None):
                     self.threads[threading.currentThread().name] = 0
                     self.check_stop(event)
-                    if event.type == VkBotEventType.MESSAGE_NEW:
+                    if event.type in (VkBotEventType.MESSAGE_NEW, VkBotEventType.MESSAGE_EVENT):
                         self.message_checker(event)
                     self.threads[threading.currentThread().name] = 1
             except Exception:
                 exception_checker()
 
     def message_checker(self, event: VkBotMessageEvent):
-        self.logger(event)
-        message: str = event.obj.message["text"]
-        peer_id = event.obj.message["peer_id"]
-        action = event.obj.message.get("action", None)
-        if action:
-            action_type = action["type"]
-            if action_type == "chat_invite_user" and action["member_id"] == -int(GROUP_ID):
-                self.redis.add_peer_id(str(peer_id))
-                send_message("дайте админку пжпж", self.vk, peer_id)
-        if not message:
-            return
-        if message.startswith(MY_NAMES):
-            for name in MY_NAMES:
-                message = message.replace(name, '')
-        message = message.lstrip().rstrip()
+        if event.type == VkBotEventType.MESSAGE_NEW:
+            self.logger(event)
 
-        command = "" if len(message.split()) < 1 else message.split()[0].lower()
+            message: str = event.obj.message["text"]
+            peer_id = event.obj.message["peer_id"]
+            action = event.obj.message.get("action", None)
+            if action:
+                action_type = action["type"]
+                if action_type == "chat_invite_user" and action["member_id"] == -int(GROUP_ID):
+                    self.redis.add_peer_id(str(peer_id))
+                    send_message("дайте админку пжпж", self.vk, peer_id)
+            if not message:
+                return
+            if message.startswith(MY_NAMES):
+                for name in MY_NAMES:
+                    message = message.replace(name, '')
+            message = message.lstrip().rstrip()
+
+            command = "" if len(message.split()) < 1 else message.split()[0].lower()
+        else:
+            print(event)
+            command = event.obj.payload["command"]
+            peer_id = event.obj["peer_id"]
+            message = ""
+            print(command, peer_id)
         c: callable = self.commands.get(command, self.commands.get("other"))
         c(event, message, peer_id)
 
@@ -504,10 +517,10 @@ class Bot:
                 sizes = {
                     # 0 1
                     # 2 3
-                    (0, 0, size[0], y): 3,   # top
+                    (0, 0, size[0], y): 3,  # top
                     (0, 0, x, size[1]): 3,  # left
                     (0, y + h, size[0], size[1]): 1,  # bottom
-                    (x + w, 0, size[0], size[1]): 2   # right
+                    (x + w, 0, size[0], size[1]): 2  # right
                 }
                 r = (w + 60) // 2
                 dab: JpegImagePlugin.JpegImageFile = Image.open(second_image)
@@ -519,10 +532,10 @@ class Bot:
                 ds = [abs(where[2] - where[0]), abs(where[3] - where[1])]
                 dab_w, dab_h = resize(dab_w, dab_h)
                 angles = (
-                             (center[0] - r * (2 ** 0.5 / 2), (center[1] - r * (2 ** 0.5 / 2))),
-                             (center[0] + r * (2 ** 0.5 / 2), (center[1] - r * (2 ** 0.5 / 2))),
-                             (center[0] - r * (2 ** 0.5 / 2), (center[1] + r * (2 ** 0.5 / 2))),
-                             (center[0] + r * (2 ** 0.5 / 2), (center[1] + r * (2 ** 0.5 / 2)))
+                    (center[0] - r * (2 ** 0.5 / 2), (center[1] - r * (2 ** 0.5 / 2))),
+                    (center[0] + r * (2 ** 0.5 / 2), (center[1] - r * (2 ** 0.5 / 2))),
+                    (center[0] - r * (2 ** 0.5 / 2), (center[1] + r * (2 ** 0.5 / 2))),
+                    (center[0] + r * (2 ** 0.5 / 2), (center[1] + r * (2 ** 0.5 / 2)))
                 )
                 if angle == 3:
                     rangle = start[0] + dab_w, start[1] + dab_h
@@ -931,6 +944,75 @@ class Bot:
 
     def archived(self, _, __, peer_id):
         send_message("данная команда была удалена...", self.vk, peer_id)
+
+    def generate_token(self, _, __, peer_id):
+        if not peer_id > MIN_CHAT_PEER_ID:
+            send_message("только для бесед", self.vk, peer_id)
+            return
+        token = token_hex(24)
+        self.redis.add_token(str(peer_id), token)
+        send_message(f"Введите это в другой беседе:", self.vk, peer_id)
+        send_message(f"/connect {token}", self.vk, peer_id)
+
+    def connect(self, _, message, peer_id):
+        data = message.split()
+        if len(data) != 2:
+            send_message("неправильный формат", self.vk, peer_id)
+            return
+        token = data[-1]
+        connect_peer_id = self.redis.get_peer_id_by_token(token)
+        if connect_peer_id == str(peer_id):
+            print(1)
+            send_message("ты че это та же беседа...", self.vk, peer_id)
+            return
+        print(peer_id)
+        data = self.vk.messages.getConversationsById(peer_ids=str(peer_id)).get("items", [dict()])
+        if not data:
+            title = "тут должно быть название беседы, но не получилось, странная беседа..."
+        else:
+            title = data[0].get("chat_settings", {}).get("title")
+        send_message(f'беседа "{title}" хочет связаться с вами, для подтверждения ответьте '
+                     f'на это сообщение сообщением /accept (прямо ответить, типа как в вк можно ответить),'
+                     f' в ином случае просто проигнорируйте',
+                     self.vk, int(connect_peer_id), keyboard=
+                     {"inline": True,
+                      "buttons": [
+                          [
+                              {
+                                  "action": {
+                                      "type": "callback",
+                                      "label": "присоединить",
+                                      "payload": {"command": "/accept_connect", "peer_id": peer_id},
+                                  },
+                                  "color": "positive"
+                              }
+                          ]
+                      ]
+                      })
+
+    def accept_connect(self, event, _, peer_id):
+        print(123)
+        if peer_id > MIN_CHAT_PEER_ID:
+            print(1)
+            admins = get_admins_in_chat(peer_id, self.vk)
+            print(0)
+            if event.obj["user_id"] in admins:
+                print(2)
+                self.redis.connect(peer_id, event.obj["payload"]["peer_id"])
+                send_message("вы подключились", self.vk, peer_id)
+                send_message("вы подключились", self.vk, event.obj["payload"]["peer_id"])
+
+    def send_other_chat(self, event, message, peer_id):
+        connected_peer_id = self.redis.get_connected_chat(str(peer_id))
+        if connected_peer_id:
+            message = message.lstrip("/send").strip()
+            if message:
+                send_message(f"сообщение из другой беседы: {message}", self.vk, int(connected_peer_id))
+                send_message("отправлено", self.vk, peer_id)
+            else:
+                send_message("пустое сообщение", self.vk, peer_id)
+        else:
+            send_message("вы ни к кому не подключены", self.vk, peer_id)
 
     def test(self, _, __, ___):
         ...

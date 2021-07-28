@@ -15,6 +15,10 @@ class RedisApi:
     #              `-> word_after -> chance
     # peer_id:_all_ -> all_words (set)
     # peer_id:_start_ -> all_starts (set)
+    # tokens --> token -> peer_id
+    #        `-> token -> peer_id
+    # connects --> peer_id1 -> peer_id2
+    #          `-> peer_id2 -> peer_id1
 
     # get user             +
     # add user             +
@@ -187,3 +191,23 @@ class RedisApi:
         self.change_huy_chance(peer_id, 30)
         if self.get_who_can_change_chances(peer_id) == ALL:
             self.toggle_access_chances(peer_id)
+
+    def add_token(self, peer_id: str, token: str):
+        self.redis.hset("tokens", token, peer_id)
+
+    def get_peer_id_by_token(self, token: str):
+        peer_id = self.redis.hget("tokens", token)
+        if peer_id:
+            return peer_id.decode("UTF-8")
+        return None
+
+    def connect(self, peer_id1: str, peer_id2: str):
+        self.redis.hset("connects", peer_id1, peer_id2)
+        self.redis.hset("connects", peer_id2, peer_id1)
+
+    def get_connected_chat(self, peer_id: str):
+        peer_id = self.redis.hget("connects", peer_id)
+        if peer_id:
+            return peer_id.decode("UTF-8")
+        return None
+

@@ -31,8 +31,13 @@ def main() -> None:
     bot = Bot(vk, rds, upload)
     while True:
         for event in long_poll.listen():
-            if event.type == VkBotEventType.MESSAGE_NEW and \
-                    str(event.obj.message["peer_id"]) in ACCEPTED_PEERS_ON_DEBUG or for_everyone:
+            if event.type == VkBotEventType.MESSAGE_NEW:
+                peer_id = str(event.obj.message["peer_id"])
+            elif event.type == VkBotEventType.MESSAGE_EVENT:
+                peer_id = str(event.obj["peer_id"])
+            else:
+                continue
+            if peer_id in ACCEPTED_PEERS_ON_DEBUG or for_everyone:
                 bot.add_event_in_queue(event)
             if threading.active_count() == 1:
                 exit()
