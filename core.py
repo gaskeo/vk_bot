@@ -6,7 +6,6 @@ import threading
 
 import logging
 from bot import Bot
-from utils import exception_checker
 
 from rds.redis_api import RedisApi
 from constants import TOKEN, GROUP_ID, REDIS_PASSWORD, ACCEPTED_PEERS_ON_DEBUG

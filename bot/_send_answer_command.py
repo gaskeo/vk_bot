@@ -1,6 +1,6 @@
 import json
 
-from constants import MIN_CHAT_PEER_ID, HUY_CHANCE, ANSWER_CHANCE, GROUP_ID
+from constants import MIN_CHAT_PEER_ID, HUY_CHANCE, ANSWER_CHANCE, GROUP_ID, KEYBOARDS
 from utils import send_message, what_answer, generate_huy_word, get_main_pos
 
 

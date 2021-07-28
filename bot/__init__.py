@@ -120,25 +120,6 @@ class Bot:
             logger.info(f"thread {threading.currentThread().name} stopped")
             exit()
 
-    @staticmethod
-    def find_image(event):
-        message = event.obj.message
-        while True:
-            if not message:
-                return []
-            if message.get("attachments", False):
-                photos = list(filter(lambda attach: attach["type"] == "photo",
-                                     message.get("attachments")))
-                if photos:
-                    return photos
-            if message.get("reply_message", False):
-                message = message.get("reply_message")
-            elif message.get("fwd_messages", False):
-                message = message.get("fwd_messages")[0]
-            else:
-                break
-        return []
-
     def check_event_type(self):
         while True:
             try:
@@ -175,7 +156,7 @@ class Bot:
             command = event.obj.payload["command"]
             peer_id = event.obj["peer_id"]
             message = ""
-        c: callable = self.commands.get(command, self.commands.get("other"))
+        c = self.commands.get(command, self.commands.get("other"))
         c(event, message, peer_id)
 
     def add_event_in_queue(self, event):

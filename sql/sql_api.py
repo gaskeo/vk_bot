@@ -1,7 +1,7 @@
 import sqlite3
 
 from constants import ANSWER_CHANCE, LADNO_CHANCE, HUY_CHANCE, NU_POLUCHAETSYA_CHANCE, \
-    MIN_CHAT_PEER_ID, ADMIN_LEVELS
+    MIN_CHAT_PEER_ID
 
 
 class Sqlite:
@@ -219,5 +219,6 @@ class Sqlite:
             self.add_user(peer_id)
 
     def update_chat(self, peer_id):
-        self.cur.execute(f"UPDATE chats SET {ANSWER_CHANCE} = 30, {HUY_CHANCE} = 30, {LADNO_CHANCE} = 30, {NU_POLUCHAETSYA_CHANCE} = 30"
+        self.cur.execute(f"UPDATE chats SET {ANSWER_CHANCE} = 30, {HUY_CHANCE} = 30, {LADNO_CHANCE} = 30, "
+                         f"{NU_POLUCHAETSYA_CHANCE} = 30"
                          f" WHERE id == {abs(peer_id)};")

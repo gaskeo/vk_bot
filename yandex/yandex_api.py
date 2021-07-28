@@ -3,7 +3,7 @@ import requests
 from constants import SYNONYMS_API_ADDRESS
 
 
-def get_synonyms(text, dictionary="ru") -> dict:
+def get_synonyms_yandex(text, dictionary="ru") -> dict:
     """
     get synonyms from yandex api
     :param text: text need synonyms

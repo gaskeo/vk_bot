@@ -9,11 +9,11 @@ def is_admin(self, _, message, peer_id):
                 admin_url = message.split()[-1]
                 admin_id = get_user_id_via_url(admin_url, self.vk)
                 if admin_id:
-                    is_admin = self.redis.get_admin(admin_id)
-                    if is_admin:
+                    admin = self.redis.get_admin(admin_id)
+                    if admin:
                         name = get_user_name(int(admin_id), self.vk)
                         send_message(f"@id{admin_id} ({name}) - Администратор уровня "
-                                     f"{is_admin}",
+                                     f"{admin}",
                                      self.vk, peer_id=peer_id)
                     else:
                         send_message(f"@id{admin_id} - не администратор", self.vk,

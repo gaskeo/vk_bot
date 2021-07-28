@@ -6,7 +6,7 @@ import string
 from io import BytesIO
 import cv2
 
-from utils import send_message
+from utils import send_message, find_image
 
 
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
@@ -94,7 +94,7 @@ def create_dab(self, event, _, peer_id):
         create_rect()
         return name
 
-    photos = self.find_image(event)
+    photos = find_image(event)
     if len(photos) == 2:
         image, second_image = photos
     elif len(photos) == 1:

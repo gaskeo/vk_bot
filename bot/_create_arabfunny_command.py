@@ -6,7 +6,7 @@ import string
 from io import BytesIO
 
 from constants import TEXT_COLORS, FONTS_PATH, ARABIC_FONT
-from utils import send_message, get_random_funny_wiki_page, get_only_symbols
+from utils import send_message, get_random_funny_wiki_page, get_only_symbols, find_image
 
 
 def create_arabfunny(self, event, message, peer_id):
@@ -69,7 +69,7 @@ def create_arabfunny(self, event, message, peer_id):
         return name, text_ar
 
     color = 0
-    photos = self.find_image(event)
+    photos = find_image(event)
     if photos:
         if len(message.split()) > 1:
             color = message.split()[-1]

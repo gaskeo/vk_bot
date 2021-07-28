@@ -30,10 +30,11 @@ def connect(self, _, message, peer_id):
     keyboard = json.loads(KEYBOARDS)["connect_keyboard"]
     keyboard["buttons"][0][0]["action"]["payload"]["peer_id"] = peer_id
     keyboard["buttons"][0][0]["action"]["payload"]["token"] = token
-
+    extra_text = "(вы уже подключены к другой беседе, по нажатию кнопки эта связь разорвется)" \
+        if self.redis.get_connected_chat(connect_peer_id) else ""
     send_message(
         f'беседа "{title}" хочет связаться с вами, для подтверждения админы нажмите на кнопочку. '
-        f'{"(вы уже подключены к другой беседе, по нажатию кнопки эта связь разорвется)" if self.redis.get_connected_chat(connect_peer_id) else ""}',
+        f'{extra_text}',
         self.vk, int(connect_peer_id), keyboard=keyboard
     )
 

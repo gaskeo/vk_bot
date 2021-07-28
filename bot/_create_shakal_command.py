@@ -5,7 +5,7 @@ import urllib.request
 import string
 from io import BytesIO
 
-from utils import send_message
+from utils import send_message, find_image
 
 
 def create_shakal(self, event, message, peer_id):
@@ -35,7 +35,7 @@ def create_shakal(self, event, message, peer_id):
         image_sh.save(name)
         return name
 
-    photos = self.find_image(event)
+    photos = find_image(event)
     if photos:
         factor = 5
         if len(message.split()) > 1:

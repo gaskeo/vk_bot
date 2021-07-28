@@ -1,4 +1,6 @@
-from vk_api.bot_longpoll import VkBotMessageEvent, VkBotEventType
+from vk_api.bot_longpoll import VkBotMessageEvent
+
+from constants import GROUP_ID
 from utils import send_message
 
 
