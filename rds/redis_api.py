@@ -211,3 +211,5 @@ class RedisApi:
             return peer_id.decode("UTF-8")
         return None
 
+    def disconnect_chats(self, peer_id1: str, peer_id2: str):
+        self.redis.hdel("connects", peer_id1, peer_id2)

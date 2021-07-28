@@ -85,6 +85,7 @@ class Bot:
             "/clear": self.clear_chat_speaker,
             "/update": self.update_chat,
             "/dt": self.delete_this,
+            "/disconnect": self.disconnect,
             "/accept_connect": self.accept_connect,
             # "/dsw": self.clear_similarity_words,
             # for bot admins only
@@ -962,10 +963,8 @@ class Bot:
         token = data[-1]
         connect_peer_id = self.redis.get_peer_id_by_token(token)
         if connect_peer_id == str(peer_id):
-            print(1)
             send_message("ты че это та же беседа...", self.vk, peer_id)
             return
-        print(peer_id)
         data = self.vk.messages.getConversationsById(peer_ids=str(peer_id)).get("items", [dict()])
         if not data:
             title = "тут должно быть название беседы, но не получилось, странная беседа..."
@@ -991,13 +990,9 @@ class Bot:
                       })
 
     def accept_connect(self, event, _, peer_id):
-        print(123)
         if peer_id > MIN_CHAT_PEER_ID:
-            print(1)
             admins = get_admins_in_chat(peer_id, self.vk)
-            print(0)
             if event.obj["user_id"] in admins:
-                print(2)
                 self.redis.connect(peer_id, event.obj["payload"]["peer_id"])
                 send_message("вы подключились", self.vk, peer_id)
                 send_message("вы подключились", self.vk, event.obj["payload"]["peer_id"])
@@ -1013,6 +1008,18 @@ class Bot:
                 send_message("пустое сообщение", self.vk, peer_id)
         else:
             send_message("вы ни к кому не подключены", self.vk, peer_id)
+
+    def disconnect(self, event, _, peer_id):
+        if event.obj["message"]["from_id"] in get_admins_in_chat(peer_id, self.vk):
+            other_peer_id = self.redis.get_connected_chat(str(peer_id))
+            if not other_peer_id:
+                send_message("вы ни к кому не подключены...", self.vk, peer_id)
+                return
+            self.redis.disconnect_chats(str(peer_id), other_peer_id)
+            send_message("вы отключились", self.vk, peer_id)
+            send_message("от вас отключились", self.vk, int(other_peer_id))
+            return
+        send_message("только админ может это делать", self.vk, peer_id)
 
     def test(self, _, __, ___):
         ...

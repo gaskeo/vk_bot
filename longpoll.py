@@ -7,5 +7,5 @@ class MyVkLongPoll(VkBotLongPoll):
             try:
                 for event in self.check():
                     yield event
-            except Exception as e:
-                print('error', e)
+            except Exception:
+                ...
