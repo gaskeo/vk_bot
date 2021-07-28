@@ -956,12 +956,19 @@ class Bot:
         send_message(f"/connect {token}", self.vk, peer_id)
 
     def connect(self, _, message, peer_id):
+        if self.redis.get_connected_chat(str(peer_id)):
+            send_message("вы уже подключены к другой беседе, для начала админ должен написать /disconnect, "
+                         "чтобы отключиться", self.vk, peer_id)
+            return
         data = message.split()
         if len(data) != 2:
             send_message("неправильный формат", self.vk, peer_id)
             return
         token = data[-1]
         connect_peer_id = self.redis.get_peer_id_by_token(token)
+        if not connect_peer_id:
+            send_message("не могу найти такой токен, возможно его уже использовали, попросите сделать новый", self.vk,
+                         peer_id)
         if connect_peer_id == str(peer_id):
             send_message("ты че это та же беседа...", self.vk, peer_id)
             return
@@ -970,30 +977,25 @@ class Bot:
             title = "тут должно быть название беседы, но не получилось, странная беседа..."
         else:
             title = data[0].get("chat_settings", {}).get("title")
-        send_message(f'беседа "{title}" хочет связаться с вами, для подтверждения ответьте '
-                     f'на это сообщение сообщением /accept (прямо ответить, типа как в вк можно ответить),'
-                     f' в ином случае просто проигнорируйте',
-                     self.vk, int(connect_peer_id), keyboard=
-                     {"inline": True,
-                      "buttons": [
-                          [
-                              {
-                                  "action": {
-                                      "type": "callback",
-                                      "label": "присоединить",
-                                      "payload": {"command": "/accept_connect", "peer_id": peer_id},
-                                  },
-                                  "color": "positive"
-                              }
-                          ]
-                      ]
-                      })
+
+        keyboard = json.loads(KEYBOARDS)["connect_keyboard"]
+        keyboard["buttons"][0][0]["action"]["payload"]["peer_id"] = peer_id
+        keyboard["buttons"][0][0]["action"]["payload"]["token"] = token
+
+        send_message(
+            f'беседа "{title}" хочет связаться с вами, для подтверждения админы нажмите на кнопочку. '
+            f'{"(вы уже подключенны к другой беседе, по нажатию кнопки эта связь разорвется)" if self.redis.get_connected_chat(connect_peer_id) else ""}',
+            self.vk, int(connect_peer_id), keyboard=keyboard
+            )
+
+        send_message("запрос в другую беседу отправлен", self.vk, peer_id)
 
     def accept_connect(self, event, _, peer_id):
         if peer_id > MIN_CHAT_PEER_ID:
             admins = get_admins_in_chat(peer_id, self.vk)
             if event.obj["user_id"] in admins:
                 self.redis.connect(peer_id, event.obj["payload"]["peer_id"])
+                self.redis.delete_token(event.obj["payload"]["token"])
                 send_message("вы подключились", self.vk, peer_id)
                 send_message("вы подключились", self.vk, event.obj["payload"]["peer_id"])
 

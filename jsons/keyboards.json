@@ -70,5 +70,21 @@
       ]
     ],
     "inline": true
-  }
+  },
+  "connect_keyboard": {"inline": true,
+             "buttons": [
+                 [
+                     {
+                         "action": {
+                             "type": "callback",
+                             "label": "присоединить",
+                             "payload": {
+                                 "command": "/accept_connect"
+                             }
+                         },
+                         "color": "positive"
+                     }
+                 ]
+             ]
+             }
 }
