@@ -191,11 +191,9 @@ class Bot:
 
             command = "" if len(message.split()) < 1 else message.split()[0].lower()
         else:
-            print(event)
             command = event.obj.payload["command"]
             peer_id = event.obj["peer_id"]
             message = ""
-            print(command, peer_id)
         c: callable = self.commands.get(command, self.commands.get("other"))
         c(event, message, peer_id)
 
