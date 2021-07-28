@@ -28,6 +28,8 @@ def main() -> None:
     upload = VkUpload(vk_session)
     vk = vk_session.get_api()
     rds = RedisApi(password=REDIS_PASSWORD)
+    if not rds.redis.ping():
+        raise ConnectionError
     bot = Bot(vk, rds, upload)
     while True:
         for event in long_poll.listen():
@@ -44,8 +46,5 @@ def main() -> None:
 
 
 if __name__ == '__main__':
-    while True:
-        try:
-            main()
-        except Exception as e:
-            exception_checker()
+    main()
+
