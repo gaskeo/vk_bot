@@ -114,16 +114,15 @@ def create_dab(self, event, _, peer_id):
             f.write(bytes(second_image.getbuffer()))
         second_image = dab_name
     else:
-        second_image = "photos/examples/dab.jpg"
+        second_image = "photos_examples/dab.png"
     url = max(image["photo"]["sizes"], key=lambda x: x["width"])["url"]
     img = urllib.request.urlopen(url).read()
     bytes_img = BytesIO(img)
     photo_bytes = create_dab_function(bytes_img)
-    photo = self.upload.photo_messages(photos=[photo_bytes],
-                                       peer_id=peer_id)
+    photo = self.upload.photo_messages(photos=[photo_bytes], peer_id=peer_id)
     vk_photo_id = \
         f"photo{photo[0]['owner_id']}_{photo[0]['id']}_{photo[0]['access_key']}"
     send_message("", self.vk, peer_id=peer_id, attachments=vk_photo_id)
     os.remove(photo_bytes)
-    if second_image != "photos/examples/dab.jpg":
+    if second_image != "photos_examples/dab.png":
         os.remove(second_image)
