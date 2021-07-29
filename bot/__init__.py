@@ -47,6 +47,7 @@ class Bot:
             "/cd": self.create_dab,
             "/ut": self.get_uptime,
             "/a": self.alive,
+            "/yesno": self.answer_yes_no,
             # in chats only
             "/gac": self.get_chance,  # get answer chance
             "/ghc": self.get_chance,  # get huy chance
@@ -197,6 +198,7 @@ class Bot:
     from ._send_other_chat_command import send_other_chat
     from ._disconnect_command import disconnect
     from ._test_command import test
+    from ._ans_yes_no_command import answer_yes_no
 
 
 
