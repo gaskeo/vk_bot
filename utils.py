@@ -9,8 +9,7 @@ import logging
 from transliterate import translit
 import sys
 
-from sql.sql_api import Sqlite
-from constants import CHIEF_ADMIN, LADNO_CHANCE, HUY_CHANCE, NU_POLUCHAETSYA_CHANCE, \
+from constants import CHIEF_ADMIN, HUY_CHANCE, \
     RUSSIAN_SYMBOLS, RUSSIAN_VOWEL, MAIN_POS, ANSWER_CHANCE
 
 wiki_wiki = wikipediaapi.Wikipedia('ar')
@@ -187,58 +186,6 @@ def generate_huy_word(data: dict) -> str:
             return "Ху" + word[2:].lower()
     else:
         return ""
-
-
-def answer_or_not(chat_id: int, sqlite) -> bool:
-    """
-    choose answer on message or not
-    :param chat_id: id of chat for get weights
-    :param sqlite: Sqlite object from sql_api
-    :return: True if answer else False
-
-    """
-    answer_chance = sqlite(Sqlite.get_chances, (chat_id,),
-                           {"params": {"answer_chance": True}})["answer_chance"]
-    if answer_chance:
-        return random.choices((True, False), weights=(answer_chance, 100 - answer_chance))[0]
-    return False
-
-
-def get_random_answer(chat_id: int, message: str, sqlite=None, weights: dict = None) \
-        -> str:
-    """
-    get random answer template name
-    :param chat_id: id of chat for get weights
-    :param message:
-    :param sqlite: Sqlite object from sql_api
-    :param weights: weights of answers. if refer, sqlite don't need
-    :return: random answer or "" if can't answer
-    """
-    params = {LADNO_CHANCE: True}
-    if generate_huy_word(get_main_pos(message)):
-        params[HUY_CHANCE] = True
-    else:
-        params[HUY_CHANCE] = False
-    if answer_nu_poluchaetsya_or_not(get_main_pos(message)):
-        params[NU_POLUCHAETSYA_CHANCE] = True
-    else:
-        params[NU_POLUCHAETSYA_CHANCE] = False
-    if not weights and sqlite:
-        weights = sqlite(Sqlite.get_chances, (chat_id,), {"params": params})
-    if weights.get(HUY_CHANCE, 1) == 0 or not params[HUY_CHANCE]:
-        if weights.get(HUY_CHANCE, 1) == 0:
-            weights.pop(HUY_CHANCE)
-    if weights.get(NU_POLUCHAETSYA_CHANCE, 1) == 0 or not params[NU_POLUCHAETSYA_CHANCE]:
-        if weights.get(NU_POLUCHAETSYA_CHANCE, 1) == 0:
-            weights.pop(NU_POLUCHAETSYA_CHANCE)
-    if weights.get(LADNO_CHANCE, 1) == 0 or not params[LADNO_CHANCE]:
-        if weights.get(LADNO_CHANCE, 1) == 0:
-            weights.pop(LADNO_CHANCE)
-    if weights:
-        answer = random.choices(tuple(weights.keys()), weights=tuple(weights.values()))
-        if answer:
-            return answer[0]
-    return ""
 
 
 def get_admins_in_chat(peer_id, vk) -> list:

@@ -1,7 +1,6 @@
 from PIL import Image, ImageDraw, ImageFont
 import random
 import urllib.request
-import os
 import string
 from io import BytesIO
 
@@ -78,11 +77,6 @@ def create_arabfunny(self, event, message, peer_id):
             img = urllib.request.urlopen(url).read()
             bytes_img = BytesIO(img)
             name_final_file, text = create_arabfunny_function(bytes_img, color)
-            photo = self.upload.photo_messages(photos=[name_final_file],
-                                               peer_id=peer_id)
-            vk_photo_id = \
-                f"photo{photo[0]['owner_id']}_{photo[0]['id']}_{photo[0]['access_key']}"
-            send_message(text, self.vk, peer_id=peer_id, attachments=vk_photo_id)
-            os.remove(name_final_file)
+            self.photo_work(name_final_file, peer_id)
     else:
         send_message("Прикрепи фото", self.vk, peer_id=peer_id)

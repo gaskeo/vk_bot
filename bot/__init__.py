@@ -2,6 +2,7 @@ import logging
 
 import threading
 from queue import Queue
+import os
 
 import time
 from transliterate import translit
@@ -13,10 +14,7 @@ from rds.redis_api import RedisApi
 from speaker import Speaker
 
 from constants import MY_NAMES, GROUP_ID
-from utils import \
-    exception_checker, \
-    send_message, \
-    StopEvent
+from utils import send_message, StopEvent
 
 logger = logging.getLogger("main_logger")
 logging.basicConfig(filename="vk_bot.log", filemode="a",
@@ -37,57 +35,57 @@ class Bot:
         self.speaker = Speaker(redis)
         self.commands = {
             # commands for all users
-            "/": self.redo_command,
-            "/help": self.show_help,
-            "/gs": self.get_synonyms,  # get synonyms
-            "/cp": self.create_postirony,  # create postirony
-            "/cs": self.create_shakal,  # create shakal
-            "/cg": self.create_grain,  # create grain
-            "/ca": self.create_arabfunny,  # create arabfunny
-            "/cd": self.create_dab,
-            "/ut": self.get_uptime,
-            "/a": self.alive,
-            "/yesno": self.answer_yes_no,
+            "/": Bot.redo_command,
+            "/help": Bot.show_help,
+            "/gs": Bot.get_synonyms,  # get synonyms
+            "/cp": Bot.create_postirony,  # create postirony
+            "/cs": Bot.create_shakal,  # create shakal
+            "/cg": Bot.create_grain,  # create grain
+            "/ca": Bot.create_arabfunny,  # create arabfunny
+            "/cd": Bot.create_dab,
+            "/ut": Bot.get_uptime,
+            "/a": Bot.alive,
+            "/yesno": Bot.answer_yes_no,
             # in chats only
-            "/gac": self.get_chance,  # get answer chance
-            "/ghc": self.get_chance,  # get huy chance
-            "/gc": self.get_count_words,
-            # "/gsw": self.get_similarity_words,
-            "/g": self.generate_speak,
-            "/at": self.get_words_after_that,
-            "/peer": self.get_peer,
-            "/generate": self.generate_token,
-            "/connect": self.connect,
-            "/send": self.send_other_chat,
+            "/gac": Bot.get_chance,  # get answer chance
+            "/ghc": Bot.get_chance,  # get huy chance
+            "/gc": Bot.get_count_words,
+            # "/gsw": Bot.get_similarity_words,
+            "/g": Bot.generate_speak,
+            "/at": Bot.get_words_after_that,
+            "/peer": Bot.get_peer,
+            "/generate": Bot.generate_token,
+            "/connect": Bot.connect,
+            "/send": Bot.send_other_chat,
             # for chat admins only
-            "/tac": self.toggle_access_chat_settings,  # toggle access
-            "/ac": self.set_chance,  # set answer chance
-            "/hc": self.set_chance,  # set huy chance
-            "/s": self.show_settings,  # settings
-            "/clear": self.clear_chat_speaker,
-            "/update": self.update_chat,
-            "/dt": self.delete_this,
-            "/disconnect": self.disconnect,
-            "/accept_connect": self.accept_connect,
-            # "/dsw": self.clear_similarity_words,
+            "/tac": Bot.toggle_access_chat_settings,  # toggle access
+            "/ac": Bot.set_chance,  # set answer chance
+            "/hc": Bot.set_chance,  # set huy chance
+            "/s": Bot.show_settings,  # settings
+            "/clear": Bot.clear_chat_speaker,
+            "/update": Bot.update_chat,
+            "/dt": Bot.delete_this,
+            "/disconnect": Bot.disconnect,
+            "/accept_connect": Bot.accept_connect,
+            # "/dsw": Bot.clear_similarity_words,
             # for bot admins only
-            "/adm": self.admin_help,  # help admins
-            "/sa": self.set_admin,  # set admin
-            "/ga": self.get_admin,  # get admin
-            "/ia": self.is_admin,  # is admin
-            "/bb": self.bye_bye,  # exit program
-            "/th": self.alive_threads,
+            "/adm": Bot.admin_help,  # help admins
+            "/sa": Bot.set_admin,  # set admin
+            "/ga": Bot.get_admin,  # get admin
+            "/ia": Bot.is_admin,  # is admin
+            "/bb": Bot.bye_bye,  # exit program
+            "/th": Bot.alive_threads,
             # experimental
             "/csg": None,  # create gif shakal
             "/cag": None,  # create gif arabfunny
             # other
-            "other": self.send_answer,  # answer on simple message
+            "other": Bot.send_answer,  # answer on simple message
             # archive
-            "/glc": self.archived,  # get ladno chance
-            "/gnc": self.archived,  # get nu... chance
-            "/lc": self.archived,  # set ladno chance
-            "/nc": self.archived,  # set nu... chance
-            "/test": self.test
+            "/glc": Bot.archived,  # get ladno chance
+            "/gnc": Bot.archived,  # get nu... chance
+            "/lc": Bot.archived,  # set ladno chance
+            "/nc": Bot.archived,  # set nu... chance
+            "/test": Bot.test
         }
         self.threads = {}
         self.n_threads = n_threads
@@ -123,15 +121,12 @@ class Bot:
 
     def check_event_type(self):
         while True:
-            try:
-                for event in iter(self.events.get, None):
-                    self.threads[threading.currentThread().name] = 0
-                    self.check_stop(event)
-                    if event.type in (VkBotEventType.MESSAGE_NEW, VkBotEventType.MESSAGE_EVENT):
-                        self.message_checker(event)
-                    self.threads[threading.currentThread().name] = 1
-            except Exception:
-                exception_checker()
+            for event in iter(self.events.get, None):
+                self.threads[threading.currentThread().name] = 0
+                self.check_stop(event)
+                if event.type in (VkBotEventType.MESSAGE_NEW, VkBotEventType.MESSAGE_EVENT):
+                    self.message_checker(event)
+                self.threads[threading.currentThread().name] = 1
 
     def message_checker(self, event: VkBotMessageEvent):
         if event.type == VkBotEventType.MESSAGE_NEW:
@@ -158,10 +153,19 @@ class Bot:
             peer_id = event.obj["peer_id"]
             message = ""
         c = self.commands.get(command, self.commands.get("other"))
-        c(event, message, peer_id)
+        c(self, event, message, peer_id)
 
     def add_event_in_queue(self, event):
         self.events.put(event)
+
+    def photo_work(self, photo_bytes, peer_id, second_image=None):
+        photo = self.upload.photo_messages(photos=[photo_bytes], peer_id=peer_id)
+        vk_photo_id = \
+            f"photo{photo[0]['owner_id']}_{photo[0]['id']}_{photo[0]['access_key']}"
+        send_message("", self.vk, peer_id=peer_id, attachments=vk_photo_id)
+        os.remove(photo_bytes)
+        if second_image and second_image != "photos_examples/dab.png":
+            os.remove(second_image)
 
     from ._redo_command import redo_command
     from ._help_command import show_help
