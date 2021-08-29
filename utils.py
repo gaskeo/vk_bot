@@ -196,9 +196,12 @@ def get_admins_in_chat(peer_id, vk) -> list:
     :return: list of admins
 
     """
-    members = \
-        vk.messages.getConversationMembers(
-            peer_id=peer_id)["items"]
+    try:
+        members = \
+            vk.messages.getConversationMembers(
+                peer_id=peer_id)["items"]
+    except vk_api.exceptions.ApiError:
+        return [int(CHIEF_ADMIN)]
     admins = map(lambda y: y["member_id"],
                  tuple(filter(lambda x: x.get("is_admin", False), members)))
     admins = list(admins)

@@ -152,8 +152,11 @@ class Bot:
             command = event.obj.payload["command"]
             peer_id = event.obj["peer_id"]
             message = ""
-        c = self.commands.get(command, self.commands.get("other"))
-        c(self, event, message, peer_id)
+        try:
+            c = self.commands.get(command, self.commands.get("other"))
+            c(self, event, message, peer_id)
+        except Exception as e:
+            ...
 
     def add_event_in_queue(self, event):
         self.events.put(event)
