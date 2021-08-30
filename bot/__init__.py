@@ -57,6 +57,7 @@ class Bot:
             "/generate": Bot.generate_token,
             "/connect": Bot.connect,
             "/send": Bot.send_other_chat,
+            "/lox": Bot.lox_command,
             # for chat admins only
             "/tac": Bot.toggle_access_chat_settings,  # toggle access
             "/ac": Bot.set_chance,  # set answer chance
@@ -206,6 +207,7 @@ class Bot:
     from ._disconnect_command import disconnect
     from ._test_command import test
     from ._ans_yes_no_command import answer_yes_no
+    from ._lox_command import lox_command
 
 
 

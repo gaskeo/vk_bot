@@ -265,6 +265,15 @@ def find_image(event):
     return []
 
 
+def get_random_user_from_conversation(vk: vk_api.vk_api.VkApiMethod, peer_id):
+    try:
+        members = tuple(filter(lambda u: u["member_id"] > 0, vk.messages.getConversationMembers(peer_id=int(peer_id))["items"]))
+        return random.choice(members)['member_id']
+    except vk_api.exceptions.ApiError as e:
+        ...
+    return -1
+
+
 class StopEvent:
     ...
 
