@@ -139,14 +139,20 @@ class RedisApi:
             self.redis.sadd(f"{peer_id}:_all_", text[-1])
             self.redis.hset(f"{peer_id}:{text[-1]}", "///end", 1)
 
-    def generate_text(self, peer_id: str):
+    def generate_text(self, peer_id: str, word: str = None):
         if int(peer_id) <= MIN_CHAT_PEER_ID:
             return
         self.check_and_add_peer_id(peer_id)
-        word = self.redis.srandmember(f"{peer_id}:_start_")
-        if not word:
-            return ""
-        start = self.decode_bytes(word)
+        if word:
+            if self.redis.exists(f"{peer_id}:{word}"):
+                start = word
+            else:
+                return "нет такого слова"
+        else:
+            start_word = self.redis.srandmember(f"{peer_id}:_start_")
+            if not start_word:
+                return ""
+            start = self.decode_bytes(start_word)
         sent = [start]
         n_max = random.randint(4, 20)
         n = 0

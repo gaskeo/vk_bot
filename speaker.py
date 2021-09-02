@@ -25,8 +25,8 @@ class Speaker:
         words = self.format_text(text)
         self.redis.add_text(str(peer_id), words)
 
-    def generate_text(self, peer_id):
-        return self.redis.generate_text(str(peer_id))
+    def generate_text(self, peer_id, word):
+        return self.redis.generate_text(str(peer_id), word)
 
     def clear_chat(self, peer_id):
         self.redis.clear_chat(str(peer_id))
