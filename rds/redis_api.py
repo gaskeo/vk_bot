@@ -11,6 +11,7 @@ class RedisApi:
     #       `-> peer_id -> level
     # peer_id --> xy_chance -> chance;
     #         `-> tac -> who (hash) (int)
+    #         `-> user_id -> count (hash) (int)
     # peer_id:word --> word_after -> chance (hash) (int)
     #              `-> word_after -> chance
     # peer_id:_all_ -> all_words (set)
@@ -50,7 +51,7 @@ class RedisApi:
         if int(peer_id) > MIN_CHAT_PEER_ID:
             self.redis.hset(peer_id, HUY_CHANCE, 30)  # huy chance
             self.redis.hset(peer_id, WHO_CAN_TOGGLE_CHANCES_TEXT, ADMINS_ONLY)
-            self.redis.hset(peer_id, ANSWER_CHANCE, 30)  # huy chance
+            self.redis.hset(peer_id, ANSWER_CHANCE, 30)  # answer chance
 
         else:
             self.redis.hset(ADMIN_LEVELS, peer_id, 0)   # admin level: 0 - not admin
@@ -95,6 +96,28 @@ class RedisApi:
             who = 1 - int(self.redis.hget(peer_id, WHO_CAN_TOGGLE_CHANCES_TEXT))
             self.redis.hset(peer_id, WHO_CAN_TOGGLE_CHANCES_TEXT, who)
             return who
+
+    def increment_count_messages(self, peer_id: str, user_id: str):
+        if int(peer_id) > MIN_CHAT_PEER_ID:
+            self.redis.hincrby(peer_id, user_id)
+
+    def get_count_messages(self, peer_id: str, user_id: str):
+        if int(peer_id) > MIN_CHAT_PEER_ID:
+            count = self.redis.hget(peer_id, user_id)
+            return int(count.decode("UTF-8")) if count else 0
+
+    def get_all_users_count_messages(self, peer_id: str):
+        if int(peer_id) > MIN_CHAT_PEER_ID:
+            all_users: dict = self.redis.hgetall(peer_id)
+            all_users.pop(b"huy_chance")
+            all_users.pop(b"who_can")
+            all_users.pop(b"answer_chance")
+            all_users_format = dict()
+
+            for user, count in all_users.items():
+                all_users_format[int(user.decode("UTF-8"))] = int(count.decode("UTF-8"))
+
+            return all_users_format
 
     def set_admin(self, peer_id, level):
         self.check_and_add_peer_id(peer_id)

@@ -58,6 +58,8 @@ class Bot:
             "/connect": Bot.connect,
             "/send": Bot.send_other_chat,
             "/lox": Bot.lox_command,
+            "/mc": Bot.get_my_count,
+            "/gt": Bot.get_top,
             # for chat admins only
             "/tac": Bot.toggle_access_chat_settings,  # toggle access
             "/ac": Bot.set_chance,  # set answer chance
@@ -148,6 +150,8 @@ class Bot:
                     message = message.replace(name, '')
             message = message.lstrip().rstrip()
 
+            self.add_message(event, message)
+
             command = "" if len(message.split()) < 1 else message.split()[0].lower()
         else:
             command = event.obj.payload["command"]
@@ -170,6 +174,10 @@ class Bot:
         os.remove(photo_bytes)
         if second_image and second_image != "photos_examples/dab.png":
             os.remove(second_image)
+
+    def add_message(self, event, message):
+        if len(message) > 10:
+            self.redis.increment_count_messages(event.obj.message["peer_id"], event.obj.message["from_id"])
 
     from ._redo_command import redo_command
     from ._help_command import show_help
@@ -208,6 +216,8 @@ class Bot:
     from ._test_command import test
     from ._ans_yes_no_command import answer_yes_no
     from ._lox_command import lox_command
+    from ._get_my_count import get_my_count
+    from ._get_top import get_top
 
 
 
