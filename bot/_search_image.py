@@ -3,6 +3,7 @@ import random
 import string
 import re
 from utils import send_message
+import bs4
 
 search_in_text = "im0-tub-ru.yandex.net/i"
 
@@ -17,7 +18,7 @@ def search_image(self, _, message, peer_id):
     site_text = site_text[random.choice([u.start() for u in re.finditer(f"(?={search_in_text})", site_text)]):]
     site_text = site_text[:site_text.find('"')]
 
-    image: Response = self.session.get("https://" + site_text)
+    image: Response = self.session.get("https://" + site_text, params={"n": 13, "exp": 1})
     file_format = image.headers["Content-Type"].replace("image/", "")
 
     name = "photos/{}.{}" \

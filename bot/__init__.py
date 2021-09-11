@@ -175,7 +175,7 @@ class Bot:
         photo = self.upload.photo_messages(photos=[photo_bytes], peer_id=peer_id)
         vk_photo_id = \
             f"photo{photo[0]['owner_id']}_{photo[0]['id']}_{photo[0]['access_key']}"
-        send_message("", self.vk, peer_id=peer_id, attachments=vk_photo_id)
+        send_message("123", self.vk, peer_id=peer_id, attachments=vk_photo_id)
         os.remove(photo_bytes)
         if second_image and second_image != "photos_examples/dab.png":
             os.remove(second_image)
