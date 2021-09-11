@@ -3,7 +3,6 @@ import random
 import string
 import re
 from utils import send_message
-import bs4
 
 search_in_text = "im0-tub-ru.yandex.net/i"
 
