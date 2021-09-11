@@ -45,6 +45,7 @@ class Bot:
             "/cd": Bot.create_dab,
             "/ut": Bot.get_uptime,
             "/a": Bot.alive,
+            "/ck": Bot.clear_keyboard,
             "/yesno": Bot.answer_yes_no,
             # in chats only
             "/gac": Bot.get_chance,  # get answer chance
@@ -220,6 +221,6 @@ class Bot:
     from ._get_my_count import get_my_count
     from ._get_top import get_top
     from ._send_in_peer import send_in_peer
-
+    from ._clear_keyboard import clear_keyboard
 
 
