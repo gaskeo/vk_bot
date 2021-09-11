@@ -3,6 +3,7 @@ import logging
 import threading
 from queue import Queue
 import os
+from requests import session
 
 import time
 from transliterate import translit
@@ -33,6 +34,7 @@ class Bot:
         self.events = Queue()
         self.uptime = time.time()
         self.speaker = Speaker(redis)
+        self.session = session()
         self.commands = {
             # commands for all users
             "/": Bot.redo_command,
@@ -51,6 +53,7 @@ class Bot:
             "/gac": Bot.get_chance,  # get answer chance
             "/ghc": Bot.get_chance,  # get huy chance
             "/gc": Bot.get_count_words,
+            "/si": Bot.search_image,
             # "/gsw": Bot.get_similarity_words,
             "/g": Bot.generate_speak,
             "/at": Bot.get_words_after_that,
@@ -222,5 +225,6 @@ class Bot:
     from ._get_top import get_top
     from ._send_in_peer import send_in_peer
     from ._clear_keyboard import clear_keyboard
+    from ._search_image import search_image
 
 

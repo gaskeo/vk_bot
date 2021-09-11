@@ -20,7 +20,7 @@ def main() -> None:
     main cycle of program
 
     """
-    for_everyone = True
+    for_everyone = 0
     vk_session: VkApi = VkApi(
         token=TOKEN)
     long_poll = MyVkLongPoll(vk_session, GROUP_ID)
