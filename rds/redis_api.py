@@ -245,3 +245,9 @@ class RedisApi:
 
     def disconnect_chats(self, peer_id1: str, peer_id2: str):
         self.redis.hdel("connects", peer_id1, peer_id2)
+
+    def exist_key(self, key: str):
+        exist = self.redis.exists(key)
+        if exist:
+            return True
+        return False

@@ -78,6 +78,7 @@ class Bot:
             "/ia": Bot.is_admin,  # is admin
             "/bb": Bot.bye_bye,  # exit program
             "/th": Bot.alive_threads,
+            "/sp": Bot.send_in_peer,
             # experimental
             "/csg": None,  # create gif shakal
             "/cag": None,  # create gif arabfunny
@@ -218,6 +219,7 @@ class Bot:
     from ._lox_command import lox_command
     from ._get_my_count import get_my_count
     from ._get_top import get_top
+    from ._send_in_peer import send_in_peer
 
 
 
