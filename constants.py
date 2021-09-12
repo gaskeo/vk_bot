@@ -29,6 +29,11 @@ with open(os.getenv("admin_help"), encoding="utf-8") as help_admin_text:
 with open(os.getenv("keyboards"), encoding="utf-8") as keyboards:
     KEYBOARDS = keyboards.read()
 
+IMAGE_HEADERS = {
+    "x-rapidapi-host": os.getenv("x-rapidapi-host"),
+    "x-rapidapi-key": os.getenv("x-rapidapi-key")
+}
+
 ANSWER_CHANCE = "answer_chance"
 LADNO_CHANCE = "ladno_chance"
 HUY_CHANCE = "huy_chance"

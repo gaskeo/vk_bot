@@ -3,7 +3,6 @@ import logging
 import threading
 from queue import Queue
 import os
-from requests import session
 
 import time
 from transliterate import translit
@@ -16,6 +15,7 @@ from speaker import Speaker
 
 from constants import MY_NAMES, GROUP_ID
 from utils import send_message, StopEvent
+from image_api import ImageSearcher
 
 logger = logging.getLogger("main_logger")
 logging.basicConfig(filename="vk_bot.log", filemode="a",
@@ -41,8 +41,8 @@ class Bot:
         self.events = Queue()
         self.uptime = time.time()
         self.speaker = Speaker(redis)
-        self.session = session()
-        self.session.headers = HEADERS
+        self.image_searcher = ImageSearcher()
+
         self.commands = {
             # commands for all users
             "/": Bot.redo_command,

@@ -1,10 +1,13 @@
-from requests.models import Response
+from requests import get
 import random
 import string
-import re
-from utils import send_message
 
-search_in_text = "im0-tub-ru.yandex.net/i"
+from PIL import Image
+import io
+from transliterate import translit
+
+from utils import send_message
+from urllib import parse
 
 
 def search_image(self, _, message, peer_id):
@@ -12,22 +15,38 @@ def search_image(self, _, message, peer_id):
     if not text:
         send_message("напишите текст", self.vk, peer_id)
         return
+    link = ""
+    image = ""
+    ex = ""
+    images: list = self.image_searcher.find_image(translit(text, "ru", reversed=True))
+    if not images:
+        send_message("ничего не нашлось(", self.vk, peer_id)
+        return
 
-    site_text: str = self.session.get("https://yandex.ru/images/search", params={"text": text, "from": "tabbar"}).text
-    site_text = site_text[random.choice([u.start() for u in re.finditer(f"(?={search_in_text})", site_text)]):]
-    site_text = site_text[:site_text.find('"')]
+    total_images = len(images)
+    for _ in range(total_images):
+        link = random.choice(images)
+        images.pop(images.index(link))
+        try:
+            response = get(link)
+        except Exception as e:
+            continue
+        try:
+            Image.open(io.BytesIO(response.content))
+        except Exception as e:
+            continue
 
-    image: Response = self.session.get("https://" + site_text, params={"n": 13, "exp": 1})
-    file_format = image.headers["Content-Type"].replace("image/", "")
-
+        image = response.content
+        link = link
+        ex = parse.urlparse(link).path.split(".")[-1]
+        if "/" in ex:
+            continue
+        break
     name = "photos/{}.{}" \
         .format(''.join(random.choice(string.ascii_uppercase
                                       + string.ascii_lowercase + string.digits) for _ in
-                        range(16)), file_format)
+                        range(16)), ex)
     with open(name, "wb") as file:
-        file.write(image.content)
+        file.write(image)
 
     self.photo_work(name, peer_id)
-
-
-
