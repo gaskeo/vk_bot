@@ -18,9 +18,9 @@ def search_image(self, _, message, peer_id):
     link = ""
     image = ""
     ex = ""
-    images: list = self.image_searcher.find_image(translit(text, "ru", reversed=True))
+    images: list = self.image_searcher.find_image(text)
     if not images:
-        send_message("ничего не нашлось(", self.vk, peer_id)
+        send_message("ничего не нашлось(\nвозмжоно лимит на сегодня исчерпан", self.vk, peer_id)
         return
 
     total_images = len(images)

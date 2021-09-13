@@ -1,28 +1,29 @@
 import requests
-from constants import IMAGE_HEADERS
+from constants import IMAGE_START_PARAMS
 
-
-URL = "https://rapidapi.p.rapidapi.com/api/Search/ImageSearchAPI"
+URL = "https://www.googleapis.com/customsearch/v1"
 
 
 class ImageSearcher:
     def __init__(self):
-        self.headers = IMAGE_HEADERS
+        self.start_params = IMAGE_START_PARAMS
 
     def find_image(self, text):
-        querystring = {"q": text,
-                       "pageNumber": 1,
-                       "pageSize": 10,
-                       "autoCorrect": True,
-                       "safeSearch": True}
+        querystring = {
+            "searchType": "image",
+            "q": text
+        }
+        querystring.update(self.start_params)
         try:
-            response: dict = requests.get(URL, headers=self.headers, params=querystring).json()
+            response = requests.get(URL, params=querystring)
+
+            json = response.json()
         except Exception as e:
             print(e)
             return []
-        if response.get("value", 0):
-            ans = [image["url"] for image in response["value"]]
+        if json.get("items", 0):
+            ans = [image["link"] for image in json["items"]]
             return ans
 
-        print(response)
+        print(json)
         return []
