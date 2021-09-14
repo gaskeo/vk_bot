@@ -47,31 +47,100 @@ class Bot:
             # commands for all users
             "/": Bot.redo_command,
             "/help": Bot.show_help,
+
             "/gs": Bot.get_synonyms,  # get synonyms
+            "/synonyms": Bot.get_synonyms,  # get synonyms
+            "/синонимы": Bot.get_synonyms,  # get synonyms
+
             "/cp": Bot.create_postirony,  # create postirony
+            "/postirony": Bot.create_postirony,  # create postirony
+            "/постирония": Bot.create_postirony,  # create postirony
+
             "/cs": Bot.create_shakal,  # create shakal
+            "/shakal": Bot.create_shakal,  # create shakal
+            "/шакал": Bot.create_shakal,  # create shakal
+
             "/cg": Bot.create_grain,  # create grain
+            "/grain": Bot.create_grain,  # create grain
+            "/шум": Bot.create_grain,  # create grain
+
             "/ca": Bot.create_arabfunny,  # create arabfunny
+            "/arabfunny": Bot.create_arabfunny,  # create arabfunny
+            "/арабфанни": Bot.create_arabfunny,  # create arabfunny
+
             "/cd": Bot.create_dab,
+            "/dab": Bot.create_dab,
+            "/дэб": Bot.create_dab,
+
             "/ut": Bot.get_uptime,
+            "/uptime": Bot.get_uptime,
+            "/время": Bot.get_uptime,
+
             "/a": Bot.alive,
+            "/alive": Bot.alive,
+            "/живой": Bot.alive,
+
             "/ck": Bot.clear_keyboard,
+            "/keyboard": Bot.clear_keyboard,
+            "/клавиатура": Bot.clear_keyboard,
+
+            "/yn": Bot.answer_yes_no,
             "/yesno": Bot.answer_yes_no,
+            "/ответ": Bot.answer_yes_no,
+
             # in chats only
             "/gac": Bot.get_chance,  # get answer chance
+            "/get_answer": Bot.get_chance,  # get answer chance
+            "/шансответа": Bot.get_chance,  # get answer chance
+
             "/ghc": Bot.get_chance,  # get huy chance
+            "/get_huy": Bot.get_chance,  # get huy chance
+            "/шансхуя": Bot.get_chance,  # get huy chance
+
             "/gc": Bot.get_count_words,
+            "/get_count_words": Bot.get_count_words,
+            "/слов": Bot.get_count_words,
+
             "/si": Bot.search_image,
+            "/search_image": Bot.search_image,
+            "/картинка": Bot.search_image,
+
             # "/gsw": Bot.get_similarity_words,
             "/g": Bot.generate_speak,
+            "/generate": Bot.generate_speak,
+            "/скажи": Bot.generate_speak,
+
             "/at": Bot.get_words_after_that,
+            "/after_that": Bot.get_words_after_that,
+            "/после": Bot.get_words_after_that,
+
+            "/p": Bot.get_peer,
             "/peer": Bot.get_peer,
-            "/generate": Bot.generate_token,
+            "/айди": Bot.get_peer,
+
+            "/gnt": Bot.generate_token,
+            "/generate_new_token": Bot.generate_token,
+            "/сгенерируй": Bot.generate_token,
+
+            "/c": Bot.connect,
             "/connect": Bot.connect,
+            "/присоединиться": Bot.connect,
+
             "/send": Bot.send_other_chat,
+            "/отправить": Bot.send_other_chat,
+
+            "/l": Bot.lox_command,
             "/lox": Bot.lox_command,
+            "/л": Bot.lox_command,
+
             "/mc": Bot.get_my_count,
+            "/my_count": Bot.get_my_count,
+            "/написал": Bot.get_my_count,
+
             "/gt": Bot.get_top,
+            "/get_top": Bot.get_top,
+            "/топ": Bot.get_top,
+
             # for chat admins only
             "/tac": Bot.toggle_access_chat_settings,  # toggle access
             "/ac": Bot.set_chance,  # set answer chance
@@ -179,11 +248,11 @@ class Bot:
     def add_event_in_queue(self, event):
         self.events.put(event)
 
-    def photo_work(self, photo_bytes, peer_id, second_image=None):
+    def photo_work(self, photo_bytes, peer_id, second_image=None, text=""):
         photo = self.upload.photo_messages(photos=[photo_bytes], peer_id=peer_id)
         vk_photo_id = \
             f"photo{photo[0]['owner_id']}_{photo[0]['id']}_{photo[0]['access_key']}"
-        send_message("", self.vk, peer_id=peer_id, attachments=vk_photo_id)
+        send_message(text, self.vk, peer_id=peer_id, attachments=vk_photo_id)
         os.remove(photo_bytes)
         if second_image and second_image != "photos_examples/dab.png":
             os.remove(second_image)

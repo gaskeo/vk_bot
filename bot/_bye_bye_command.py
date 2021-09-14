@@ -20,6 +20,7 @@ def bye_bye(self, _, __, peer_id):
             [self.add_event_in_queue(StopEvent) for _ in range(self.n_threads)]
             logging.info(f"exit by {peer_id} | uptime: {int(time.time() - self.uptime)}s")
             logging.info(f"thread {threading.currentThread().name} stopped")
+            send_message("пока пока...", self.vk, peer_id)
             exit(0)
         else:
             send_message("У вас нет доступа к данной команде", self.vk, peer_id=peer_id)

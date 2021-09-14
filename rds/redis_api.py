@@ -115,7 +115,8 @@ class RedisApi:
             all_users_format = dict()
 
             for user, count in all_users.items():
-                all_users_format[int(user.decode("UTF-8"))] = int(count.decode("UTF-8"))
+                if int(user.decode("UTF-8")) > 0:
+                    all_users_format[int(user.decode("UTF-8"))] = int(count.decode("UTF-8"))
 
             return all_users_format
 

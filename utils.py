@@ -57,10 +57,13 @@ def get_user_id_via_url(user_url: str, vk: vk_api.vk_api.VkApiMethod) -> int:
 
 
 def get_user_name(user_id: int, vk: vk_api.vk_api.VkApiMethod) -> str:
-    user = vk.users.get(user_ids=user_id)[0]
-    name = user.get("first_name", "Name")
-    last_name = user.get("last_name", "Last name")
-    return f"{name} {last_name}"
+    try:
+        user = vk.users.get(user_ids=user_id)[0]
+        name = user.get("first_name", "Name")
+        last_name = user.get("last_name", "Last name")
+        return f"{name} {last_name}"
+    except IndexError:
+        return "'вот тут имя, но вк его не достал'"
 
 
 def send_message(message: str,

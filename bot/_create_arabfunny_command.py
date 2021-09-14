@@ -77,6 +77,6 @@ def create_arabfunny(self, event, message, peer_id):
             img = urllib.request.urlopen(url).read()
             bytes_img = BytesIO(img)
             name_final_file, text = create_arabfunny_function(bytes_img, color)
-            self.photo_work(name_final_file, peer_id)
+            self.photo_work(name_final_file, peer_id, text=text)
     else:
         send_message("Прикрепи фото", self.vk, peer_id=peer_id)

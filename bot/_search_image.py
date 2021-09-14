@@ -15,12 +15,11 @@ def search_image(self, _, message, peer_id):
     if not text:
         send_message("напишите текст", self.vk, peer_id)
         return
-    link = ""
     image = ""
     ex = ""
     images: list = self.image_searcher.find_image(text)
     if not images:
-        send_message("ничего не нашлось(\nвозмжоно лимит на сегодня исчерпан", self.vk, peer_id)
+        send_message("ничего не нашлось(\nвозможно лимит на сегодня исчерпан", self.vk, peer_id)
         return
 
     total_images = len(images)
