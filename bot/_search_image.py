@@ -4,22 +4,24 @@ import string
 
 from PIL import Image
 import io
-from transliterate import translit
 
 from utils import send_message
 from urllib import parse
 
 
-def search_image(self, _, message, peer_id):
+def search_image(self, event, message, peer_id):
     text = " ".join(message.split()[1:])
     if not text:
-        send_message("напишите текст", self.vk, peer_id)
-        return
+        text = event.obj.message.get("reply_message", dict()).get("text", "")
+        if not text:
+            send_message("напишите текст", self.vk, peer_id, reply_to=event.obj.message.get("id"))
+            return
     image = ""
     ex = ""
     images: list = self.image_searcher.find_image(text)
     if not images:
-        send_message("ничего не нашлось(\nвозможно лимит на сегодня исчерпан", self.vk, peer_id)
+        send_message("ничего не нашлось(\nвозможно лимит на сегодня исчерпан", self.vk, peer_id,
+                     reply_to=event.obj.message.get("id"))
         return
 
     total_images = len(images)
@@ -48,4 +50,4 @@ def search_image(self, _, message, peer_id):
     with open(name, "wb") as file:
         file.write(image)
 
-    self.photo_work(name, peer_id)
+    self.photo_work(name, peer_id, reply_to=event.obj.message.get("id"))

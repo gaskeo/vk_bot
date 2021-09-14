@@ -2,7 +2,7 @@ from yandex.yandex_api import get_text_from_json_get_synonyms, get_synonyms_yand
 from utils import send_message
 
 
-def get_synonyms(self, _, message, peer_id):
+def get_synonyms(self, event, message, peer_id):
     def get_synonyms_refactored(words):
         synonyms = get_text_from_json_get_synonyms(get_synonyms_yandex(words))
         if synonyms:
@@ -17,9 +17,15 @@ def get_synonyms(self, _, message, peer_id):
         else:
             return "Ничего не найдено"
 
+    text = []
     if len(message.split()) >= 2:
-        synonyms_from_api = get_synonyms_refactored(message.split()[1:])
-        send_message(synonyms_from_api, self.vk, peer_id=peer_id)
-    else:
-        send_message("Ошибка: нет слова", self.vk, peer_id=peer_id)
+        text = message.split()[1:]
+    elif event.obj.message.get("reply_message"):
+        text = event.obj.message.get("reply_message").get("text").split() \
+            if event.obj.message.get("reply_message").get("text") else ""
 
+    if not text:
+        send_message("напиши слово после /gs или ответь на сообщение", self.vk, peer_id=peer_id)
+        return
+    synonyms_from_api = get_synonyms_refactored(text)
+    send_message(synonyms_from_api, self.vk, peer_id=peer_id)

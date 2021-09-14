@@ -6,9 +6,8 @@ def send_other_chat(self, event, message, peer_id):
     if connected_peer_id:
         message = message.lstrip("/send").strip()
         if message:
-            send_message(f"сообщение из другой беседы: {message}", self.vk, int(connected_peer_id),
-                         attachments=event.obj.message["attachments"])
-            send_message("отправлено", self.vk, peer_id)
+            send_message(f"сообщение из другой беседы: {message}", self.vk, int(connected_peer_id))
+            send_message("отправлено", self.vk, peer_id, reply_to=event.obj.message.get("id"))
         else:
             send_message("пустое сообщение", self.vk, peer_id)
     else:

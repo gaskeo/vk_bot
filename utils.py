@@ -72,7 +72,8 @@ def send_message(message: str,
                  attachments:
                  str or list = None,
                  keyboard: dict = None,
-                 template=None):
+                 template=None,
+                 reply_to=None):
     """
     handler for send message
     :param message: text of message 
@@ -81,13 +82,15 @@ def send_message(message: str,
     :param attachments: attachments in message
     :param keyboard: keyboard in message
     :param template: template in message
+    :param reply_to: reply message
     """
     vk.messages.send(peer_id=peer_id,
                      message=message,
                      random_id=random.randint(0, 2 ** 64),
                      attachment=attachments,
                      keyboard=json.dumps(keyboard) if keyboard else None,
-                     template=json.dumps(template) if template else None)
+                     template=json.dumps(template) if template else None,
+                     reply_to=reply_to)
     try:
         log = u"ANSWER IN {}: {} | atts: {}".format(
             peer_id, translit(str(message), 'ru', reversed=True), attachments

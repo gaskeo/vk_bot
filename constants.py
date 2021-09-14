@@ -33,7 +33,7 @@ IMAGE_START_PARAMS = {
     "key": os.getenv("google-key"),
     "cx": os.getenv("google-cx")
 }
-print(IMAGE_START_PARAMS)
+
 ANSWER_CHANCE = "answer_chance"
 LADNO_CHANCE = "ladno_chance"
 HUY_CHANCE = "huy_chance"
