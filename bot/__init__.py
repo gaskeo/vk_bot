@@ -62,7 +62,7 @@ class Bot:
 
             "/cg": Bot.create_grain,  # create grain
             "/grain": Bot.create_grain,  # create grain
-            "/шум": Bot.create_grain,  # create grain
+            "/зернистость": Bot.create_grain,  # create grain
 
             "/ca": Bot.create_arabfunny,  # create arabfunny
             "/arabfunny": Bot.create_arabfunny,  # create arabfunny
