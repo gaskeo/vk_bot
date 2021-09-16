@@ -141,6 +141,8 @@ class Bot:
             "/get_top": Bot.get_top,
             "/топ": Bot.get_top,
 
+            "/cc": Bot.create_chat,
+
             # for chat admins only
             "/tac": Bot.toggle_access_chat_settings,  # toggle access
             "/ac": Bot.set_chance,  # set answer chance
@@ -303,5 +305,6 @@ class Bot:
     from ._send_in_peer import send_in_peer
     from ._clear_keyboard import clear_keyboard
     from ._search_image import search_image
+    from ._create_chat import create_chat
 
 
