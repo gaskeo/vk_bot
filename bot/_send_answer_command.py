@@ -32,7 +32,7 @@ def send_answer(self, event, message, peer_id):
                 HUY_CHANCE: self.redis.get_huy_chance(str(peer_id))
             })
             if what == ANSWER_CHANCE:
-                text = self.speaker.generate_text(peer_id)
+                text = self.speaker.generate_text(peer_id, "")
                 if text:
                     send_message(text, self.vk, peer_id)
             elif what == HUY_CHANCE:
