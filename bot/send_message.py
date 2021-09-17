@@ -3,14 +3,9 @@ from transliterate import translit
 import json
 import random
 
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from . import Bot
-
-
-def send_message(self: 'Bot', message: str,
-                 peer_id: int = None,
+def send_message(self, message: str,
+                 peer_id: str = None,
                  attachments:
                  str or list = None,
                  keyboard: dict = None,
