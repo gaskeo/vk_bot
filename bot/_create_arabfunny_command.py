@@ -8,7 +8,8 @@ from io import BytesIO
 
 from constants import TEXT_COLORS, FONTS_PATH, ARABIC_FONT
 from wiki_api import get_random_funny_wiki_page
-from utils import get_only_symbols, find_image
+from utils import get_only_symbols
+from my_vk_api import find_image
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:

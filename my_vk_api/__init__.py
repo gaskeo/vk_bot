@@ -78,3 +78,22 @@ def get_random_user_from_conversation(vk: vk_api.vk_api.VkApiMethod, peer_id):
     except vk_api.exceptions.ApiError:
         ...
     return -1
+
+
+def find_image(event):
+    message = event.obj.message
+    while True:
+        if not message:
+            return []
+        if message.get("attachments", False):
+            photos = list(filter(lambda attach: attach["type"] == "photo",
+                                 message.get("attachments")))
+            if photos:
+                return photos
+        if message.get("reply_message", False):
+            message = message.get("reply_message")
+        elif message.get("fwd_messages", False):
+            message = message.get("fwd_messages")[0]
+        else:
+            break
+    return []

@@ -3,7 +3,8 @@ from vk_api import bot_longpoll
 import json
 
 from constants import MIN_CHAT_PEER_ID, HUY_CHANCE, ANSWER_CHANCE, GROUP_ID, KEYBOARDS
-from utils import what_answer, generate_huy_word, get_main_pos, format_text
+from utils import what_answer, get_main_pos, format_text
+from huy_api import generate_huy_word
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:

@@ -6,9 +6,10 @@ import urllib.request
 import string
 from io import BytesIO
 
-from utils import find_image
+from my_vk_api import find_image
 
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from . import Bot
 

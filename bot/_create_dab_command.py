@@ -7,7 +7,7 @@ import string
 from io import BytesIO
 import cv2
 
-from utils import find_image
+from my_vk_api import find_image
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:

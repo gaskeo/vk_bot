@@ -1,12 +1,11 @@
 import string
 import random
 import pymorphy2
-from loguru import logger
-from transliterate import translit
-import sys
 
 from constants import HUY_CHANCE, \
-    RUSSIAN_SYMBOLS, RUSSIAN_VOWEL, MAIN_POS, ANSWER_CHANCE
+    RUSSIAN_SYMBOLS, MAIN_POS, ANSWER_CHANCE
+
+from huy_api import generate_huy_word
 
 morph = pymorphy2.analyzer.MorphAnalyzer()
 
@@ -50,51 +49,6 @@ def get_main_pos(text) -> dict:
     return parts
 
 
-def answer_nu_poluchaetsya_or_not(data: dict) -> str:
-    """
-    answer nu_poluchaetsya on message
-    :param data: dict like {part of speech: [words], ...}
-    :return: text like Ну получается... or ""
-
-    """
-    part = get_random_part_once(data)
-    if part:
-        return f"Ну получается {part}."
-    return ""
-
-
-def get_random_part_once(data) -> str:
-    """
-    get random word of part of speech that find once in dict
-    :param data: dict like {part of speech: [words], ...}
-    :return: word
-
-    """
-    parts_reformed = list(filter(lambda x: len(x[1]) == 1, list(data.items())))
-    if parts_reformed:
-        return random.choice(parts_reformed)[1][0]
-    return ""
-
-
-def generate_huy_word(data: dict) -> str:
-    """
-    generator huy word from random word from data
-    :param data: dict like {part of speech: [words], ...}
-    :return: huy-like word
-
-    """
-    word = get_random_part_once(data)
-    if word:
-        if word.lower().startswith(tuple(RUSSIAN_VOWEL)):
-            return "Хуя" + word[1:].lower()
-        else:
-            if len(word) > 1 and word[1].lower() in RUSSIAN_VOWEL:
-                return "Ху" + word[1:].lower()
-            return "Ху" + word[2:].lower()
-    else:
-        return ""
-
-
 def what_answer(message: str, chances: dict) -> str:
     """
     send answer on non-command message
@@ -111,25 +65,6 @@ def what_answer(message: str, chances: dict) -> str:
     weights = tuple(chances.values()) + (nc,)
     what = random.choices(variants, weights=weights)[0]
     return what
-
-
-def find_image(event):
-    message = event.obj.message
-    while True:
-        if not message:
-            return []
-        if message.get("attachments", False):
-            photos = list(filter(lambda attach: attach["type"] == "photo",
-                                 message.get("attachments")))
-            if photos:
-                return photos
-        if message.get("reply_message", False):
-            message = message.get("reply_message")
-        elif message.get("fwd_messages", False):
-            message = message.get("fwd_messages")[0]
-        else:
-            break
-    return []
 
 
 def format_text(text):
