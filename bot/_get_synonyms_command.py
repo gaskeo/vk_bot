@@ -1,7 +1,13 @@
+from vk_api import bot_longpoll
+
 from yandex_api import get_text_from_json_get_synonyms, get_synonyms_yandex
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from . import Bot
 
-def get_synonyms(self, event, message, peer_id):
+
+def get_synonyms(self: 'Bot', event: bot_longpoll.VkBotMessageEvent, message: str, peer_id: int):
     def get_synonyms_refactored(words):
         synonyms = get_text_from_json_get_synonyms(get_synonyms_yandex(words))
         if synonyms:
@@ -24,7 +30,7 @@ def get_synonyms(self, event, message, peer_id):
             if event.obj.message.get("reply_message").get("text") else ""
 
     if not text:
-        self.send_message("напиши слово после /gs или ответь на сообщение", peer_id=peer_id)
+        self.send_message("напиши слово после /gs или ответь на сообщение", str(peer_id))
         return
     synonyms_from_api = get_synonyms_refactored(text)
-    self.send_message(synonyms_from_api, peer_id=peer_id)
+    self.send_message(synonyms_from_api, str(peer_id))

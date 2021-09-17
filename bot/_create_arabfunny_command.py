@@ -1,3 +1,5 @@
+from vk_api import bot_longpoll
+
 from PIL import Image, ImageDraw, ImageFont
 import random
 import urllib.request
@@ -8,8 +10,12 @@ from constants import TEXT_COLORS, FONTS_PATH, ARABIC_FONT
 from wiki_api import get_random_funny_wiki_page
 from utils import get_only_symbols, find_image
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from . import Bot
 
-def create_arabfunny(self, event, message, peer_id):
+
+def create_arabfunny(self: 'Bot', event: bot_longpoll.VkBotMessageEvent, message: str, peer_id: int):
     def create_arabfunny_function(image_ar: BytesIO or str, text_color: str = "black") -> tuple:
         """
         create arabic meme from source image
@@ -61,7 +67,7 @@ def create_arabfunny(self, event, message, peer_id):
                 fill=shadow_color)
         draw.text(((size[0] - text_size[0]) // 2, (size[1] - int((text_size[1])))),
                   text=only_symbols, font=font, fill=text_color)
-        name = "photos/{}.jpg" \
+        name = "static/photos/{}.jpg" \
             .format(''.join(random.choice(string.ascii_uppercase
                                           + string.ascii_lowercase + string.digits) for _ in
                             range(16)))
@@ -78,6 +84,6 @@ def create_arabfunny(self, event, message, peer_id):
             img = urllib.request.urlopen(url).read()
             bytes_img = BytesIO(img)
             name_final_file, text = create_arabfunny_function(bytes_img, color)
-            self.send_photo(name_final_file, peer_id, text=text)
+            self.send_photo(photo_bytes=name_final_file, peer_id=str(peer_id), text=text)
     else:
-        self.send_message("Прикрепи фото", peer_id=peer_id)
+        self.send_message("Прикрепи фото", str(peer_id))

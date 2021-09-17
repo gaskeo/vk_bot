@@ -1,3 +1,5 @@
+from vk_api import bot_longpoll
+
 from PIL import Image
 import random
 import urllib.request
@@ -6,8 +8,12 @@ from io import BytesIO
 
 from utils import find_image
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from . import Bot
 
-def create_shakal(self, event, message, peer_id):
+
+def create_shakal(self: 'Bot', event: bot_longpoll.VkBotMessageEvent, message: str, peer_id: int):
     def create_shakal_function(image_sh: BytesIO or str, factor_sh: int) -> str:
         """
         create shakal image from source image
@@ -15,7 +21,7 @@ def create_shakal(self, event, message, peer_id):
         :param factor_sh: factor of image grain
         :return: name of file in /photos directory
         """
-        name = "photos/{}.jpg" \
+        name = "static/photos/{}.jpg" \
             .format(''.join(random.choice(string.ascii_uppercase
                                           + string.ascii_lowercase + string.digits) for _ in
                             range(16)))
@@ -41,13 +47,13 @@ def create_shakal(self, event, message, peer_id):
             if message.split()[-1].isdigit():
                 factor = int(message.split()[-1])
             else:
-                self.send_message("Степень должна быть целым числом", peer_id=peer_id)
+                self.send_message("Степень должна быть целым числом", str(peer_id))
                 return
         for image in photos:
             url = max(image["photo"]["sizes"], key=lambda x: x["width"])["url"]
             img = urllib.request.urlopen(url).read()
             bytes_img = BytesIO(img)
             photo_bytes = create_shakal_function(bytes_img, factor)
-            self.send_photo(photo_bytes, peer_id)
+            self.send_photo(photo_bytes, str(peer_id))
     else:
-        self.send_message("Прикрепи фото", peer_id=peer_id)
+        self.send_message("Прикрепи фото", str(peer_id))

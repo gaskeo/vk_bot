@@ -1,3 +1,5 @@
+from vk_api import bot_longpoll
+
 from PIL import Image, JpegImagePlugin, ImageDraw
 import random
 import urllib.request
@@ -7,10 +9,14 @@ import cv2
 
 from utils import find_image
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from . import Bot
+
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
 
 
-def create_dab(self, event, _, peer_id):
+def create_dab(self: 'Bot', event: bot_longpoll.VkBotMessageEvent, _, peer_id: int):
     def create_dab_function(image_dab: BytesIO or str) -> str:
         def create_rect():
             def check_compatibility(s: tuple):
@@ -69,7 +75,7 @@ def create_dab(self, event, _, peer_id):
             draw.line((rangle, cangle), width=5, fill=(255, 0, 0))
             image_dab.save(name)
 
-        name = "photos/{}.jpg".format(''.join(
+        name = "static/photos/{}.jpg".format(''.join(
             random.choice(
                 string.ascii_uppercase + string.ascii_lowercase + string.digits
             ) for _ in range(16)))
@@ -99,22 +105,22 @@ def create_dab(self, event, _, peer_id):
         image = photos[0]
         second_image = None
     else:
-        self.send_message("Прикрепи 1 или 2 фото", peer_id=peer_id)
+        self.send_message("Прикрепи 1 или 2 фото", str(peer_id))
         return
     if second_image:
         url = max(second_image["photo"]["sizes"], key=lambda x: x["width"])["url"]
         img = urllib.request.urlopen(url).read()
         second_image = BytesIO(img)
-        dab_name = "photos/{}.jpg" \
+        dab_name = "static/photos/{}.jpg" \
             .format(''.join(random.choice(string.ascii_uppercase
                                           + string.ascii_lowercase + string.digits)))
         with open(dab_name, "wb") as f:
             f.write(bytes(second_image.getbuffer()))
         second_image = dab_name
     else:
-        second_image = "photos_examples/dab.png"
+        second_image = "static/photos_examples/dab.png"
     url = max(image["photo"]["sizes"], key=lambda x: x["width"])["url"]
     img = urllib.request.urlopen(url).read()
     bytes_img = BytesIO(img)
     photo_bytes = create_dab_function(bytes_img)
-    self.send_photo(photo_bytes, peer_id, second_image=second_image)
+    self.send_photo(photo_bytes, str(peer_id), second_image=second_image)

@@ -2,8 +2,12 @@ from vk_api.bot_longpoll import VkBotMessageEvent
 
 from constants import GROUP_ID
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from . import Bot
 
-def redo_command(self, event, _, peer_id):
+
+def redo_command(self: 'Bot', event: VkBotMessageEvent, _, peer_id: int):
     if event.obj.message.get("reply_message", False):
         message = event.obj.message["reply_message"]
         message["peer_id"] = peer_id
@@ -27,4 +31,4 @@ def redo_command(self, event, _, peer_id):
         e = VkBotMessageEvent(raw)
         self.add_event_in_queue(e)
     else:
-        self.send_message("Ответь на сообщение с командой для ее повтора", peer_id)
+        self.send_message("Ответь на сообщение с командой для ее повтора", str(peer_id))

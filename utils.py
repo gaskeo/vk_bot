@@ -150,5 +150,18 @@ def find_image(event):
     return []
 
 
+def format_text(text):
+    text = text.lower()
+    text_formatted = ""
+    for s in text:
+        if s.isalpha() or s.isdigit():
+            text_formatted += s
+        elif str(s.encode('unicode-escape')).startswith("b'\\\\U"):
+            text_formatted += f" {s} "
+        elif s in " \n\t":
+            text_formatted += " "
+    return text_formatted.split()
+
+
 class Nothing:
     ...

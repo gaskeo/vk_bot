@@ -1,7 +1,7 @@
 from vk_api import VkApi, VkUpload
 from vk_api.bot_longpoll import VkBotEventType
 
-from longpoll import MyVkLongPoll
+from my_vk_api.longpoll import MyVkLongPoll
 import threading
 
 from loguru import logger
@@ -11,6 +11,7 @@ from rds.redis_api import RedisApi
 from constants import TOKEN, GROUP_ID, REDIS_PASSWORD, ACCEPTED_PEERS_ON_DEBUG
 
 for_everyone = 0
+
 if for_everyone:
     logger.remove()
 

@@ -10,7 +10,6 @@ from vk_api.bot_longpoll import VkBotMessageEvent, VkBotEventType
 from vk_api import vk_api, upload
 
 from rds.redis_api import RedisApi
-from speaker import Speaker
 
 from constants import MY_NAMES, GROUP_ID
 from .commands import create_commands
@@ -30,7 +29,6 @@ class Bot:
         self.upload = upl
         self.events = Queue()
         self.uptime = time.time()
-        self.speaker = Speaker(redis)
 
         self.commands = create_commands(Bot)
 

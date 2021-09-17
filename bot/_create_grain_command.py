@@ -1,3 +1,5 @@
+from vk_api import bot_longpoll
+
 from PIL import Image
 import random
 import urllib.request
@@ -6,8 +8,12 @@ from io import BytesIO
 
 from utils import find_image
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from . import Bot
 
-def create_grain(self, event, message, peer_id):
+
+def create_grain(self: 'Bot', event: bot_longpoll.VkBotMessageEvent, message: str, peer_id: int):
     def create_grain_function(image_gr: BytesIO or str, factor_sh: int) -> str:
         """
         create grain image from source image
@@ -38,7 +44,7 @@ def create_grain(self, event, message, peer_id):
                 if b > 255:
                     b = 255
                 pix[i, j] = r, g, b
-        name = "photos/{}.jpg" \
+        name = "static/photos/{}.jpg" \
             .format(''.join(random.choice(string.ascii_uppercase
                                           + string.ascii_lowercase + string.digits) for _ in
                             range(16)))
@@ -52,13 +58,13 @@ def create_grain(self, event, message, peer_id):
             if message.split()[-1].isdigit():
                 factor = int(message.split()[-1])
             else:
-                self.send_message("Степень должна быть целым числом", peer_id=peer_id)
+                self.send_message("Степень должна быть целым числом", str(peer_id))
                 return
         for image in photos:
             url = max(image["photo"]["sizes"], key=lambda x: x["width"])["url"]
             img = urllib.request.urlopen(url).read()
             bytes_img = BytesIO(img)
             name_final_file = create_grain_function(bytes_img, factor)
-            self.send_photo(name_final_file, peer_id)
+            self.send_photo(name_final_file, str(peer_id))
     else:
-        self.send_message("Прикрепи фото", peer_id=peer_id)
+        self.send_message("Прикрепи фото", str(peer_id))

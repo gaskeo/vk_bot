@@ -7,8 +7,13 @@ from constants import MIN_CHAT_PEER_ID, \
     WHO_CAN_TOGGLE_CHANCES, \
     KEYBOARDS
 
+from typing import TYPE_CHECKING
 
-def show_settings(self, _, __, peer_id):
+if TYPE_CHECKING:
+    from . import Bot
+
+
+def show_settings(self: 'Bot', _, __, peer_id: int):
     if peer_id > MIN_CHAT_PEER_ID:
         all_chances = {
             HUY_CHANCE: self.redis.get_huy_chance(str(peer_id)),
@@ -19,7 +24,7 @@ def show_settings(self, _, __, peer_id):
             [f'{CHANCES_ALL_SETTINGS[what]}: '
              f'{int(chance)}%' for what, chance in
              tuple(all_chances.items())]), WHO_CAN_TOGGLE_CHANCES.get(who)),
-            peer_id=peer_id, keyboard=json.loads(KEYBOARDS)["settings_keyboard"]
+            str(peer_id), keyboard=json.loads(KEYBOARDS)["settings_keyboard"]
         )
     else:
-        self.send_message(f"Команда только для бесед", peer_id=peer_id)
+        self.send_message(f"Команда только для бесед", str(peer_id))

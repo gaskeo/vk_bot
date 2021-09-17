@@ -6,7 +6,7 @@ __pycache__
 .idea
 db
 drafts
-photos
+static/photos
 sql/__pycache__
 yandex_api/__pycache__
 history.json
