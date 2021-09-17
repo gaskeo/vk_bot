@@ -113,24 +113,6 @@ def what_answer(message: str, chances: dict) -> str:
     return what
 
 
-def exception_checker():
-    try:
-        type_ex, obj_ex, info = sys.exc_info()
-        line = info.tb_lineno
-        file = info.tb_frame.f_code.co_filename
-        while True:
-            info = info.tb_next
-            if info:
-                line = info.tb_lineno
-                file = info.tb_frame.f_code.co_filename
-            else:
-                break
-        logger.error(f"{type_ex} | msg: {translit(str(obj_ex), 'ru', reversed=True)}"
-                     f" | file: {file} | line: {line}")
-    except Exception:
-        pass
-
-
 def find_image(event):
     message = event.obj.message
     while True:
@@ -161,4 +143,3 @@ def format_text(text):
         elif s in " \n\t":
             text_formatted += " "
     return text_formatted.split()
-
