@@ -162,6 +162,3 @@ def format_text(text):
             text_formatted += " "
     return text_formatted.split()
 
-
-class Nothing:
-    ...
