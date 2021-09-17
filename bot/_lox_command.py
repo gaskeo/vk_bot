@@ -1,5 +1,5 @@
 from constants import MIN_CHAT_PEER_ID
-from utils import get_random_user_from_conversation
+from my_vk_api import get_random_user_from_conversation
 
 
 def lox_command(self, event, __, peer_id):
