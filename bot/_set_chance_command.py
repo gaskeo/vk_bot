@@ -1,11 +1,11 @@
-from constants import ANSWER_CHANCE,\
-    LADNO_CHANCE,\
-    SET_COMMANDS,\
+from constants import ANSWER_CHANCE, \
+    LADNO_CHANCE, \
+    SET_COMMANDS, \
     HUY_CHANCE, \
-    CHANCES_ONE_ANSWER,\
-    NU_POLUCHAETSYA_CHANCE,\
+    CHANCES_ONE_ANSWER, \
+    NU_POLUCHAETSYA_CHANCE, \
     MIN_CHAT_PEER_ID
-from utils import get_admins_in_chat
+from my_vk_api import get_admins_in_chat
 
 
 def set_chance(self, event, message, peer_id):
@@ -28,7 +28,7 @@ def set_chance(self, event, message, peer_id):
                     elif what == HUY_CHANCE:
                         self.redis.change_huy_chance(str(peer_id), int(chance))
                     self.send_message(f"Шанс {CHANCES_ONE_ANSWER.get(what, '...')}"
-                                 f" успешно изменен на {chance}%", peer_id=peer_id)
+                                      f" успешно изменен на {chance}%", peer_id=peer_id)
                 else:
                     self.send_message("Должно быть число от 0 до 100", peer_id=peer_id)
         else:

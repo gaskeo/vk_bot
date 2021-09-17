@@ -1,71 +1,21 @@
-import vk_api
-import wikipediaapi
-
 import string
 import random
 import pymorphy2
-import json
 from loguru import logger
 from transliterate import translit
 import sys
 
-from constants import CHIEF_ADMIN, HUY_CHANCE, \
+from constants import HUY_CHANCE, \
     RUSSIAN_SYMBOLS, RUSSIAN_VOWEL, MAIN_POS, ANSWER_CHANCE
 
-wiki_wiki = wikipediaapi.Wikipedia('ar')
-wikipediaapi.log.propagate = False
-
 morph = pymorphy2.analyzer.MorphAnalyzer()
-
-
-def get_user_id_via_url(user_url: str, vk: vk_api.vk_api.VkApiMethod) -> int:
-    """
-    finding user id via url
-    :param user_url: user's url who need id
-    :param vk: vk_api for find user's id via url
-    :return: user's id or 0 if user not found
-
-    """
-
-    def get_user_screen_name_of_url(url: str) -> str:
-        """
-        searching screen name in url
-        :param url: user's account url
-        :return: user's screen name
-
-        """
-        if url.startswith("[") and url.endswith("]") and "|" in url:
-            url = url[1:url.find("|")]
-            return url
-        url = url.replace("@", "")
-        if url.endswith("/"):
-            url = url[:-1]
-        while "/" in url:
-            url = url[url.rfind("/") + 1:]
-        return url
-
-    info = vk.utils.resolveScreenName(screen_name=get_user_screen_name_of_url(user_url))
-    if info:
-        user_id: int = info["object_id"]
-        return user_id
-    return 0
-
-
-def get_user_name(user_id: int, vk: vk_api.vk_api.VkApiMethod) -> str:
-    try:
-        user = vk.users.get(user_ids=user_id)[0]
-        name = user.get("first_name", "Name")
-        last_name = user.get("last_name", "Last name")
-        return f"{name} {last_name}"
-    except IndexError:
-        return "'вот тут имя, но вк его не достал'"
 
 
 def get_only_symbols(text: str) -> str:
     """
     get only latin letters from string
     :param text: string
-    :return: string including only latin letters
+    :return: string including only latin letters and spaces
 
     """
     final_text = ""
@@ -73,16 +23,6 @@ def get_only_symbols(text: str) -> str:
         if (i.isalpha() and i not in string.ascii_letters) or i == " ":
             final_text += i
     return final_text
-
-
-def get_random_funny_wiki_page() -> str:
-    """
-    get random wiki page header from category humor
-    :return: random wiki page header
-
-    """
-    pages = wiki_wiki.page("Category:فكاهة")
-    return random.choice(list(pages.categorymembers.keys()))
 
 
 def get_main_pos(text) -> dict:
@@ -155,28 +95,6 @@ def generate_huy_word(data: dict) -> str:
         return ""
 
 
-def get_admins_in_chat(peer_id, vk) -> list:
-    """
-    get all admins in chat
-    :param peer_id: peer id of chat
-    :param vk: vk_api for get admins
-    :return: list of admins
-
-    """
-    try:
-        members = \
-            vk.messages.getConversationMembers(
-                peer_id=peer_id)["items"]
-    except vk_api.exceptions.ApiError:
-        return [int(CHIEF_ADMIN)]
-    admins = map(lambda y: y["member_id"],
-                 tuple(filter(lambda x: x.get("is_admin", False), members)))
-    admins = list(admins)
-
-    admins.append(int(CHIEF_ADMIN))
-    return admins
-
-
 def what_answer(message: str, chances: dict) -> str:
     """
     send answer on non-command message
@@ -208,7 +126,7 @@ def exception_checker():
             else:
                 break
         logger.error(f"{type_ex} | msg: {translit(str(obj_ex), 'ru', reversed=True)}"
-                      f" | file: {file} | line: {line}")
+                     f" | file: {file} | line: {line}")
     except Exception:
         pass
 
@@ -230,19 +148,6 @@ def find_image(event):
         else:
             break
     return []
-
-
-def get_random_user_from_conversation(vk: vk_api.vk_api.VkApiMethod, peer_id):
-    try:
-        members = \
-            tuple(filter(lambda u: u["member_id"] > 0,
-                         vk.messages.getConversationMembers(peer_id=int(peer_id))["items"]))
-        return random.choice(members)['member_id']
-    except vk_api.exceptions.ApiError as e:
-        ...
-    return -1
-
-
 
 
 class Nothing:

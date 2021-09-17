@@ -1,4 +1,4 @@
-from utils import get_admins_in_chat
+from my_vk_api import get_admins_in_chat
 
 
 def disconnect(self, event, _, peer_id):

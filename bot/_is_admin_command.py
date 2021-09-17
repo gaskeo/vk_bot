@@ -1,5 +1,5 @@
 from constants import MIN_CHAT_PEER_ID
-from utils import get_user_name, get_user_id_via_url
+from my_vk_api import get_user_id_via_url, get_user_name
 
 
 def is_admin(self, _, message, peer_id):

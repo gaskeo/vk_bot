@@ -1,5 +1,5 @@
 from constants import MIN_CHAT_PEER_ID
-from utils import get_admins_in_chat
+from my_vk_api import get_admins_in_chat
 
 
 def clear_chat_speaker(self, event, _, peer_id):

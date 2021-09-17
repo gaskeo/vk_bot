@@ -1,5 +1,5 @@
 from constants import MIN_CHAT_PEER_ID, WHO_CAN_TOGGLE_CHANCES
-from utils import get_admins_in_chat
+from my_vk_api import get_admins_in_chat
 
 
 def toggle_access_chat_settings(self, event, _, peer_id):

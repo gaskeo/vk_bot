@@ -8,5 +8,5 @@ db
 drafts
 photos
 sql/__pycache__
-yandex/__pycache__
+yandex_api/__pycache__
 history.json

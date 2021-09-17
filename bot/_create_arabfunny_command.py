@@ -5,7 +5,8 @@ import string
 from io import BytesIO
 
 from constants import TEXT_COLORS, FONTS_PATH, ARABIC_FONT
-from utils import get_random_funny_wiki_page, get_only_symbols, find_image
+from wiki_api import get_random_funny_wiki_page
+from utils import get_only_symbols, find_image
 
 
 def create_arabfunny(self, event, message, peer_id):

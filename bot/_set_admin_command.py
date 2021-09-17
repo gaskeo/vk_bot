@@ -1,7 +1,7 @@
 from vk_api import vk_api
 
 from constants import MIN_CHAT_PEER_ID, CHIEF_ADMIN
-from utils import get_user_id_via_url
+from my_vk_api import get_user_id_via_url
 
 
 def set_admin(self, _, message, peer_id):

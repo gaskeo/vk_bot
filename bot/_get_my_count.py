@@ -1,4 +1,4 @@
-from utils import get_user_name
+from my_vk_api import get_user_name
 
 
 def get_my_count(self, event, _, peer_id):

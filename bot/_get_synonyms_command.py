@@ -1,4 +1,4 @@
-from yandex.yandex_api import get_text_from_json_get_synonyms, get_synonyms_yandex
+from yandex_api.yandex_api import get_text_from_json_get_synonyms, get_synonyms_yandex
 
 
 def get_synonyms(self, event, message, peer_id):

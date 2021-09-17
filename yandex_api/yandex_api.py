@@ -5,7 +5,7 @@ from constants import SYNONYMS_API_ADDRESS
 
 def get_synonyms_yandex(text, dictionary="ru") -> dict:
     """
-    get synonyms from yandex api
+    get synonyms from yandex_api api
     :param text: text need synonyms
     :param dictionary: language of text
     :return: dict of synonyms

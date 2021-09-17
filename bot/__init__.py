@@ -2,7 +2,6 @@ from loguru import logger
 
 import threading
 from queue import Queue
-import os
 
 import time
 from transliterate import translit
@@ -14,7 +13,6 @@ from rds.redis_api import RedisApi
 from speaker import Speaker
 
 from constants import MY_NAMES, GROUP_ID
-from image_api import ImageSearcher
 from .commands import create_commands
 
 
@@ -33,7 +31,6 @@ class Bot:
         self.events = Queue()
         self.uptime = time.time()
         self.speaker = Speaker(redis)
-        self.image_searcher = ImageSearcher()
 
         self.commands = create_commands(Bot)
 
@@ -95,7 +92,7 @@ class Bot:
                 action_type = action["type"]
                 if action_type == "chat_invite_user" and action["member_id"] == -int(GROUP_ID):
                     self.redis.add_peer_id(str(peer_id))
-                    self.send_message("дайте админку пжпж", self.vk, peer_id)
+                    self.send_message("дайте админку пжпж", peer_id)
                     return
 
             if not message:
