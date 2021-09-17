@@ -117,4 +117,4 @@ def create_dab(self, event, _, peer_id):
     img = urllib.request.urlopen(url).read()
     bytes_img = BytesIO(img)
     photo_bytes = create_dab_function(bytes_img)
-    self.photo_work(photo_bytes, peer_id, second_image=second_image)
+    self.send_photo(photo_bytes, peer_id, second_image=second_image)

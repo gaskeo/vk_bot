@@ -10,7 +10,11 @@ from bot import Bot
 from rds.redis_api import RedisApi
 from constants import TOKEN, GROUP_ID, REDIS_PASSWORD, ACCEPTED_PEERS_ON_DEBUG
 
-logger.add("vk_bot.log", rotation="10 MB")
+for_everyone = 0
+if for_everyone:
+    logger.remove()
+
+logger.add("vk_bot.log", rotation="10 MB", encoding="utf-8")
 
 
 def main() -> None:
@@ -18,7 +22,6 @@ def main() -> None:
     main cycle of program
 
     """
-    for_everyone = 0
     vk_session: VkApi = VkApi(
         token=TOKEN)
     long_poll = MyVkLongPoll(vk_session, GROUP_ID)

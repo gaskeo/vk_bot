@@ -120,20 +120,12 @@ class Bot:
     def add_event_in_queue(self, event):
         self.events.put(event)
 
-    def photo_work(self, photo_bytes, peer_id, second_image=None, text="", **kwargs):
-        photo = self.upload.photo_messages(photos=[photo_bytes], peer_id=peer_id)
-        vk_photo_id = \
-            f"photo{photo[0]['owner_id']}_{photo[0]['id']}_{photo[0]['access_key']}"
-        self.send_message(text, self.vk, peer_id=peer_id, attachments=vk_photo_id, **kwargs)
-        os.remove(photo_bytes)
-        if second_image and second_image != "photos_examples/dab.png":
-            os.remove(second_image)
-
     def add_message(self, event, message):
         if len(message) > 10:
             self.redis.increment_count_messages(event.obj.message["peer_id"], event.obj.message["from_id"])
 
     from .send_message import send_message
+    from .send_photo import send_photo
 
     from ._redo_command import redo_command
     from ._help_command import show_help

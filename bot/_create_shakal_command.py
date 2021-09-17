@@ -48,6 +48,6 @@ def create_shakal(self, event, message, peer_id):
             img = urllib.request.urlopen(url).read()
             bytes_img = BytesIO(img)
             photo_bytes = create_shakal_function(bytes_img, factor)
-            self.photo_work(photo_bytes, peer_id)
+            self.send_photo(photo_bytes, peer_id)
     else:
         self.send_message("Прикрепи фото", peer_id=peer_id)

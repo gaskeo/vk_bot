@@ -59,6 +59,6 @@ def create_grain(self, event, message, peer_id):
             img = urllib.request.urlopen(url).read()
             bytes_img = BytesIO(img)
             name_final_file = create_grain_function(bytes_img, factor)
-            self.photo_work(name_final_file, peer_id)
+            self.send_photo(name_final_file, peer_id)
     else:
         self.send_message("Прикрепи фото", peer_id=peer_id)
