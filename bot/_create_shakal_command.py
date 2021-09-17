@@ -4,7 +4,7 @@ import urllib.request
 import string
 from io import BytesIO
 
-from utils import send_message, find_image
+from utils import find_image
 
 
 def create_shakal(self, event, message, peer_id):
@@ -41,7 +41,7 @@ def create_shakal(self, event, message, peer_id):
             if message.split()[-1].isdigit():
                 factor = int(message.split()[-1])
             else:
-                send_message("Степень должна быть целым числом", self.vk, peer_id=peer_id)
+                self.send_message("Степень должна быть целым числом", peer_id=peer_id)
                 return
         for image in photos:
             url = max(image["photo"]["sizes"], key=lambda x: x["width"])["url"]
@@ -50,4 +50,4 @@ def create_shakal(self, event, message, peer_id):
             photo_bytes = create_shakal_function(bytes_img, factor)
             self.photo_work(photo_bytes, peer_id)
     else:
-        send_message("Прикрепи фото", self.vk, peer_id=peer_id)
+        self.send_message("Прикрепи фото", peer_id=peer_id)

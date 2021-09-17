@@ -5,7 +5,7 @@ from constants import ANSWER_CHANCE,\
     CHANCES_ONE_ANSWER,\
     NU_POLUCHAETSYA_CHANCE,\
     MIN_CHAT_PEER_ID
-from utils import send_message, get_admins_in_chat
+from utils import get_admins_in_chat
 
 
 def set_chance(self, event, message, peer_id):
@@ -15,8 +15,7 @@ def set_chance(self, event, message, peer_id):
         )
         if what not in (ANSWER_CHANCE, HUY_CHANCE):
             if what in (LADNO_CHANCE, NU_POLUCHAETSYA_CHANCE):
-                send_message("эта команда была выпилена в марте 21 года... помянем",
-                             self.vk, peer_id)
+                self.send_message("эта команда была выпилена в марте 21 года... помянем", peer_id)
             return
         if len(message.split()) == 2:
             admins = get_admins_in_chat(peer_id, self.vk)
@@ -28,11 +27,11 @@ def set_chance(self, event, message, peer_id):
                         self.redis.change_answer_chance(str(peer_id), int(chance))
                     elif what == HUY_CHANCE:
                         self.redis.change_huy_chance(str(peer_id), int(chance))
-                    send_message(f"Шанс {CHANCES_ONE_ANSWER.get(what, '...')}"
-                                 f" успешно изменен на {chance}%", self.vk, peer_id=peer_id)
+                    self.send_message(f"Шанс {CHANCES_ONE_ANSWER.get(what, '...')}"
+                                 f" успешно изменен на {chance}%", peer_id=peer_id)
                 else:
-                    send_message("Должно быть число от 0 до 100", self.vk, peer_id=peer_id)
+                    self.send_message("Должно быть число от 0 до 100", peer_id=peer_id)
         else:
-            send_message("Добавьте шанс (от 0 до 100)", self.vk, peer_id=peer_id)
+            self.send_message("Добавьте шанс (от 0 до 100)", peer_id=peer_id)
     else:
-        send_message(f"Команда только для бесед", self.vk, peer_id=peer_id)
+        self.send_message(f"Команда только для бесед", peer_id=peer_id)

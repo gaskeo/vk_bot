@@ -1,4 +1,4 @@
-import logging
+from loguru import logger
 
 import threading
 from queue import Queue
@@ -14,20 +14,12 @@ from rds.redis_api import RedisApi
 from speaker import Speaker
 
 from constants import MY_NAMES, GROUP_ID
-from utils import send_message, StopEvent
 from image_api import ImageSearcher
+from .commands import create_commands
 
-logger = logging.getLogger("main_logger")
-logging.basicConfig(filename="vk_bot.log", filemode="a",
-                    format=f"%(levelname)s\t\t%(asctime)s\t\t%(message)s",
-                    level=logging.INFO)
 
-HEADERS = {
-        'user-agent':
-            'Mozilla/5.0 (iPhone; CPU iPhone OS 12_3_1 like Mac OS X) AppleWebKit/605.1.15 '
-            '(KHTML, like Gecko) Mobile/15E148 Instagram 105.0.0.11.118 (iPhone11,8; iOS 12_3_1; en_US; '
-            'en-US; scale=2.00; 828x1792; 165586599)'
-    }
+class StopEvent:
+    ...
 
 
 class Bot:
@@ -43,137 +35,8 @@ class Bot:
         self.speaker = Speaker(redis)
         self.image_searcher = ImageSearcher()
 
-        self.commands = {
-            # commands for all users
-            "/": Bot.redo_command,
-            "/help": Bot.show_help,
+        self.commands = create_commands(Bot)
 
-            "/gs": Bot.get_synonyms,  # get synonyms
-            "/synonyms": Bot.get_synonyms,  # get synonyms
-            "/синонимы": Bot.get_synonyms,  # get synonyms
-
-            "/cp": Bot.create_postirony,  # create postirony
-            "/postirony": Bot.create_postirony,  # create postirony
-            "/постирония": Bot.create_postirony,  # create postirony
-
-            "/cs": Bot.create_shakal,  # create shakal
-            "/shakal": Bot.create_shakal,  # create shakal
-            "/шакал": Bot.create_shakal,  # create shakal
-
-            "/cg": Bot.create_grain,  # create grain
-            "/grain": Bot.create_grain,  # create grain
-            "/зернистость": Bot.create_grain,  # create grain
-
-            "/ca": Bot.create_arabfunny,  # create arabfunny
-            "/arabfunny": Bot.create_arabfunny,  # create arabfunny
-            "/арабфанни": Bot.create_arabfunny,  # create arabfunny
-
-            "/cd": Bot.create_dab,
-            "/dab": Bot.create_dab,
-            "/дэб": Bot.create_dab,
-
-            "/ut": Bot.get_uptime,
-            "/uptime": Bot.get_uptime,
-            "/время": Bot.get_uptime,
-
-            "/a": Bot.alive,
-            "/alive": Bot.alive,
-            "/живой": Bot.alive,
-
-            "/ck": Bot.clear_keyboard,
-            "/keyboard": Bot.clear_keyboard,
-            "/клавиатура": Bot.clear_keyboard,
-
-            "/yn": Bot.answer_yes_no,
-            "/yesno": Bot.answer_yes_no,
-            "/ответ": Bot.answer_yes_no,
-
-            # in chats only
-            "/gac": Bot.get_chance,  # get answer chance
-            "/get_answer": Bot.get_chance,  # get answer chance
-            "/шансответа": Bot.get_chance,  # get answer chance
-
-            "/ghc": Bot.get_chance,  # get huy chance
-            "/get_huy": Bot.get_chance,  # get huy chance
-            "/шансхуя": Bot.get_chance,  # get huy chance
-
-            "/gc": Bot.get_count_words,
-            "/get_count_words": Bot.get_count_words,
-            "/слов": Bot.get_count_words,
-
-            "/si": Bot.search_image,
-            "/search_image": Bot.search_image,
-            "/картинка": Bot.search_image,
-
-            # "/gsw": Bot.get_similarity_words,
-            "/g": Bot.generate_speak,
-            "/generate": Bot.generate_speak,
-            "/скажи": Bot.generate_speak,
-
-            "/at": Bot.get_words_after_that,
-            "/after_that": Bot.get_words_after_that,
-            "/после": Bot.get_words_after_that,
-
-            "/p": Bot.get_peer,
-            "/peer": Bot.get_peer,
-            "/айди": Bot.get_peer,
-
-            "/gnt": Bot.generate_token,
-            "/generate_new_token": Bot.generate_token,
-            "/сгенерируй": Bot.generate_token,
-
-            "/c": Bot.connect,
-            "/connect": Bot.connect,
-            "/присоединиться": Bot.connect,
-
-            "/send": Bot.send_other_chat,
-            "/отправить": Bot.send_other_chat,
-
-            "/l": Bot.lox_command,
-            "/lox": Bot.lox_command,
-            "/л": Bot.lox_command,
-
-            "/mc": Bot.get_my_count,
-            "/my_count": Bot.get_my_count,
-            "/написал": Bot.get_my_count,
-
-            "/gt": Bot.get_top,
-            "/get_top": Bot.get_top,
-            "/топ": Bot.get_top,
-
-            "/cc": Bot.create_chat,
-
-            # for chat admins only
-            "/tac": Bot.toggle_access_chat_settings,  # toggle access
-            "/ac": Bot.set_chance,  # set answer chance
-            "/hc": Bot.set_chance,  # set huy chance
-            "/s": Bot.show_settings,  # settings
-            "/clear": Bot.clear_chat_speaker,
-            "/update": Bot.update_chat,
-            "/dt": Bot.delete_this,
-            "/disconnect": Bot.disconnect,
-            "/accept_connect": Bot.accept_connect,
-            # "/dsw": Bot.clear_similarity_words,
-            # for bot admins only
-            "/adm": Bot.admin_help,  # help admins
-            "/sa": Bot.set_admin,  # set admin
-            "/ga": Bot.get_admin,  # get admin
-            "/ia": Bot.is_admin,  # is admin
-            "/bb": Bot.bye_bye,  # exit program
-            "/th": Bot.alive_threads,
-            "/sp": Bot.send_in_peer,
-            # experimental
-            "/csg": None,  # create gif shakal
-            "/cag": None,  # create gif arabfunny
-            # other
-            "other": Bot.send_answer,  # answer on simple message
-            # archive
-            "/glc": Bot.archived,  # get ladno chance
-            "/gnc": Bot.archived,  # get nu... chance
-            "/lc": Bot.archived,  # set ladno chance
-            "/nc": Bot.archived,  # set nu... chance
-            "/test": Bot.test
-        }
         self.threads = {}
         self.n_threads = n_threads
         self.start()
@@ -216,36 +79,43 @@ class Bot:
                 self.threads[threading.currentThread().name] = 1
 
     def message_checker(self, event: VkBotMessageEvent):
+        def clear_my_names(mess: str):
+            for name in MY_NAMES:
+                mess = mess.replace(name, '')
+            return mess.strip()
+
         if event.type == VkBotEventType.MESSAGE_NEW:
             self.logger(event)
 
-            message: str = event.obj.message["text"]
+            message: str = event.obj.message.get("text", "")
             peer_id = event.obj.message["peer_id"]
             action = event.obj.message.get("action", None)
+
             if action:
                 action_type = action["type"]
                 if action_type == "chat_invite_user" and action["member_id"] == -int(GROUP_ID):
                     self.redis.add_peer_id(str(peer_id))
-                    send_message("дайте админку пжпж", self.vk, peer_id)
+                    self.send_message("дайте админку пжпж", self.vk, peer_id)
+                    return
+
             if not message:
                 return
-            if message.startswith(MY_NAMES):
-                for name in MY_NAMES:
-                    message = message.replace(name, '')
-            message = message.lstrip().rstrip()
+
+            message = clear_my_names(message)
+
+            command = "" if len(message.split()) < 1 else message.split()[0].lower()
 
             self.add_message(event, message)
 
-            command = "" if len(message.split()) < 1 else message.split()[0].lower()
-        else:
-            command = event.obj.payload["command"]
+        elif event.type == VkBotEventType.MESSAGE_EVENT:
+            command = event.obj.payload.get("command", "")
             peer_id = event.obj["peer_id"]
             message = ""
-        try:
-            c = self.commands.get(command, self.commands.get("other"))
-            c(self, event, message, peer_id)
-        except Exception as e:
-            ...
+        else:
+            return
+
+        c = self.commands.get(command, self.commands.get("other"))
+        c(self, event, message, peer_id)
 
     def add_event_in_queue(self, event):
         self.events.put(event)
@@ -254,7 +124,7 @@ class Bot:
         photo = self.upload.photo_messages(photos=[photo_bytes], peer_id=peer_id)
         vk_photo_id = \
             f"photo{photo[0]['owner_id']}_{photo[0]['id']}_{photo[0]['access_key']}"
-        send_message(text, self.vk, peer_id=peer_id, attachments=vk_photo_id, **kwargs)
+        self.send_message(text, self.vk, peer_id=peer_id, attachments=vk_photo_id, **kwargs)
         os.remove(photo_bytes)
         if second_image and second_image != "photos_examples/dab.png":
             os.remove(second_image)
@@ -262,6 +132,8 @@ class Bot:
     def add_message(self, event, message):
         if len(message) > 10:
             self.redis.increment_count_messages(event.obj.message["peer_id"], event.obj.message["from_id"])
+
+    from .send_message import send_message
 
     from ._redo_command import redo_command
     from ._help_command import show_help
@@ -306,5 +178,3 @@ class Bot:
     from ._clear_keyboard import clear_keyboard
     from ._search_image import search_image
     from ._create_chat import create_chat
-
-

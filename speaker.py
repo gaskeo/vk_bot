@@ -2,8 +2,6 @@ from rds.redis_api import RedisApi
 
 
 class Speaker:
-    SIMILAR_COEF = 0.8
-
     def __init__(self, redis: RedisApi):
         self.nearest_words = {}
         self.redis = redis
@@ -40,23 +38,3 @@ class Speaker:
     def delete_words(self, peer_id, text: str):
         words = self.format_text(text)
         self.redis.delete_words_from_text(str(peer_id), words)
-
-    # future
-    # def get_similar_word(self, peer_id):
-    #     peer_id = str(peer_id)
-    #     words = []
-    #     for i, word in enumerate(dict(self.messages[peer_id]), 1):
-    #         for word_after in tuple(self.messages[peer_id])[i:]:
-    #             if SequenceMatcher(None, word, word_after).ratio() > self.SIMILAR_COEF:
-    #                 words.append((word, word_after))
-    #     return words
-    #
-    # def clear_similar_word(self, peer_id):
-    #     peer_id = str(peer_id)
-    #     words = []
-    #     for i, word in enumerate(self.messages[peer_id], 1):
-    #         for word_after in tuple(self.messages[peer_id])[i:]:
-    #             if SequenceMatcher(None, word, word_after).ratio() > self.SIMILAR_COEF:
-    #                 words.append(word)
-    #     self.delete_words(peer_id, " ".join(words))
-    #     return words

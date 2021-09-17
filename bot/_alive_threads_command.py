@@ -1,5 +1,4 @@
 from constants import MIN_CHAT_PEER_ID
-from utils import send_message
 
 
 def alive_threads(self, _, __, peer_id):
@@ -8,4 +7,4 @@ def alive_threads(self, _, __, peer_id):
             threads = "тред " + \
                       '\nтред '.join((y[0] for y in
                                       tuple(filter(lambda x: x[1] == 1, self.threads.items()))))
-            send_message(f"живые треды (из {self.n_threads}):\n{threads}", self.vk, peer_id)
+            self.send_message(f"живые треды (из {self.n_threads}):\n{threads}", peer_id)

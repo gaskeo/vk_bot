@@ -1,5 +1,5 @@
 from constants import MIN_CHAT_PEER_ID, CHIEF_ADMIN
-from utils import send_message, get_user_name
+from utils import get_user_name
 
 
 def get_admin(self, _, __, peer_id):
@@ -11,8 +11,8 @@ def get_admin(self, _, __, peer_id):
                 for (id_temp, access_level_temp) in admins:
                     name = get_user_name(int(id_temp), self.vk)
                     admins_str += f"{'@id'}{id_temp} ({name}) - {access_level_temp}\n"
-                send_message(admins_str, self.vk, peer_id=peer_id)
+                self.send_message(admins_str, peer_id=peer_id)
             else:
-                send_message("Список пуст", self.vk, peer_id=peer_id)
+                self.send_message("Список пуст", peer_id=peer_id)
         else:
-            send_message("У вас нет прав для этой команды", self.vk, peer_id=peer_id)
+            self.send_message("У вас нет прав для этой команды", peer_id=peer_id)

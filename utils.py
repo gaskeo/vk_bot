@@ -5,7 +5,7 @@ import string
 import random
 import pymorphy2
 import json
-import logging
+from loguru import logger
 from transliterate import translit
 import sys
 
@@ -16,11 +16,6 @@ wiki_wiki = wikipediaapi.Wikipedia('ar')
 wikipediaapi.log.propagate = False
 
 morph = pymorphy2.analyzer.MorphAnalyzer()
-
-logger = logging.getLogger("main_logger")
-logging.basicConfig(filename="vk_bot.log", filemode="a",
-                    format=f"%(levelname)s\t\t%(asctime)s\t\t%(message)s",
-                    level=logging.INFO)
 
 
 def get_user_id_via_url(user_url: str, vk: vk_api.vk_api.VkApiMethod) -> int:
@@ -64,40 +59,6 @@ def get_user_name(user_id: int, vk: vk_api.vk_api.VkApiMethod) -> str:
         return f"{name} {last_name}"
     except IndexError:
         return "'вот тут имя, но вк его не достал'"
-
-
-def send_message(message: str,
-                 vk: vk_api.vk_api.VkApiMethod,
-                 peer_id: int = None,
-                 attachments:
-                 str or list = None,
-                 keyboard: dict = None,
-                 template=None,
-                 reply_to=None):
-    """
-    handler for send message
-    :param message: text of message 
-    :param vk: vk_api for send message
-    :param peer_id: id of peer of chat who receive message 
-    :param attachments: attachments in message
-    :param keyboard: keyboard in message
-    :param template: template in message
-    :param reply_to: reply message
-    """
-    vk.messages.send(peer_id=peer_id,
-                     message=message,
-                     random_id=random.randint(0, 2 ** 64),
-                     attachment=attachments,
-                     keyboard=json.dumps(keyboard) if keyboard else None,
-                     template=json.dumps(template) if template else None,
-                     reply_to=reply_to)
-    try:
-        log = u"ANSWER IN {}: {} | atts: {}".format(
-            peer_id, translit(str(message), 'ru', reversed=True), attachments
-        )
-        logger.info(log)
-    except UnicodeEncodeError:
-        pass
 
 
 def get_only_symbols(text: str) -> str:
@@ -246,7 +207,7 @@ def exception_checker():
                 file = info.tb_frame.f_code.co_filename
             else:
                 break
-        logging.error(f"{type_ex} | msg: {translit(str(obj_ex), 'ru', reversed=True)}"
+        logger.error(f"{type_ex} | msg: {translit(str(obj_ex), 'ru', reversed=True)}"
                       f" | file: {file} | line: {line}")
     except Exception:
         pass
@@ -282,8 +243,6 @@ def get_random_user_from_conversation(vk: vk_api.vk_api.VkApiMethod, peer_id):
     return -1
 
 
-class StopEvent:
-    ...
 
 
 class Nothing:

@@ -4,15 +4,13 @@ from vk_api.bot_longpoll import VkBotEventType
 from longpoll import MyVkLongPoll
 import threading
 
-import logging
+from loguru import logger
 from bot import Bot
 
 from rds.redis_api import RedisApi
 from constants import TOKEN, GROUP_ID, REDIS_PASSWORD, ACCEPTED_PEERS_ON_DEBUG
 
-logging.basicConfig(filename="vk_bot.log", filemode="a",
-                    format=f"%(levelname)s\t\t%(asctime)s\t\t%(message)s",
-                    level=logging.INFO)
+logger.add("vk_bot.log", rotation="10 MB")
 
 
 def main() -> None:
@@ -20,7 +18,7 @@ def main() -> None:
     main cycle of program
 
     """
-    for_everyone = 1
+    for_everyone = 0
     vk_session: VkApi = VkApi(
         token=TOKEN)
     long_poll = MyVkLongPoll(vk_session, GROUP_ID)

@@ -1,5 +1,5 @@
 from constants import MIN_CHAT_PEER_ID
-from utils import get_admins_in_chat, send_message
+from utils import get_admins_in_chat
 
 
 def accept_connect(self, event, _, peer_id):
@@ -8,5 +8,5 @@ def accept_connect(self, event, _, peer_id):
         if event.obj["user_id"] in admins:
             self.redis.connect(peer_id, event.obj["payload"]["peer_id"])
             self.redis.delete_token(event.obj["payload"]["token"])
-            send_message("вы подключились", self.vk, peer_id)
-            send_message("вы подключились", self.vk, event.obj["payload"]["peer_id"])
+            self.send_message("вы подключились", peer_id)
+            self.send_message("вы подключились", event.obj["payload"]["peer_id"])

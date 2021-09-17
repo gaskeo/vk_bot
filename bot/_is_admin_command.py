@@ -1,5 +1,5 @@
 from constants import MIN_CHAT_PEER_ID
-from utils import send_message, get_user_name, get_user_id_via_url
+from utils import get_user_name, get_user_id_via_url
 
 
 def is_admin(self, _, message, peer_id):
@@ -12,15 +12,12 @@ def is_admin(self, _, message, peer_id):
                     admin = self.redis.get_admin(admin_id)
                     if admin:
                         name = get_user_name(int(admin_id), self.vk)
-                        send_message(f"@id{admin_id} ({name}) - Администратор уровня "
-                                     f"{admin}",
-                                     self.vk, peer_id=peer_id)
+                        self.send_message(f"@id{admin_id} ({name}) - Администратор уровня {admin}", peer_id=peer_id)
                     else:
-                        send_message(f"@id{admin_id} - не администратор", self.vk,
-                                     peer_id=peer_id)
+                        self.send_message(f"@id{admin_id} - не администратор", peer_id=peer_id)
                 else:
-                    send_message("Неправильный id", self.vk, peer_id=peer_id)
+                    self.send_message("Неправильный id", peer_id=peer_id)
             else:
-                send_message("Неправильный формат команды", self.vk, peer_id=peer_id)
+                self.send_message("Неправильный формат команды", peer_id=peer_id)
         else:
-            send_message("У вас нет прав для этой команды", self.vk, peer_id=peer_id)
+            self.send_message("У вас нет прав для этой команды", peer_id=peer_id)

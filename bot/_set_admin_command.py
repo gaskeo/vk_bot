@@ -1,8 +1,7 @@
 from vk_api import vk_api
 
-
 from constants import MIN_CHAT_PEER_ID, CHIEF_ADMIN
-from utils import send_message, get_user_id_via_url
+from utils import get_user_id_via_url
 
 
 def set_admin(self, _, message, peer_id):
@@ -31,15 +30,14 @@ def set_admin(self, _, message, peer_id):
             if len(message.split()) == 3:
                 new_admin_id, access_level = message.split()[1:]
                 if not access_level.isdigit() or not (1 <= int(access_level) <= 5):
-                    send_message("Недопустимый уровень пользователя", self.vk,
-                                 peer_id=peer_id)
+                    self.send_message("Недопустимый уровень пользователя",
+                                      peer_id=peer_id)
                     return
                 access_level = int(access_level)
                 answer = set_admin_function(new_admin_id, access_level, self.vk)
-                send_message(answer, self.vk, peer_id=peer_id)
+                self.send_message(answer, peer_id=peer_id)
             else:
-                send_message("Неправильный формат команды", self.vk, peer_id=peer_id)
+                self.send_message("Неправильный формат команды", peer_id=peer_id)
         else:
-            send_message("У вас нет прав для этой команды. "
-                         "Минимальный уровень администрирования для данной команды: 5",
-                         self.vk, peer_id=peer_id)
+            self.send_message("У вас нет прав для этой команды. "
+                              "Минимальный уровень администрирования для данной команды: 5", peer_id=peer_id)

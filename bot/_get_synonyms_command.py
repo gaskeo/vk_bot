@@ -1,5 +1,4 @@
 from yandex.yandex_api import get_text_from_json_get_synonyms, get_synonyms_yandex
-from utils import send_message
 
 
 def get_synonyms(self, event, message, peer_id):
@@ -25,7 +24,7 @@ def get_synonyms(self, event, message, peer_id):
             if event.obj.message.get("reply_message").get("text") else ""
 
     if not text:
-        send_message("напиши слово после /gs или ответь на сообщение", self.vk, peer_id=peer_id)
+        self.send_message("напиши слово после /gs или ответь на сообщение", peer_id=peer_id)
         return
     synonyms_from_api = get_synonyms_refactored(text)
-    send_message(synonyms_from_api, self.vk, peer_id=peer_id)
+    self.send_message(synonyms_from_api, peer_id=peer_id)

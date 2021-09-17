@@ -1,5 +1,4 @@
 from constants import ANSWER_CHANCE, GET_COMMANDS, CHANCES_ONE_ANSWER, HUY_CHANCE, MIN_CHAT_PEER_ID
-from utils import send_message
 
 
 def get_chance(self, _, message, peer_id):
@@ -12,10 +11,9 @@ def get_chance(self, _, message, peer_id):
         elif what == HUY_CHANCE:
             chance = self.redis.get_huy_chance(str(peer_id))
         else:
-            send_message("эта команда была выпилена в марте 21 года... помянем",
-                         self.vk, peer_id)
+            self.send_message("эта команда была выпилена в марте 21 года... помянем", peer_id)
             return
-        send_message(f"Шанс {CHANCES_ONE_ANSWER[what]} равен "
-                     f"{chance}%", self.vk, peer_id=peer_id)
+        self.send_message(f"Шанс {CHANCES_ONE_ANSWER[what]} равен "
+                          f"{chance}%", peer_id=peer_id)
     else:
-        send_message(f"Команда только для бесед", self.vk, peer_id=peer_id)
+        self.send_message(f"Команда только для бесед", peer_id=peer_id)

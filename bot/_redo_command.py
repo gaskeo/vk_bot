@@ -1,7 +1,6 @@
 from vk_api.bot_longpoll import VkBotMessageEvent
 
 from constants import GROUP_ID
-from utils import send_message
 
 
 def redo_command(self, event, _, peer_id):
@@ -28,4 +27,4 @@ def redo_command(self, event, _, peer_id):
         e = VkBotMessageEvent(raw)
         self.add_event_in_queue(e)
     else:
-        send_message("Ответь на сообщение с командой для ее повтора", self.vk, peer_id)
+        self.send_message("Ответь на сообщение с командой для ее повтора", peer_id)

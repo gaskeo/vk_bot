@@ -5,7 +5,7 @@ import string
 from io import BytesIO
 
 from constants import TEXT_COLORS, FONTS_PATH, ARABIC_FONT
-from utils import send_message, get_random_funny_wiki_page, get_only_symbols, find_image
+from utils import get_random_funny_wiki_page, get_only_symbols, find_image
 
 
 def create_arabfunny(self, event, message, peer_id):
@@ -79,4 +79,4 @@ def create_arabfunny(self, event, message, peer_id):
             name_final_file, text = create_arabfunny_function(bytes_img, color)
             self.photo_work(name_final_file, peer_id, text=text)
     else:
-        send_message("Прикрепи фото", self.vk, peer_id=peer_id)
+        self.send_message("Прикрепи фото", peer_id=peer_id)

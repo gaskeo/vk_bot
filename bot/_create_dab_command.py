@@ -5,8 +5,7 @@ import string
 from io import BytesIO
 import cv2
 
-from utils import send_message, find_image
-
+from utils import find_image
 
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
 
@@ -100,7 +99,7 @@ def create_dab(self, event, _, peer_id):
         image = photos[0]
         second_image = None
     else:
-        send_message("Прикрепи 1 или 2 фото", self.vk, peer_id=peer_id)
+        self.send_message("Прикрепи 1 или 2 фото", peer_id=peer_id)
         return
     if second_image:
         url = max(second_image["photo"]["sizes"], key=lambda x: x["width"])["url"]

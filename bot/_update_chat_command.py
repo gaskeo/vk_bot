@@ -1,5 +1,5 @@
 from constants import MIN_CHAT_PEER_ID
-from utils import get_admins_in_chat, send_message
+from utils import get_admins_in_chat
 
 
 def update_chat(self, event, _, peer_id):
@@ -8,4 +8,4 @@ def update_chat(self, event, _, peer_id):
         if event.obj.message["from_id"] in admins:
             self.redis.update_chat(str(peer_id))
     else:
-        send_message("Команда только для бесед", self.vk, peer_id=peer_id)
+        self.send_message("Команда только для бесед", peer_id=peer_id)
