@@ -99,6 +99,8 @@ class Bot:
             message = clear_my_names(message)
 
             command = "" if len(message.split()) < 1 else message.split()[0].lower()
+            if command in self.commands:
+                message = " ".join(message.split()[1:])
 
             self.add_message(event, message)
 

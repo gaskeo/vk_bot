@@ -13,8 +13,8 @@ def accept_connect(self: 'Bot', event: bot_longpoll.VkBotEvent, _, peer_id: int)
     if peer_id < MIN_CHAT_PEER_ID:
         return
 
-    admins = get_admins_in_chat(peer_id, self.vk)
-    if event.obj["user_id"] not in admins:
+    admins: list = get_admins_in_chat(peer_id, self.vk)
+    if event.obj.get("user_id", -1) not in admins:
         return
 
     self.redis.connect(str(peer_id), event.obj["payload"]["peer_id"])
