@@ -7,7 +7,7 @@ import string
 from io import BytesIO
 import cv2
 
-from my_vk_api import find_image
+from my_vk_api import find_images
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -98,7 +98,7 @@ def create_dab(self: 'Bot', event: bot_longpoll.VkBotMessageEvent, _, peer_id: i
         create_rect()
         return name
 
-    photos = find_image(event)
+    photos = find_images(event)
     if len(photos) == 2:
         image, second_image = photos
     elif len(photos) == 1:

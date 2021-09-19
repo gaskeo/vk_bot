@@ -6,7 +6,7 @@ import urllib.request
 import string
 from io import BytesIO
 
-from my_vk_api import find_image
+from my_vk_api import find_images
 
 from typing import TYPE_CHECKING
 
@@ -52,7 +52,7 @@ def create_grain(self: 'Bot', event: bot_longpoll.VkBotMessageEvent, message: st
         image_gr.save(name)
         return name
 
-    photos = find_image(event)
+    photos = find_images(event)
     if photos:
         factor = 50
         if len(message.split()) > 1:

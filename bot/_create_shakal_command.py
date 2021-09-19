@@ -6,7 +6,7 @@ import urllib.request
 import string
 from io import BytesIO
 
-from my_vk_api import find_image
+from my_vk_api import find_images
 
 from typing import TYPE_CHECKING
 
@@ -41,7 +41,7 @@ def create_shakal(self: 'Bot', event: bot_longpoll.VkBotMessageEvent, message: s
         image_sh.save(name)
         return name
 
-    photos = find_image(event)
+    photos = find_images(event)
     if photos:
         factor = 5
         if len(message.split()) > 1:

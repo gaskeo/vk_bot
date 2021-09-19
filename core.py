@@ -10,7 +10,7 @@ from bot import Bot
 from rds.redis_api import RedisApi
 from constants import TOKEN, GROUP_ID, REDIS_PASSWORD, ACCEPTED_PEERS_ON_DEBUG
 
-for_everyone = 0
+for_everyone = 1
 
 if for_everyone:
     logger.remove()

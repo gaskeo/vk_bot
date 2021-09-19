@@ -98,3 +98,8 @@ ACCEPTED_PEERS_ON_DEBUG = ("2000000002", "2000000003", "2000000005", "2000000006
 STOP_WORDS = "_start_", "_all_"
 
 ENTER = "\n"
+
+EMPTY_KEYBOARD = {
+    "one_time": False,
+    "buttons": []
+}

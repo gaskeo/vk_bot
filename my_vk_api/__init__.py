@@ -80,7 +80,7 @@ def get_random_user_from_conversation(vk: vk_api.vk_api.VkApiMethod, peer_id):
     return -1
 
 
-def find_image(event):
+def find_images(event):
     message = event.obj.message
     while True:
         if not message:
