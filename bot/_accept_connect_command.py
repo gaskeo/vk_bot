@@ -1,7 +1,7 @@
 from vk_api import bot_longpoll
 
-from constants import MIN_CHAT_PEER_ID
 from my_vk_api import get_admins_in_chat
+from constants import MIN_CHAT_PEER_ID
 
 from typing import TYPE_CHECKING
 
