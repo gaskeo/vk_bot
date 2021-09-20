@@ -15,6 +15,8 @@ def clear_chat_speaker(self: 'Bot', event: bot_longpoll.VkBotMessageEvent, _, pe
 
     admins = get_admins_in_chat(peer_id, self.vk)
 
-    if event.obj.message.get("from_id", "") in admins:
-        self.redis.clear_chat(str(peer_id))
-        self.send_message("слова очищены", str(peer_id))
+    if event.obj.message.get("from_id", "") not in admins:
+        return
+
+    self.redis.clear_chat(str(peer_id))
+    self.send_message("слова очищены", str(peer_id))

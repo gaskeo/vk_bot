@@ -17,8 +17,12 @@ def accept_connect(self: 'Bot', event: bot_longpoll.VkBotEvent, _, peer_id: int)
     if event.obj.get("user_id", -1) not in admins:
         return
 
-    self.redis.connect(str(peer_id), event.obj["payload"]["peer_id"])
-    self.redis.delete_token(event.obj["payload"]["token"])
+    peer_id2 = event.obj.get("payload", dict()).get("peer_id")
+    if not peer_id2:
+        return self.send_message("ошибка...", str(peer_id))
+
+    self.redis.connect(str(peer_id), peer_id2)
+    self.redis.delete_token(event.obj.get("payload", dict()).get("token"))
 
     self.send_message("вы подключились", str(peer_id))
     self.send_message("вы подключились", event.obj["payload"]["peer_id"])

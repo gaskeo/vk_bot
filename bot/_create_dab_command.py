@@ -10,12 +10,14 @@ import cv2
 from my_vk_api import find_images
 
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from . import Bot
 
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
 
 
+# TODO переделать это все
 def create_dab(self: 'Bot', event: bot_longpoll.VkBotMessageEvent, _, peer_id: int):
     def create_dab_function(image_dab: BytesIO or str) -> str:
         def create_rect():

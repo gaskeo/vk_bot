@@ -9,11 +9,7 @@ if TYPE_CHECKING:
 
 
 def answer_yes_no(self: 'Bot', event: bot_longpoll.VkBotMessageEvent, message: str, peer_id: int):
-    if not message:
-        message = event.obj.message.get("reply_message", dict()).get("text", "")
-
     message = message.rstrip("?")
-
     answer = random.choice(("да", "нет", "дет"))
 
     if not message:

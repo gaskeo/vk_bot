@@ -79,10 +79,25 @@ class Bot:
                 mess = mess.replace(name, '')
             return mess.strip()
 
+        def get_text():
+            mess = event.obj.message
+            if mess["text"] != command:
+                return " ".join(mess["text"].split()[1:])
+            elif mess.get("reply_message", dict()).get("text", ""):
+                return mess.get("reply_message", dict()).get("text", "")
+            elif mess.get("attachments"):
+                for attach in mess.get("attachments"):
+                    if attach["type"] == "wall":
+                        return attach.get("wall", dict()).get("text", "")
+            return ""
+
         if event.type == VkBotEventType.MESSAGE_NEW:
             self.logger(event)
+            text = event.obj.message.get("text", "")
+            command = "" if len(text.split()) < 1 else text.split()[0].lower()
 
-            message: str = event.obj.message.get("text", "")
+            message: str = get_text()
+
             peer_id = event.obj.message["peer_id"]
             action = event.obj.message.get("action", None)
 
@@ -93,15 +108,7 @@ class Bot:
                     self.send_message("дайте админку пжпж", peer_id)
                     return
 
-            if not message:
-                return
-
             message = clear_my_names(message)
-
-            command = "" if len(message.split()) < 1 else message.split()[0].lower()
-            if command in self.commands:
-                message = " ".join(message.split()[1:])
-
             self.add_message(event, message)
 
         elif event.type == VkBotEventType.MESSAGE_EVENT:

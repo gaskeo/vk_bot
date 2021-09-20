@@ -10,25 +10,22 @@ if TYPE_CHECKING:
 
 def connect(self: 'Bot', _, message: str, peer_id: int):
     if self.redis.get_connected_chat(str(peer_id)):
-        self.send_message("вы уже подключены к другой беседе, для начала админ должен написать /disconnect, "
-                          "чтобы отключиться", str(peer_id))
-        return
+        return self.send_message("вы уже подключены к другой беседе, для начала админ должен написать /disconnect, "
+                                 "чтобы отключиться", str(peer_id))
 
     data = message.split()
     if len(data) != 1:
-        self.send_message("неправильный формат", str(peer_id))
-        return
+        return self.send_message("неправильный формат, должно быть /connect xxxxx", str(peer_id))
 
     token = data[-1]
     connect_peer_id = self.redis.get_peer_id_by_token(token)
 
     if not connect_peer_id:
-        self.send_message("не могу найти такой токен, возможно его уже использовали, попросите сделать новый",
-                          str(peer_id))
+        return self.send_message("не могу найти такой токен, возможно его уже использовали, попросите сделать новый",
+                                 str(peer_id))
 
     if connect_peer_id == str(peer_id):
-        self.send_message("ты че это та же беседа...", str(peer_id))
-        return
+        return self.send_message("ты че это та же беседа...", str(peer_id))
 
     chat_info = self.vk.messages.getConversationsById(peer_ids=str(peer_id)).get("items", [dict()])
 

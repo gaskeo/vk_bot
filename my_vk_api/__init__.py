@@ -1,5 +1,6 @@
 import vk_api
 import random
+import re
 
 from constants import CHIEF_ADMIN
 
@@ -97,3 +98,11 @@ def find_images(event):
         else:
             break
     return []
+
+
+def delete_user_mentions(text):
+    return re.sub(r"\s\s", " ", re.sub(r'\[\w*\d*\|\S*\]', '', text))
+
+
+def delete_links(text):
+    return re.sub(r'^https?:\/\/.*[\r\n]*', '', text, flags=re.MULTILINE)
