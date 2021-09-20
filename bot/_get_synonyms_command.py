@@ -1,36 +1,30 @@
-from vk_api import bot_longpoll
-
 from yandex_api import get_text_from_json_get_synonyms, get_synonyms_yandex
 
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from . import Bot
 
 
-def get_synonyms(self: 'Bot', event: bot_longpoll.VkBotMessageEvent, message: str, peer_id: int):
+def get_synonyms(self: 'Bot', _, message: str, peer_id: int):
     def get_synonyms_refactored(words):
         synonyms = get_text_from_json_get_synonyms(get_synonyms_yandex(words))
-        if synonyms:
-            synonyms_refactored = f"Синонимы к слову \"{' '.join(words)}\":\n\n"
-            for synonym in synonyms:
-                synonyms_refactored += tuple(synonym.keys())[0] + "\n"
-                if tuple(synonym.values())[0]:
-                    synonyms_refactored += f"Подобные слову \"{tuple(synonym.keys())[0]}\":\n"
-                    for mini_synonym in tuple(synonym.values())[0]:
-                        synonyms_refactored += "&#4448;• " + mini_synonym + "\n"
-            return synonyms_refactored
-        else:
+        if not synonyms:
             return "Ничего не найдено"
 
-    text = []
-    if len(message.split()) >= 2:
-        text = message.split()[1:]
-    elif event.obj.message.get("reply_message"):
-        text = event.obj.message.get("reply_message").get("text").split() \
-            if event.obj.message.get("reply_message").get("text") else ""
+        synonyms_refactored = f"Синонимы к слову \"{words}\":\n\n"
+        for synonym in synonyms:
+            synonyms_refactored += tuple(synonym.keys())[0] + "\n"
 
-    if not text:
-        self.send_message("напиши слово после /gs или ответь на сообщение", str(peer_id))
-        return
-    synonyms_from_api = get_synonyms_refactored(text)
+            if tuple(synonym.values())[0]:
+                synonyms_refactored += f"Подобные слову \"{tuple(synonym.keys())[0]}\":\n"
+
+                for mini_synonym in tuple(synonym.values())[0]:
+                    synonyms_refactored += "&#4448;• " + mini_synonym + "\n"
+        return synonyms_refactored
+
+    if len(message) < 1:
+        return self.send_message("напиши слово после /gs или ответь на сообщение", str(peer_id))
+
+    synonyms_from_api = get_synonyms_refactored(message)
     self.send_message(synonyms_from_api, str(peer_id))

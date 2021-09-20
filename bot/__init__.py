@@ -102,7 +102,6 @@ class Bot:
             command = "" if len(text.split()) < 1 else text.split()[0].lower()
 
             message: str = get_text()
-            print(message)
 
             peer_id = event.obj.message["peer_id"]
             action = event.obj.message.get("action", None)

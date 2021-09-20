@@ -27,6 +27,7 @@ def get_text_from_json_get_synonyms(json, dictionary="ru") -> list:
 
     """
     all_syn = []
+    print(json)
     if json[dictionary]["syn"]:
         for word in json[dictionary]["syn"][0]["tr"]:
             main_word = word["text"]
