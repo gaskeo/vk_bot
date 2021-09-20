@@ -44,16 +44,12 @@ def create_grain(self: 'Bot', event: bot_longpoll.VkBotMessageEvent, message: st
 
     photos = find_images(event)
     if not photos:
-        self.send_message("Прикрепи фото", str(peer_id))
-        return
+        return self.send_message("Прикрепи фото", str(peer_id))
 
     if not message or not message.isdigit():
         factor = 50
     elif message.isdigit():
         factor = int(message)
-    else:
-        self.send_message("Степень должна быть целым числом", str(peer_id))
-        return
 
     for image in photos:
         url = max(image["photo"]["sizes"], key=lambda x: x["width"])["url"]

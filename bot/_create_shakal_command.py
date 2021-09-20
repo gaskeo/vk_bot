@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 def create_shakal(self: 'Bot', event: bot_longpoll.VkBotMessageEvent, message: str, peer_id: int):
-    def create_shakal_function(image_sh: BytesIO or str, factor_sh: int) -> str:
+    def create_shakal_function() -> str:
         """
         create shakal image from source image
         :param image_sh: bytes of image or file's name
@@ -26,9 +26,9 @@ def create_shakal(self: 'Bot', event: bot_longpoll.VkBotMessageEvent, message: s
             .format(''.join(random.choice(string.ascii_uppercase
                                           + string.ascii_lowercase + string.digits) for _ in
                             range(16)))
-        image_sh = Image.open(image_sh)
+        image_sh = Image.open(bytes_img)
         start_size = image_sh.size
-        for i in range(factor_sh):
+        for i in range(factor):
             image_sh = image_sh.resize((int(image_sh.size[0] / 1.1),
                                         int(image_sh.size[1] / 1.1)))
             size = image_sh.size
@@ -42,19 +42,17 @@ def create_shakal(self: 'Bot', event: bot_longpoll.VkBotMessageEvent, message: s
         return name
 
     photos = find_images(event)
-    if photos:
+    if not photos:
+        return self.send_message("Прикрепи фото", str(peer_id))
+
+    if not message or not message.isdigit():
         factor = 5
-        if len(message.split()) > 1:
-            if message.split()[-1].isdigit():
-                factor = int(message.split()[-1])
-            else:
-                self.send_message("Степень должна быть целым числом", str(peer_id))
-                return
-        for image in photos:
-            url = max(image["photo"]["sizes"], key=lambda x: x["width"])["url"]
-            img = urllib.request.urlopen(url).read()
-            bytes_img = BytesIO(img)
-            photo_bytes = create_shakal_function(bytes_img, factor)
-            self.send_photo(photo_bytes, str(peer_id))
-    else:
-        self.send_message("Прикрепи фото", str(peer_id))
+    elif message.isdigit():
+        factor = int(message)
+
+    for image in photos:
+        url = max(image["photo"]["sizes"], key=lambda x: x["width"])["url"]
+        img = urllib.request.urlopen(url).read()
+        bytes_img = BytesIO(img)
+        photo_bytes = create_shakal_function()
+        self.send_photo(photo_bytes, str(peer_id))

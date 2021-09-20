@@ -77,4 +77,4 @@ def create_arabfunny(self: 'Bot', event: bot_longpoll.VkBotMessageEvent, message
         img = urllib.request.urlopen(url).read()
         bytes_img = BytesIO(img)
         name_final_file, text = create_arabfunny_function()
-        self.send_photo(photo_bytes=name_final_file, peer_id=str(peer_id), text=text)
+        self.send_photo(photo=name_final_file, peer_id=str(peer_id), text=text)

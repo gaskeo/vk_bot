@@ -10,7 +10,7 @@ from bot import Bot
 from rds.redis_api import RedisApi
 from constants import TOKEN, GROUP_ID, REDIS_PASSWORD, ACCEPTED_PEERS_ON_DEBUG
 
-for_everyone = 1
+for_everyone = 0
 
 if for_everyone and 0:
     logger.remove()
@@ -48,4 +48,3 @@ def main() -> None:
 
 if __name__ == '__main__':
     main()
-
