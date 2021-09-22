@@ -41,9 +41,7 @@ class Bot:
         try:
             log = u"{} IN {}: {} | atts: {}".format(event.obj.message["from_id"],
                                                     event.obj.message["peer_id"],
-                                                    translit(event.obj.message["text"],
-                                                             "ru", reversed=True
-                                                             ).encode('unicode-escape'),
+                                                    event.obj.message["text"],
                                                     event.obj.message["attachments"]
                                                     )
             logger.info(log)

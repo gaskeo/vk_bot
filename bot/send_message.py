@@ -30,7 +30,7 @@ def send_message(self, message: str,
                           reply_to=reply_to)
     try:
         log = u"ANSWER IN {}: {} | atts: {}".format(
-            peer_id, translit(str(message), 'ru', reversed=True), attachments
+            peer_id, str(message), attachments
         )
         logger.info(log)
     except UnicodeEncodeError:
