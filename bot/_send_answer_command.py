@@ -32,7 +32,8 @@ def send_answer(self: 'Bot', event: bot_longpoll.VkBotMessageEvent, message: str
                                      "а то я вас не слышу я глухой", str(peer_id))
 
     words = format_text(message)
-    self.redis.add_text(str(peer_id), words)
+    if len(words) > 1:
+        self.redis.add_text(str(peer_id), words)
 
     what = what_answer(message, chances={
         ANSWER_CHANCE: self.redis.get_answer_chance(str(peer_id)),

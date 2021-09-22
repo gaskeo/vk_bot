@@ -83,8 +83,10 @@ class Bot:
             mess = event.obj.message
             if mess["text"] != command:
                 return " ".join(mess["text"].split()[1:])
+
             elif mess.get("reply_message", dict()).get("text", ""):
                 return mess.get("reply_message", dict()).get("text", "")
+
             elif mess.get("attachments"):
                 for attach in mess.get("attachments"):
                     if attach["type"] == "wall":
