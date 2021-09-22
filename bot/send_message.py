@@ -10,7 +10,7 @@ def send_message(self, message: str,
                  str or list = None,
                  keyboard: dict = None,
                  template=None,
-                 reply_to=None):
+                 reply_to=None, **kwargs):
     """
     handler for send message
     :param self: ...
@@ -27,7 +27,7 @@ def send_message(self, message: str,
                           attachment=attachments,
                           keyboard=json.dumps(keyboard) if keyboard else None,
                           template=json.dumps(template) if template else None,
-                          reply_to=reply_to)
+                          reply_to=reply_to, **kwargs)
     try:
         log = u"ANSWER IN {}: {} | atts: {}".format(
             peer_id, str(message), attachments
