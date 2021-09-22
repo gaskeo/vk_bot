@@ -10,9 +10,9 @@ if TYPE_CHECKING:
 
 
 def update_chat(self: 'Bot', event: bot_longpoll.VkBotMessageEvent, _, peer_id: int):
-    if peer_id > MIN_CHAT_PEER_ID:
-        admins = get_admins_in_chat(peer_id, self.vk)
-        if event.obj.message["from_id"] in admins:
-            self.redis.update_chat(str(peer_id))
-    else:
-        self.send_message("Команда только для бесед", str(peer_id))
+    if not peer_id > MIN_CHAT_PEER_ID:
+        return self.send_message("Команда только для бесед", str(peer_id))
+
+    admins = get_admins_in_chat(peer_id, self.vk)
+    if event.obj.message["from_id"] in admins:
+        self.redis.update_chat(str(peer_id))
