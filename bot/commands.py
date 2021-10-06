@@ -28,6 +28,9 @@ def create_commands(bot) -> dict:
         "/dab": bot.create_dab,
         "/дэб": bot.create_dab,
 
+        "/кот": bot.get_cat,
+        "/cat": bot.get_cat,
+
         "/ut": bot.get_uptime,
         "/uptime": bot.get_uptime,
         "/время": bot.get_uptime,

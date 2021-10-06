@@ -179,3 +179,4 @@ class Bot:
     from ._clear_keyboard import clear_keyboard
     from ._search_image import search_image
     from ._create_chat import create_chat
+    from ._get_cat import get_cat
