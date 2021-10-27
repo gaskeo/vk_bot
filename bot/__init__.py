@@ -80,7 +80,9 @@ class Bot:
         def get_text():
             mess = event.obj.message
             if mess["text"] != command:
-                return " ".join(mess["text"].split()[1:])
+                if mess["text"].startswith("/"):
+                    return " ".join(mess["text"].split()[1:])
+                return mess["text"]
 
             elif mess.get("reply_message", dict()).get("text", ""):
                 return mess.get("reply_message", dict()).get("text", "")
