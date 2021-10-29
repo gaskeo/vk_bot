@@ -187,12 +187,10 @@ class RedisApi:
                               (self.decode_bytes(x[0]), int(x[1])),
                               self.redis.hgetall(f"{peer_id}:{start}").items()))
 
-            try:
-                start = random.choices(tuple(map(lambda x: x[0], words)),
-                                       weights=tuple(map(lambda x: x[1], words)))[0]
-            except IndexError:  # TODO что здесь я точно не знаю, но оно умирает на этом моменте
-                print("ERROR:", words)
-                return ''
+            if not words:
+                continue
+            start = random.choices(tuple(map(lambda x: x[0], words)),
+                                   weights=tuple(map(lambda x: x[1], words)))[0]
             sent.append(start)
         if sent[-1] == "///end":
             sent.pop(-1)
