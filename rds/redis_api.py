@@ -54,7 +54,7 @@ class RedisApi:
             self.redis.hset(peer_id, ANSWER_CHANCE, 30)  # answer chance
 
         else:
-            self.redis.hset(ADMIN_LEVELS, peer_id, 0)   # admin level: 0 - not admin
+            self.redis.hset(ADMIN_LEVELS, peer_id, 0)  # admin level: 0 - not admin
 
     def check_peer_id(self, peer_id: str):
         if int(peer_id) > MIN_CHAT_PEER_ID:
@@ -186,8 +186,13 @@ class RedisApi:
             words = tuple(map(lambda x:
                               (self.decode_bytes(x[0]), int(x[1])),
                               self.redis.hgetall(f"{peer_id}:{start}").items()))
-            start = random.choices(tuple(map(lambda x: x[0], words)),
-                                   weights=tuple(map(lambda x: x[1], words)))[0]
+
+            try:
+                start = random.choices(tuple(map(lambda x: x[0], words)),
+                                       weights=tuple(map(lambda x: x[1], words)))[0]
+            except IndexError:  # TODO что здесь я точно не знаю, но оно умирает на этом моменте
+                print("ERROR:", words)
+                return ''
             sent.append(start)
         if sent[-1] == "///end":
             sent.pop(-1)
@@ -204,7 +209,7 @@ class RedisApi:
 
     def get_words_after_that(self, peer_id: str, word):
         words = dict(map(lambda x: (self.decode_bytes(x[0]), int(x[1])),
-                     self.redis.hgetall(f"{peer_id}:{word}").items()))
+                         self.redis.hgetall(f"{peer_id}:{word}").items()))
         if words.get("///end"):
             words.pop("///end")
         return words
