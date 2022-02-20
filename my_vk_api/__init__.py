@@ -5,7 +5,8 @@ import re
 from constants import CHIEF_ADMIN
 
 
-def get_user_id_via_url(user_url: str, vk: vk_api.vk_api.VkApiMethod) -> int:
+def get_user_id_via_url(user_url: str,
+                        vk: vk_api.vk_api.VkApiMethod) -> int:
     """
     finding user id via url
     :param user_url: user's url who need id
@@ -31,7 +32,8 @@ def get_user_id_via_url(user_url: str, vk: vk_api.vk_api.VkApiMethod) -> int:
             url = url[url.rfind("/") + 1:]
         return url
 
-    info = vk.utils.resolveScreenName(screen_name=get_user_screen_name_of_url(user_url))
+    info = vk.utils.resolveScreenName(
+        screen_name=get_user_screen_name_of_url(user_url))
     if info:
         user_id: int = info["object_id"]
         return user_id
@@ -63,18 +65,21 @@ def get_admins_in_chat(peer_id, vk) -> list:
     except vk_api.exceptions.ApiError:
         return [int(CHIEF_ADMIN)]
     admins = map(lambda y: y["member_id"],
-                 tuple(filter(lambda x: x.get("is_admin", False), members)))
+                 tuple(filter(lambda x: x.get("is_admin", False),
+                              members)))
     admins = list(admins)
 
     admins.append(int(CHIEF_ADMIN))
     return admins
 
 
-def get_random_user_from_conversation(vk: vk_api.vk_api.VkApiMethod, peer_id):
+def get_random_user_from_conversation(vk: vk_api.vk_api.VkApiMethod,
+                                      peer_id):
     try:
         members = \
             tuple(filter(lambda u: u["member_id"] > 0,
-                         vk.messages.getConversationMembers(peer_id=int(peer_id))["items"]))
+                         vk.messages.getConversationMembers(
+                             peer_id=int(peer_id))["items"]))
         return random.choice(members)['member_id']
     except vk_api.exceptions.ApiError:
         ...
@@ -87,8 +92,9 @@ def find_images(event):
         if not message:
             return []
         if message.get("attachments", False):
-            photos = list(filter(lambda attach: attach["type"] == "photo",
-                                 message.get("attachments")))
+            photos = list(filter(
+                lambda attach: attach["type"] == "photo",
+                message.get("attachments")))
             if photos:
                 return photos
         if message.get("reply_message", False):
@@ -105,4 +111,5 @@ def delete_user_mentions(text):
 
 
 def delete_links(text):
-    return re.sub(r'^https?:\/\/.*[\r\n]*', '', text, flags=re.MULTILINE)
+    return re.sub(r'^https?:\/\/.*[\r\n]*', '', text,
+                  flags=re.MULTILINE)

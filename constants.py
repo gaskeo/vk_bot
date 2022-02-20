@@ -53,7 +53,10 @@ SET_COMMANDS = {"/ac": ANSWER_CHANCE,
                 "/lc": LADNO_CHANCE,
                 "/hc": HUY_CHANCE,
                 "/nc": NU_POLUCHAETSYA_CHANCE}
-MY_NAMES = ("[club198181337|Ну получается ладно]", "[club198181337|@club198181337]")
+
+# Заменить xxxxxxxxx на id группы
+MY_NAMES = ("[clubxxxxxxxxx|group_name]",
+            "[clubxxxxxxxxx|@clubxxxxxxxxx]")
 
 CHANCES_ONE_ANSWER = {
     "answer_chance": "ответа",
@@ -72,9 +75,11 @@ CHANCES_ALL_SETTINGS = {
 RUSSIAN_SYMBOLS = "абвгдеёжзийклмнопрстуфхкцчшщъыьэюя"
 RUSSIAN_VOWEL = "аеёиоуыэюя"
 MAIN_POS = ("NOUN",
-            "ADJF", "ADJS", "COMP", "VERB", "INFN", "PRTF", "PRTS", "GRND", "NUMR", "ADVB", "NPRO")
+            "ADJF", "ADJS", "COMP", "VERB", "INFN", "PRTF",
+            "PRTS", "GRND", "NUMR", "ADVB", "NPRO")
 
-SYNONYMS_API_ADDRESS = "https://dictionary.yandex.net/dicservice.json/lookupMultiple"
+SYNONYMS_API_ADDRESS = \
+    "https://dictionary.yandex.net/dicservice.json/lookupMultiple"
 
 TEXT_COLORS = {
     "black": "white",
@@ -94,7 +99,7 @@ WHO_CAN_TOGGLE_CHANCES_TEXT = "who_can"
 ADMINS_ONLY = 1
 ALL = 0
 
-ACCEPTED_PEERS_ON_DEBUG = ("2000000002", "2000000003", "2000000005", "2000000006", CHIEF_ADMIN)
+ACCEPTED_PEERS_ON_DEBUG = (CHIEF_ADMIN, )
 STOP_WORDS = "_start_", "_all_"
 
 ENTER = "\n"

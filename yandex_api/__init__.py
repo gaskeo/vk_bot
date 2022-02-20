@@ -26,15 +26,13 @@ def get_text_from_json_get_synonyms(json, dictionary="ru") -> list:
     :return: list of synonyms
 
     """
-    all_syn = []
-    print(json)
+    all_synonyms = []
     if json[dictionary]["syn"]:
         for word in json[dictionary]["syn"][0]["tr"]:
             main_word = word["text"]
-            syns = []
+            synonyms = []
             if "syn" in word.keys():
                 for syn in word["syn"]:
-                    syns.append(syn["text"])
-            all_syn.append({main_word: syns})
-    return all_syn
-
+                    synonyms.append(syn["text"])
+            all_synonyms.append({main_word: synonyms})
+    return all_synonyms

@@ -18,7 +18,8 @@ def generate_huy_word(data: dict) -> str:
         :return: word
 
         """
-        parts_reformed = list(filter(lambda x: len(x[1]) == 1, list(words.items())))
+        parts_reformed = list(filter(lambda x: len(x[1]) == 1,
+                                     list(words.items())))
         if parts_reformed:
             return random.choice(parts_reformed)[1][0]
         return ""
