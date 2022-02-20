@@ -15,7 +15,8 @@ if TYPE_CHECKING:
 
 def show_settings(self: 'Bot', _, __, peer_id: int):
     if not peer_id > MIN_CHAT_PEER_ID:
-        return self.send_message(f"Команда только для бесед", str(peer_id))
+        return self.send_message(f"Команда только для бесед",
+                                 str(peer_id))
 
     all_chances = {
         HUY_CHANCE: self.redis.get_huy_chance(str(peer_id)),
@@ -28,5 +29,6 @@ def show_settings(self: 'Bot', _, __, peer_id: int):
         [f'{CHANCES_ALL_SETTINGS[what]}: '
          f'{int(chance)}%' for what, chance in
          tuple(all_chances.items())]), WHO_CAN_TOGGLE_CHANCES.get(who)),
-        str(peer_id), keyboard=json.loads(KEYBOARDS)["settings_keyboard"]
+        str(peer_id),
+        keyboard=json.loads(KEYBOARDS)["settings_keyboard"]
     )

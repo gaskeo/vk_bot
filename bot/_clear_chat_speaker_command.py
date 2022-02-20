@@ -9,7 +9,9 @@ if TYPE_CHECKING:
     from . import Bot
 
 
-def clear_chat_speaker(self: 'Bot', event: bot_longpoll.VkBotMessageEvent, _, peer_id: int):
+def clear_chat_speaker(self: 'Bot',
+                       event: bot_longpoll.VkBotMessageEvent, _,
+                       peer_id: int):
     if not peer_id > MIN_CHAT_PEER_ID:
         return
 

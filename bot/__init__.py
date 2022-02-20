@@ -4,7 +4,6 @@ import threading
 from queue import Queue
 
 import time
-from transliterate import translit
 
 from vk_api.bot_longpoll import VkBotMessageEvent, VkBotEventType
 from vk_api import vk_api, upload
@@ -39,18 +38,20 @@ class Bot:
     @staticmethod
     def logger(event):
         try:
-            log = u"{} IN {}: {} | atts: {}".format(event.obj.message["from_id"],
-                                                    event.obj.message["peer_id"],
-                                                    event.obj.message["text"],
-                                                    event.obj.message["attachments"]
-                                                    )
+            log = u"{} IN {}: {} | atts: {}".format(
+                event.obj.message["from_id"],
+                event.obj.message["peer_id"],
+                event.obj.message["text"],
+                event.obj.message["attachments"]
+            )
             logger.info(log)
         except UnicodeEncodeError:
             pass
 
     def start(self):
         for th in range(self.n_threads):
-            event_checker = threading.Thread(target=self.check_event_type)
+            event_checker = threading.Thread(
+                target=self.check_event_type)
             event_checker.setName(str(th + 1))
             self.threads[event_checker.name] = 1
             event_checker.start()
@@ -59,7 +60,8 @@ class Bot:
     @staticmethod
     def check_stop(event):
         if event == StopEvent:
-            logger.info(f"thread {threading.currentThread().name} stopped")
+            logger.info(
+                f"thread {threading.currentThread().name} stopped")
             exit()
 
     def check_event_type(self):
@@ -67,7 +69,8 @@ class Bot:
             for event in iter(self.events.get, None):
                 self.threads[threading.currentThread().name] = 0
                 self.check_stop(event)
-                if event.type in (VkBotEventType.MESSAGE_NEW, VkBotEventType.MESSAGE_EVENT):
+                if event.type in (VkBotEventType.MESSAGE_NEW,
+                                  VkBotEventType.MESSAGE_EVENT):
                     self.message_checker(event)
                 self.threads[threading.currentThread().name] = 1
 
@@ -78,6 +81,20 @@ class Bot:
             return mess.strip()
 
         def get_text():
+            def get_attach():
+                for attach in mess.get("attachments"):
+                    if attach["type"] != "wall":
+                        return ""
+                    if attach.get("wall", dict()).get("text", ""):
+                        return attach.get("wall", dict()).get(
+                            "text", "")
+                    elif attach.get("wall", dict()).get(
+                            "copy_history", ""):
+                        for post in attach.get("wall", dict()).get(
+                                "copy_history", ""):
+                            if post.get("text", ""):
+                                return post.get("text", "")
+
             mess = event.obj.message
             if mess["text"] != command:
                 if mess["text"].startswith("/"):
@@ -88,20 +105,14 @@ class Bot:
                 return mess.get("reply_message", dict()).get("text", "")
 
             elif mess.get("attachments"):
-                for attach in mess.get("attachments"):
-                    if attach["type"] == "wall":
-                        if attach.get("wall", dict()).get("text", ""):
-                            return attach.get("wall", dict()).get("text", "")
-                        elif attach.get("wall", dict()).get("copy_history", ""):
-                            for post in attach.get("wall", dict()).get("copy_history", ""):
-                                if post.get("text", ""):
-                                    return post.get("text", "")
+                return get_attach()
             return ""
 
         if event.type == VkBotEventType.MESSAGE_NEW:
             self.logger(event)
             text = event.obj.message.get("text", "")
-            command = "" if len(text.split()) < 1 else text.split()[0].lower()
+            command = "" if len(text.split()) < 1 else text.split()[
+                0].lower()
 
             message: str = get_text()
 
@@ -110,7 +121,8 @@ class Bot:
 
             if action:
                 action_type = action["type"]
-                if action_type == "chat_invite_user" and action["member_id"] == -int(GROUP_ID):
+                if action_type == "chat_invite_user" \
+                        and action["member_id"] == -int(GROUP_ID):
                     self.redis.add_peer_id(str(peer_id))
                     self.send_message("дайте админку пжпж", peer_id)
                     return
@@ -133,7 +145,9 @@ class Bot:
 
     def add_message(self, event, message):
         if len(message) > 10:
-            self.redis.increment_count_messages(event.obj.message["peer_id"], event.obj.message["from_id"])
+            self.redis.increment_count_messages(
+                event.obj.message["peer_id"],
+                event.obj.message["from_id"])
 
     from .send_message import send_message
     from .send_photo import send_photo
@@ -153,7 +167,8 @@ class Bot:
     from ._get_words_after_that_command import get_words_after_that
     from ._get_peer_command import get_peer
     from ._alive_command import alive
-    from ._toggle_access_chat_settings_command import toggle_access_chat_settings
+    from ._toggle_access_chat_settings_command import \
+        toggle_access_chat_settings
     from ._set_chance_command import set_chance
     from ._show_settings_command import show_settings
     from ._clear_chat_speaker_command import clear_chat_speaker

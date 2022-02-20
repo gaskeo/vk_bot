@@ -24,12 +24,14 @@ def bye_bye(self: 'Bot', _, __, peer_id: int):
     self.send_message("Закрыл базу", str(peer_id))
 
     if peer_id != int(CHIEF_ADMIN):
-        self.send_message(f"Завершаю работу по команде @id{peer_id}", str(CHIEF_ADMIN))
+        self.send_message(f"Завершаю работу по команде @id{peer_id}",
+                          str(CHIEF_ADMIN))
 
     self.send_message("Завершаю работу всей программы", str(peer_id))
     [self.add_event_in_queue(StopEvent) for _ in range(self.n_threads)]
 
-    logger.info(f"exit by {peer_id} | uptime: {int(time.time() - self.uptime)}s")
+    logger.info(f"exit by {peer_id} | uptime: "
+                f"{int(time.time() - self.uptime)}s")
     logger.info(f"thread {threading.currentThread().name} stopped")
 
     self.send_message("пока пока...", str(peer_id))

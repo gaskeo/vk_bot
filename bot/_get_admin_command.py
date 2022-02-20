@@ -9,7 +9,8 @@ if TYPE_CHECKING:
 def get_admin(self: 'Bot', _, __, peer_id: int):
     if peer_id > MIN_CHAT_PEER_ID:
         return
-    if not (peer_id == int(CHIEF_ADMIN) or self.redis.get_admin(peer_id) == 5):
+    if not (peer_id == int(CHIEF_ADMIN) or
+            self.redis.get_admin(peer_id) == 5):
         return
 
     admins = self.redis.get_all_admins()
@@ -19,6 +20,7 @@ def get_admin(self: 'Bot', _, __, peer_id: int):
     admin_out_list = [f"Всего админов: {len(admins)}"]
     for id_temp, access_level_temp in admins.items():
         name = get_user_name(int(id_temp), self.vk)
-        admin_out_list.append(f"{'@id'}{id_temp} ({name}) - {access_level_temp}")
+        admin_out_list.append(
+            f"{'@id'}{id_temp} ({name}) - {access_level_temp}")
 
     self.send_message("\n".join(admin_out_list), str(peer_id))

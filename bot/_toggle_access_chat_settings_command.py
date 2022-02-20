@@ -9,9 +9,12 @@ if TYPE_CHECKING:
     from . import Bot
 
 
-def toggle_access_chat_settings(self: 'Bot', event: bot_longpoll.VkBotMessageEvent, _, peer_id: int):
+def toggle_access_chat_settings(self: 'Bot',
+                                event: bot_longpoll.VkBotMessageEvent,
+                                _, peer_id: int):
     if not peer_id > MIN_CHAT_PEER_ID:
-        return self.send_message("Команда только для бесед", str(peer_id))
+        return self.send_message("Команда только для бесед",
+                                 str(peer_id))
 
     admins = get_admins_in_chat(peer_id, self.vk)
 

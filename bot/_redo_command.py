@@ -8,9 +8,12 @@ if TYPE_CHECKING:
     from . import Bot
 
 
-def redo_command(self: 'Bot', event: VkBotMessageEvent, _, peer_id: int):
+def redo_command(self: 'Bot', event: VkBotMessageEvent,
+                 _, peer_id: int):
     if not event.obj.message.get("reply_message", False):
-        return self.send_message("Ответь на сообщение с командой для ее повтора", str(peer_id))
+        return self.send_message(
+            "Ответь на сообщение с командой для ее повтора",
+            str(peer_id))
 
     message = event.obj.message["reply_message"]
     message["peer_id"] = peer_id
@@ -23,8 +26,12 @@ def redo_command(self: 'Bot', event: VkBotMessageEvent, _, peer_id: int):
     raw = {'type': 'message_new',
            'object': {'message': message},
            'client_info': {
-               'button_actions': ['text', 'vkpay', 'open_app', 'location', 'open_link',
-                                  'intent_subscribe', 'intent_unsubscribe'],
+               'button_actions': ['text',
+                                  'vkpay',
+                                  'open_app',
+                                  'location', 'open_link',
+                                  'intent_subscribe',
+                                  'intent_unsubscribe'],
                'keyboard': True,
                'inline_keyboard': True,
                'carousel': False,

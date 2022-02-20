@@ -8,5 +8,8 @@ if TYPE_CHECKING:
 
 
 def get_uptime(self: 'Bot', _, __, peer_id: int):
-    self.send_message("я живу уже "
-                      f"{str(datetime.timedelta(seconds=int(time.time() - self.uptime)))}", str(peer_id))
+    uptime = datetime.timedelta(seconds=int(time.time() - self.uptime))
+    self.send_message(
+        "я живу уже "
+        f"{uptime}",
+        str(peer_id))

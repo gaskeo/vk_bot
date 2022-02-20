@@ -1,5 +1,4 @@
 from loguru import logger
-from transliterate import translit
 import json
 import random
 
@@ -25,8 +24,11 @@ def send_message(self, message: str,
                           message=message,
                           random_id=random.randint(0, 2 ** 64),
                           attachment=attachments,
-                          keyboard=json.dumps(keyboard) if keyboard else None,
-                          template=json.dumps(template) if template else None,
+                          keyboard=json.dumps(
+                              keyboard) if keyboard else None,
+
+                          template=json.dumps(
+                              template) if template else None,
                           reply_to=reply_to, **kwargs)
     try:
         log = u"ANSWER IN {}: {} | atts: {}".format(

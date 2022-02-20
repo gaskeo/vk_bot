@@ -67,7 +67,7 @@ def what_answer(message: str, chances: dict) -> str:
     return what
 
 
-def format_text(text):
+def format_text(text: str) -> list:
     text = text.lower()
     text_formatted = ""
     for s in text:
@@ -78,3 +78,10 @@ def format_text(text):
         elif s in " \n\t":
             text_formatted += " "
     return text_formatted.split()
+
+
+def generate_token(size: int) -> str:
+    all_symbols = string.ascii_uppercase + \
+                  string.ascii_lowercase + \
+                  string.digits
+    return ''.join(random.choice(all_symbols) for _ in range(size))

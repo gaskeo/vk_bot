@@ -5,6 +5,6 @@ if TYPE_CHECKING:
 
 
 def get_count_words(self: 'Bot', _, __, peer_id: int):
-    c = str(self.redis.get_count_words(str(peer_id)))
-    if c:
-        self.send_message(f"количество слов: {c}", str(peer_id))
+    count = str(self.redis.get_count_words(str(peer_id)))
+    if count:
+        self.send_message(f"количество слов: {count}", str(peer_id))

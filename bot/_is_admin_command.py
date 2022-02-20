@@ -13,7 +13,8 @@ def is_admin(self: 'Bot', _, message: str, peer_id: int):
     if not self.redis.get_admin(str(peer_id)):
         return
     if len(message.split()) != 1:
-        return self.send_message("Неправильный формат команды", str(peer_id))
+        return self.send_message("Неправильный формат команды",
+                                 str(peer_id))
 
     admin_url = message.split()[-1]
     admin_id = get_user_id_via_url(admin_url, self.vk)
@@ -21,9 +22,12 @@ def is_admin(self: 'Bot', _, message: str, peer_id: int):
     if not admin_id:
         return self.send_message("Неправильный id", str(peer_id))
 
-    admin = self.redis.get_admin(admin_id)
-    if not admin:
-        self.send_message(f"@id{admin_id} - не администратор", str(peer_id))
+    level = self.redis.get_admin(admin_id)
+    if not level:
+        self.send_message(f"@id{admin_id} - не администратор",
+                          str(peer_id))
 
     name = get_user_name(int(admin_id), self.vk)
-    self.send_message(f"@id{admin_id} ({name}) - Администратор уровня {admin}", str(peer_id))
+    self.send_message(
+        f"@id{admin_id} ({name}) - Администратор уровня {level}",
+        str(peer_id))

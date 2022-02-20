@@ -1,5 +1,3 @@
-from vk_api import bot_longpoll
-
 import random
 
 from my_vk_api import delete_user_mentions

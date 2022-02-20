@@ -9,7 +9,8 @@ if TYPE_CHECKING:
 
 
 def alive_threads(self: 'Bot', _, __, peer_id: int):
-    if peer_id > MIN_CHAT_PEER_ID or not self.redis.get_admin(peer_id) >= 5:
+    if peer_id > MIN_CHAT_PEER_ID \
+            or not self.redis.get_admin(peer_id) >= 5:
         return
 
     check_lines = []
@@ -22,4 +23,5 @@ def alive_threads(self: 'Bot', _, __, peer_id: int):
         elif thread[1] == 0:
             check_lines.append(f"тред {thread[0]} умер или работает...")
 
-    self.send_message(f"живые треды (из {self.n_threads}):\n{ENTER.join(check_lines)}", str(peer_id))
+    self.send_message(f"живые треды (из {self.n_threads}):\n"
+                      f"{ENTER.join(check_lines)}", str(peer_id))

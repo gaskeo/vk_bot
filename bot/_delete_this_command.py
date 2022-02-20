@@ -10,7 +10,8 @@ if TYPE_CHECKING:
     from . import Bot
 
 
-def delete_this(self: 'Bot', event: bot_longpoll.VkBotMessageEvent, message: str, peer_id: int):
+def delete_this(self: 'Bot', event: bot_longpoll.VkBotMessageEvent,
+                message: str, peer_id: int):
     admins = get_admins_in_chat(peer_id, self.vk)
     if event.obj.message["from_id"] not in admins:
         return
@@ -19,6 +20,10 @@ def delete_this(self: 'Bot', event: bot_longpoll.VkBotMessageEvent, message: str
         words = format_text(message)
         self.redis.delete_words_from_text(str(peer_id), words)
 
-        self.send_message(f"очищены слова: {' '.join(message.split()[1:])}", str(peer_id))
+        self.send_message(
+            f"очищены слова: {' '.join(message.split()[1:])}",
+            str(peer_id))
     else:
-        self.send_message("ответь на сообщение или напиши текст после команды", str(peer_id))
+        self.send_message(
+            "ответь на сообщение или напиши текст после команды",
+            str(peer_id))

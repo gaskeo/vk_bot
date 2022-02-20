@@ -7,4 +7,5 @@ if TYPE_CHECKING:
 
 
 def clear_keyboard(self: 'Bot', _, __, peer_id: int):
-    self.send_message("убрал клавиатуру", str(peer_id), keyboard=EMPTY_KEYBOARD)
+    self.send_message("убрал клавиатуру",
+                      str(peer_id), keyboard=EMPTY_KEYBOARD)

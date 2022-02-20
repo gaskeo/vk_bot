@@ -3,24 +3,25 @@ from vk_api import bot_longpoll
 from PIL import Image
 import random
 import urllib.request
-import string
 from io import BytesIO
 
 from my_vk_api import find_images
 
 from typing import TYPE_CHECKING
 
+from utils import generate_token
+
 if TYPE_CHECKING:
     from . import Bot
 
 
-def create_grain(self: 'Bot', event: bot_longpoll.VkBotMessageEvent, message: str, peer_id: int):
+def create_grain(self: 'Bot',
+                 event: bot_longpoll.VkBotMessageEvent,
+                 message: str, peer_id: int):
     def create_grain_function() -> str:
         """
         create grain image from source image
-        :param image_gr: bytes of image or file's name
-        :param factor_sh: factor of image grain
-        :return: name of file in /photos directory
+        :return: name of the file
         """
         image_gr = Image.open(bytes_img)
         width = image_gr.size[0]
@@ -35,10 +36,7 @@ def create_grain(self: 'Bot', event: bot_longpoll.VkBotMessageEvent, message: st
 
                 pix[i, j] = r, g, b
 
-        name = "static/photos/{}.jpg" \
-            .format(''.join(random.choice(string.ascii_uppercase
-                                          + string.ascii_lowercase + string.digits) for _ in
-                            range(16)))
+        name = "static/photos/{}.jpg".format(generate_token(16))
         image_gr.save(name)
         return name
 
@@ -52,7 +50,8 @@ def create_grain(self: 'Bot', event: bot_longpoll.VkBotMessageEvent, message: st
         factor = int(message)
 
     for image in photos:
-        url = max(image["photo"]["sizes"], key=lambda x: x["width"])["url"]
+        url = max(image["photo"]["sizes"],
+                  key=lambda x: x["width"])["url"]
         img = urllib.request.urlopen(url).read()
         bytes_img = BytesIO(img)
         name_final_file = create_grain_function()

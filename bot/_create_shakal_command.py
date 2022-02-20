@@ -1,31 +1,27 @@
 from vk_api import bot_longpoll
 
 from PIL import Image
-import random
 import urllib.request
-import string
 from io import BytesIO
 
 from my_vk_api import find_images
 
 from typing import TYPE_CHECKING
 
+from utils import generate_token
+
 if TYPE_CHECKING:
     from . import Bot
 
 
-def create_shakal(self: 'Bot', event: bot_longpoll.VkBotMessageEvent, message: str, peer_id: int):
+def create_shakal(self: 'Bot', event: bot_longpoll.VkBotMessageEvent,
+                  message: str, peer_id: int):
     def create_shakal_function() -> str:
         """
         create shakal image from source image
-        :param image_sh: bytes of image or file's name
-        :param factor_sh: factor of image grain
         :return: name of file in /photos directory
         """
-        name = "static/photos/{}.jpg" \
-            .format(''.join(random.choice(string.ascii_uppercase
-                                          + string.ascii_lowercase + string.digits) for _ in
-                            range(16)))
+        name = "static/photos/{}.jpg".format(generate_token(16))
         image_sh = Image.open(bytes_img)
         start_size = image_sh.size
         for i in range(factor):
@@ -51,7 +47,8 @@ def create_shakal(self: 'Bot', event: bot_longpoll.VkBotMessageEvent, message: s
         factor = int(message)
 
     for image in photos:
-        url = max(image["photo"]["sizes"], key=lambda x: x["width"])["url"]
+        url = max(image["photo"]["sizes"],
+                  key=lambda x: x["width"])["url"]
         img = urllib.request.urlopen(url).read()
         bytes_img = BytesIO(img)
         photo_bytes = create_shakal_function()
