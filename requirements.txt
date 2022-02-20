@@ -1,0 +1,10 @@
+pymorphy2
+pymorphy2-dicts
+vk-api
+loguru
+python-dotenv
+requests
+Wikipedia-API
+redis
+pillow
+opencv-python

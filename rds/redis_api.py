@@ -38,8 +38,9 @@ class RedisApi:
     # get words after another word
     def __init__(self, host=None, password=None):
         self.redis = redis.Redis(password=password, host=host)
-        self.chances = {ANSWER_CHANCE: 30, LADNO_CHANCE: 30, HUY_CHANCE: 30,
-                        NU_POLUCHAETSYA_CHANCE: 30, WHO_CAN_TOGGLE_CHANCES_TEXT: 1}
+        self.chances = {
+            ANSWER_CHANCE: 30, LADNO_CHANCE: 30, HUY_CHANCE: 30,
+            NU_POLUCHAETSYA_CHANCE: 30, WHO_CAN_TOGGLE_CHANCES_TEXT: 1}
 
     @staticmethod
     def decode_bytes(bytes_text: bytes):
@@ -52,17 +53,21 @@ class RedisApi:
     def add_peer_id(self, peer_id: str):
         if int(peer_id) > MIN_CHAT_PEER_ID:
             self.redis.hset(peer_id, HUY_CHANCE, 30)  # huy chance
-            self.redis.hset(peer_id, WHO_CAN_TOGGLE_CHANCES_TEXT, ADMINS_ONLY)
+            self.redis.hset(peer_id, WHO_CAN_TOGGLE_CHANCES_TEXT,
+                            ADMINS_ONLY)
             self.redis.hset(peer_id, ANSWER_CHANCE, 30)  # answer chance
 
         else:
-            self.redis.hset(ADMIN_LEVELS, peer_id, 0)  # admin level: 0 - not admin
+            self.redis.hset(ADMIN_LEVELS, peer_id,
+                            0)  # admin level: 0 - not admin
 
     def check_peer_id(self, peer_id: str):
         if int(peer_id) > MIN_CHAT_PEER_ID:
-            return True if self.redis.hget(peer_id, HUY_CHANCE) else False
+            return True if self.redis.hget(peer_id,
+                                           HUY_CHANCE) else False
         else:
-            return True if self.redis.hget(ADMIN_LEVELS, peer_id) else False
+            return True if self.redis.hget(ADMIN_LEVELS,
+                                           peer_id) else False
 
     def get_huy_chance(self, peer_id: str):
         self.check_and_add_peer_id(peer_id)
@@ -95,7 +100,8 @@ class RedisApi:
     def toggle_access_chances(self, peer_id: str):
         self.check_and_add_peer_id(peer_id)
         if int(peer_id) > MIN_CHAT_PEER_ID:
-            who = 1 - int(self.redis.hget(peer_id, WHO_CAN_TOGGLE_CHANCES_TEXT))
+            who = 1 - int(
+                self.redis.hget(peer_id, WHO_CAN_TOGGLE_CHANCES_TEXT))
             self.redis.hset(peer_id, WHO_CAN_TOGGLE_CHANCES_TEXT, who)
             return who
 
@@ -118,7 +124,8 @@ class RedisApi:
 
             for user, count in all_users.items():
                 if int(user.decode("UTF-8")) > 0:
-                    all_users_format[int(user.decode("UTF-8"))] = int(count.decode("UTF-8"))
+                    all_users_format[int(user.decode("UTF-8"))] = int(
+                        count.decode("UTF-8"))
 
             return all_users_format
 
@@ -136,7 +143,8 @@ class RedisApi:
         levels = self.redis.hgetall(ADMIN_LEVELS)
         if levels:
             return dict(filter(lambda y: y[1] > 0,
-                               map(lambda x: (int(x[0]), int(x[1])), levels.items())))
+                               map(lambda x: (int(x[0]), int(x[1])),
+                                   levels.items())))
 
     def add_text(self, peer_id: str, text: iter):
         if int(peer_id) <= MIN_CHAT_PEER_ID:
@@ -153,7 +161,8 @@ class RedisApi:
         for word, word_after in zip(text[:-1], text[1:]):
             if word in STOP_WORDS:
                 continue
-            has_word_after = self.redis.hget(f"{peer_id}:{word}", word_after)
+            has_word_after = self.redis.hget(f"{peer_id}:{word}",
+                                             word_after)
             if not has_word_after:
                 self.redis.hset(f"{peer_id}:{word}", word_after, 1)
             else:
@@ -187,19 +196,22 @@ class RedisApi:
                 break
             words = tuple(map(lambda x:
                               (self.decode_bytes(x[0]), int(x[1])),
-                              self.redis.hgetall(f"{peer_id}:{start}").items()))
+                              self.redis.hgetall(
+                                  f"{peer_id}:{start}").items()))
 
             if not words:
                 continue
             start = random.choices(tuple(map(lambda x: x[0], words)),
-                                   weights=tuple(map(lambda x: x[1], words)))[0]
+                                   weights=tuple(
+                                       map(lambda x: x[1], words)))[0]
             sent.append(start)
         if sent[-1] == "///end":
             sent.pop(-1)
         return " ".join(sent)
 
     def clear_chat(self, peer_id: str):
-        words = tuple(map(self.decode_bytes, self.redis.smembers(f"{peer_id}:_all_")))
+        words = tuple(map(self.decode_bytes,
+                          self.redis.smembers(f"{peer_id}:_all_")))
         for word in words:
             self.redis.delete(f"{peer_id}:{word}")
         self.redis.delete(f"{peer_id}:_all_")
@@ -209,7 +221,8 @@ class RedisApi:
 
     def get_words_after_that(self, peer_id: str, word):
         words = dict(map(lambda x: (self.decode_bytes(x[0]), int(x[1])),
-                         self.redis.hgetall(f"{peer_id}:{word}").items()))
+                         self.redis.hgetall(
+                             f"{peer_id}:{word}").items()))
         if words.get("///end"):
             words.pop("///end")
         return words
@@ -218,7 +231,8 @@ class RedisApi:
         for word in words:
             self.redis.delete(f"{peer_id}:{word}")
         self.redis.srem(f"{peer_id}:_all_", *words)
-        for i in tuple(map(self.decode_bytes, self.redis.smembers(f"{peer_id}:_all_"))):
+        for i in tuple(map(self.decode_bytes,
+                           self.redis.smembers(f"{peer_id}:_all_"))):
             self.redis.hdel(f"{peer_id}:{i}", *words)
 
     def update_chat(self, peer_id: str):

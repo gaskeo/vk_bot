@@ -2,7 +2,7 @@
 
 Бот, который может генерировать сообщения 
 на основе сообщений пользователей с помощью 
-[цепей маркова](https://en.wikipedia.org/wiki/Markov_chain). 
+[цепей Маркова](https://en.wikipedia.org/wiki/Markov_chain). 
 Также есть несколько команд.
 
 # Команды
@@ -371,3 +371,27 @@
 
 ### `/bb`
 Завершить работу бота
+
+---
+
+# Установка на сервер 
+
+1. Скачать и настроить [redis](https://redis.io/)
+2. Заполнить пропуски `config.env`
+
+| Ключ | Что значит |
+|:----:|------------|
+| `vk_group_token` | [Токен](https://dev.vk.com/api/access-token/getting-started) группы |
+|  `vk_group_id`   | `id` группы, для которой создан токен                               |
+| `vk_group_name`  | Название группы                                                     | 
+|  `chief_admin`   | `id` главного администратора для бота                               |
+|   `redis_pass`   | Пароль для redis                                                    |
+|   `font_linux`   | Абсолютный путь до папки `fonts`: `/.../static/fonts/`              |
+|  `font_windows`  | Аналогично                                                          |
+
+3. Скачать зависимости из `requirements.txt`:
+   
+   `pip install -r requirements.txt`
+4. Запустить бота
+
+  `python core.py`

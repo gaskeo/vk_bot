@@ -9,6 +9,7 @@ if os.path.exists(dotenv_path):
     load_dotenv(dotenv_path)
 
 GROUP_ID: str = os.getenv("vk_group_id")
+GROUP_NAME: str = os.getenv("vk_group_name")
 TOKEN: str = os.getenv("vk_group_token")
 CHIEF_ADMIN: str = os.getenv("chief_admin")
 
@@ -54,9 +55,8 @@ SET_COMMANDS = {"/ac": ANSWER_CHANCE,
                 "/hc": HUY_CHANCE,
                 "/nc": NU_POLUCHAETSYA_CHANCE}
 
-# Заменить xxxxxxxxx на id группы
-MY_NAMES = ("[clubxxxxxxxxx|group_name]",
-            "[clubxxxxxxxxx|@clubxxxxxxxxx]")
+MY_NAMES = (f"[club{GROUP_ID}|{GROUP_NAME}]",
+            f"[club{GROUP_ID}|@club{GROUP_ID}]")
 
 CHANCES_ONE_ANSWER = {
     "answer_chance": "ответа",
