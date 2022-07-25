@@ -12,10 +12,72 @@ from rds.redis_api import RedisApi
 
 from constants import MY_NAMES, GROUP_ID
 from .commands import create_commands
+from .logging import my_logger, log_stop
 
 
-class StopEvent:
-    ...
+def check_stop(event: VkBotMessageEvent):
+    return event.type == StopEvent
+
+
+def stop_thread():
+    exit()
+
+
+class StopEvent(VkBotMessageEvent):
+    type = 'stop_event'
+
+
+def clear_my_names(mess: str) -> str:
+    for name in MY_NAMES:
+        mess = mess.replace(name, '')
+    return mess.strip()
+
+
+def get_text_from_wall(event: VkBotMessageEvent) -> str:
+    mess = event.obj.message
+    for attach in mess.get("attachments"):
+        if attach.get("type", '') != "wall":
+            continue
+
+        if wall_text := get_wall_text(attach):
+            return wall_text
+
+        elif copy_history := get_wall_copy_history(attach):
+            for post in copy_history:
+                if wall_text := post.get("text", ""):
+                    return wall_text
+    return ''
+
+
+def get_reply_text(event: VkBotMessageEvent):
+    return event.obj.message.get(
+        "reply_message", dict()).get("text", "")
+
+
+def get_wall_text(wall_post: dict) -> str:
+    return wall_post.get('wall', dict()).get('text', '')
+
+
+def get_wall_copy_history(wall_post: dict) -> list:
+    return wall_post.get('wall', dict()).get('copy_history', [])
+
+
+def get_command(text: str) -> str:
+    return split_text[0] if len(split_text := text.split()) > 0 else ''
+
+
+def get_text(event: VkBotMessageEvent):
+    text = event.obj.message.get("text", "")
+
+    if text != get_command(text):
+        if text.startswith("/"):
+            return " ".join(text.split()[1:])
+        return text
+
+    elif reply_text := get_reply_text(event):
+        return reply_text
+
+    return get_text_from_wall(event)
 
 
 class Bot:
@@ -35,19 +97,6 @@ class Bot:
         self.n_threads = n_threads
         self.start()
 
-    @staticmethod
-    def logger(event):
-        try:
-            log = u"{} IN {}: {} | atts: {}".format(
-                event.obj.message["from_id"],
-                event.obj.message["peer_id"],
-                event.obj.message["text"],
-                event.obj.message["attachments"]
-            )
-            logger.info(log)
-        except UnicodeEncodeError:
-            pass
-
     def start(self):
         for th in range(self.n_threads):
             event_checker = threading.Thread(
@@ -57,88 +106,67 @@ class Bot:
             event_checker.start()
             logger.info(f"thread {event_checker.name} started")
 
-    @staticmethod
-    def check_stop(event):
-        if event == StopEvent:
-            logger.info(
-                f"thread {threading.currentThread().name} stopped")
-            exit()
-
     def check_event_type(self):
         while True:
             for event in iter(self.events.get, None):
                 self.threads[threading.currentThread().name] = 0
-                self.check_stop(event)
+                if check_stop(event):
+                    log_stop()
+                    stop_thread()
+
                 if event.type in (VkBotEventType.MESSAGE_NEW,
                                   VkBotEventType.MESSAGE_EVENT):
-                    self.message_checker(event)
+                    self.handle_event(event)
                 self.threads[threading.currentThread().name] = 1
 
-    def message_checker(self, event: VkBotMessageEvent):
-        def clear_my_names(mess: str):
-            for name in MY_NAMES:
-                mess = mess.replace(name, '')
-            return mess.strip()
+    @staticmethod
+    def check_invite_me(event: VkBotMessageEvent) -> bool:
+        action = event.obj.message.get("action", None)
+        if action:
+            action_type = action["type"]
+            if action_type == "chat_invite_user" \
+                    and action["member_id"] == -int(GROUP_ID):
+                return True
+        return False
 
-        def get_text():
-            def get_attach():
-                for attach in mess.get("attachments"):
-                    if attach["type"] != "wall":
-                        return ""
-                    if attach.get("wall", dict()).get("text", ""):
-                        return attach.get("wall", dict()).get(
-                            "text", "")
-                    elif attach.get("wall", dict()).get(
-                            "copy_history", ""):
-                        for post in attach.get("wall", dict()).get(
-                                "copy_history", ""):
-                            if post.get("text", ""):
-                                return post.get("text", "")
+    def on_invite(self, event):
+        peer_id = event.obj.message["peer_id"]
 
-            mess = event.obj.message
-            if mess["text"] != command:
-                if mess["text"].startswith("/"):
-                    return " ".join(mess["text"].split()[1:])
-                return mess["text"]
+        self.redis.add_peer_id(str(peer_id))
+        self.send_message("дайте админку пжпж", peer_id)
+        return
 
-            elif mess.get("reply_message", dict()).get("text", ""):
-                return mess.get("reply_message", dict()).get("text", "")
-
-            elif mess.get("attachments"):
-                return get_attach()
-            return ""
-
-        if event.type == VkBotEventType.MESSAGE_NEW:
-            self.logger(event)
-            text = event.obj.message.get("text", "")
-            command = "" if len(text.split()) < 1 else text.split()[
-                0].lower()
-
-            message: str = get_text()
-
-            peer_id = event.obj.message["peer_id"]
-            action = event.obj.message.get("action", None)
-
-            if action:
-                action_type = action["type"]
-                if action_type == "chat_invite_user" \
-                        and action["member_id"] == -int(GROUP_ID):
-                    self.redis.add_peer_id(str(peer_id))
-                    self.send_message("дайте админку пжпж", peer_id)
-                    return
-
-            message = clear_my_names(message)
-            self.add_message(event, message)
-
-        elif event.type == VkBotEventType.MESSAGE_EVENT:
-            command = event.obj.payload.get("command", "")
-            peer_id = event.obj["peer_id"]
-            message = ""
-        else:
+    def on_new_message(self, event: VkBotMessageEvent):
+        my_logger(event)
+        command = get_command(event.obj.message.get('text', ''))
+        message: str = get_text(event)
+        if self.check_invite_me(event):
+            self.on_invite(event)
             return
 
-        c = self.commands.get(command, self.commands.get("other"))
-        c(self, event, message, peer_id)
+        peer_id = event.obj.message["peer_id"]
+
+        message = clear_my_names(message)
+
+        self.add_message(event, message)
+        self.get_bot_command(command)(self, event, message, peer_id)
+
+    def on_message_event(self, event: VkBotMessageEvent):
+        command = event.obj.payload.get("command", "")
+        peer_id = event.obj["peer_id"]
+        message = ""
+        self.get_bot_command(command)(self, event, message, peer_id)
+
+    def get_bot_command(self, command_name: str):
+        return self.commands.get(command_name,
+                                 self.commands.get("other"))
+
+    def handle_event(self, event: VkBotMessageEvent):
+        if event.type == VkBotEventType.MESSAGE_NEW:
+            self.on_new_message(event)
+
+        elif event.type == VkBotEventType.MESSAGE_EVENT:
+            self.on_message_event(event)
 
     def add_event_in_queue(self, event):
         self.events.put(event)
@@ -152,48 +180,49 @@ class Bot:
     from .send_message import send_message
     from .send_photo import send_photo
 
-    from ._redo_command import redo_command
-    from ._help_command import show_help
-    from ._get_synonyms_command import get_synonyms
-    from ._create_postirony_command import create_postirony
-    from ._create_shakal_command import create_shakal
-    from ._create_grain_command import create_grain
-    from ._create_arabfunny_command import create_arabfunny
-    from ._create_dab_command import create_dab
-    from ._get_uptime_command import get_uptime
-    from ._get_chance_command import get_chance
-    from ._get_count_words_command import get_count_words
-    from ._generate_speak_command import generate_speak
-    from ._get_words_after_that_command import get_words_after_that
-    from ._get_peer_command import get_peer
-    from ._alive_command import alive
-    from ._toggle_access_chat_settings_command import \
+    from .commands.redo_command import redo_command
+    from .commands.help_command import show_help
+    from .commands.get_synonyms_command import get_synonyms
+    from .commands.create_postirony_command import create_postirony
+    from .commands.create_shakal_command import create_shakal
+    from .commands.create_grain_command import create_grain
+    from .commands.create_arabfunny_command import create_arabfunny
+    from .commands.create_dab_command import create_dab
+    from .commands.get_uptime_command import get_uptime
+    from .commands.get_chance_command import get_chance
+    from .commands.get_count_words_command import get_count_words
+    from .commands.generate_speak_command import generate_speak
+    from .commands.get_words_after_that_command \
+        import get_words_after_that
+    from .commands.get_peer_command import get_peer
+    from .commands.alive_command import alive
+    from .commands.toggle_access_chat_settings_command import \
         toggle_access_chat_settings
-    from ._set_chance_command import set_chance
-    from ._show_settings_command import show_settings
-    from ._clear_chat_speaker_command import clear_chat_speaker
-    from ._update_chat_command import update_chat
-    from ._delete_this_command import delete_this
-    from ._admin_help_command import admin_help
-    from ._set_admin_command import set_admin
-    from ._get_admin_command import get_admin
-    from ._is_admin_command import is_admin
-    from ._bye_bye_command import bye_bye
-    from ._alive_threads_command import alive_threads
-    from ._send_answer_command import send_answer
-    from ._archived_command import archived
-    from ._generate_token_command import generate_token
-    from ._connect_command import connect
-    from ._accept_connect_command import accept_connect
-    from ._send_other_chat_command import send_other_chat
-    from ._disconnect_command import disconnect
-    from ._test_command import test
-    from ._ans_yes_no_command import answer_yes_no
-    from ._lox_command import lox_command
-    from ._get_my_count import get_my_count
-    from ._get_top import get_top
-    from ._send_in_peer import send_in_peer
-    from ._clear_keyboard import clear_keyboard
-    from ._search_image import search_image
-    from ._create_chat import create_chat
-    from ._get_cat import get_cat
+    from .commands.set_chance_command import set_chance
+    from .commands.show_settings_command import show_settings
+    from .commands.clear_chat_speaker_command import clear_chat_speaker
+    from .commands.update_chat_command import update_chat
+    from .commands.delete_this_command import delete_this
+    from .commands.admin_help_command import admin_help
+    from .commands.set_admin_command import set_admin
+    from .commands.get_admin_command import get_admin
+    from .commands.is_admin_command import is_admin
+    from .commands.bye_bye_command import bye_bye
+    from .commands.alive_threads_command import alive_threads
+    from .commands.send_answer_command import send_answer
+    from .commands.archived_command import archived
+    from .commands.generate_token_command import generate_token
+    from .commands.connect_command import connect
+    from .commands.accept_connect_command import accept_connect
+    from .commands.send_other_chat_command import send_other_chat
+    from .commands.disconnect_command import disconnect
+    from .commands.test_command import test
+    from .commands.ans_yes_no_command import answer_yes_no
+    from .commands.lox_command import lox_command
+    from .commands.get_my_count import get_my_count
+    from .commands.get_top import get_top
+    from .commands.send_in_peer import send_in_peer
+    from .commands.clear_keyboard import clear_keyboard
+    from .commands.search_image import search_image
+    from .commands.create_chat import create_chat
+    from .commands.get_cat import get_cat
