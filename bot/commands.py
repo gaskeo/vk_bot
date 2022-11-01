@@ -1,6 +1,6 @@
 def create_commands(bot) -> dict:
     return {
-        # commands for all users
+        # _commands for all users
         "/": bot.redo_command,
         "/help": bot.show_help,
 
